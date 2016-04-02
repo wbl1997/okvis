@@ -198,15 +198,15 @@ __inline__ void integrateOneStep_RungeKutta(
   Eigen::Quaterniond q_WS2 = q_WS;
   okvis::SpeedAndBias sb2 = sb;
   // state propagation:
-  p_WS_W2 += k2_p_WS_W_dot * dt;
-  theta_half = k2_q_WS_dot.head<3>().norm() * dt;
+  p_WS_W2 += k2_p_WS_W_dot * 0.5 * dt;
+  theta_half = k2_q_WS_dot.head<3>().norm() * 0.5 * dt;
   sinc_theta_half = sinc(theta_half);
   cos_theta_half = cos(theta_half);
-  dq.vec() = sinc_theta_half * k2_q_WS_dot.head<3>() * dt;
+  dq.vec() = sinc_theta_half * k2_q_WS_dot.head<3>() * 0.5 * dt;
   dq.w() = cos_theta_half;
   //std::cout<<dq.transpose()<<std::endl;
   q_WS2 = q_WS2 * dq;
-  sb2 += k1_sb_dot * dt;
+  sb2 += k1_sb_dot * 0.5 * dt;
 
   Eigen::Vector3d k3_p_WS_W_dot;
   Eigen::Vector4d k3_q_WS_dot;
