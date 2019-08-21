@@ -785,6 +785,11 @@ void ThreadedKFVio::optimizationLoop() {
           result.speedAndBiases = lastOptimizedSpeedAndBiases_;
           result.stamp = lastOptimizedStateTimestamp_;
           result.onlyPublishLandmarks = false;
+          for (size_t i = 0; i < parameters_.nCameraSystem.numCameras(); ++i) {
+            okvis::kinematics::Transformation T_SCA; 
+            estimator_.getCameraSensorStates(frame_pairs->id(), i, T_SCA); 
+            result.vector_of_T_SCi.emplace_back(T_SCA); 
+          }
         }
         else
           result.onlyPublishLandmarks = true;
@@ -837,9 +842,9 @@ void ThreadedKFVio::optimizationLoop() {
     if (!parameters_.publishing.publishImuPropagatedState) {
       // adding further elements to result that do not access estimator.
       for (size_t i = 0; i < parameters_.nCameraSystem.numCameras(); ++i) {
-        result.vector_of_T_SCi.push_back(
-            okvis::kinematics::Transformation(
-                *parameters_.nCameraSystem.T_SC(i)));
+        // result.vector_of_T_SCi.push_back(
+        //     okvis::kinematics::Transformation(
+        //         *parameters_.nCameraSystem.T_SC(i)));    
       }
     }
     optimizationResults_.Push(result);
