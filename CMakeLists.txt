@@ -148,7 +148,7 @@ else()
   set(CERES_VERSION 1.9.0)
   set(CERES_TAG 7c57de5080c9f5a4f067e2d20b5f33bad5b1ade6) #version 1.9. Newer ones would need adaptation with ceres::ParameterBlock
   ExternalProject_Add(ceres_external
-    GIT_REPOSITORY https://ceres-solver.googlesource.com/ceres-solver
+    GIT_REPOSITORY https://github.com/ceres-solver/ceres-solver
     GIT_TAG ${CERES_TAG}
     UPDATE_COMMAND ""
     INSTALL_DIR ${CMAKE_BINARY_DIR}
@@ -248,7 +248,7 @@ if(${BUILD_TESTS})
   # http://stackoverflow.com/questions/9689183/cmake-googletest
   ExternalProject_Add(
     googlemock
-    URL https://googlemock.googlecode.com/files/gmock-1.7.0.zip
+    GIT_REPOSITORY https://github.com/paulsapps/gmock-1.7.0.git
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gmock
     CMAKE_ARGS -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
     BUILD_COMMAND make -j${N_CORES}

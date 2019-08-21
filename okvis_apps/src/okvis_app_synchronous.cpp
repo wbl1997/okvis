@@ -200,7 +200,6 @@ class ExtrinsicObserver {
   void recordExtrinsicEstimate(
       const okvis::Time &timestamp, const okvis::kinematics::Transformation &,
       const Eigen::Matrix<double, 9, 1> &, const Eigen::Matrix<double, 3, 1> &,
-      const int,
       const std::vector<
           okvis::kinematics::Transformation,
           Eigen::aligned_allocator<okvis::kinematics::Transformation>>
@@ -263,7 +262,7 @@ int main(int argc, char **argv)
       std::bind(&ExtrinsicObserver::recordExtrinsicEstimate, &exObs,
                 std::placeholders::_1, std::placeholders::_2,
                 std::placeholders::_3, std::placeholders::_4,
-                std::placeholders::_5, std::placeholders::_6));
+                std::placeholders::_5));
 
   okvis_estimator.setBlocking(true);
 
