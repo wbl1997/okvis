@@ -335,7 +335,7 @@ int main(int argc, char **argv)
     for (size_t i = 0; i < numCameras; ++i) {
       if (cam_iterators[i] == image_names[i].end()) {
         std::cout << std::endl << "Finished images. Press any key to exit." << std::endl << std::flush;
-        cv::waitKey();
+        // cv::waitKey();
         return 0;
       }
     }
