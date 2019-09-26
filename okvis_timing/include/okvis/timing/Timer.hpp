@@ -96,7 +96,7 @@ namespace timing {
     ~DummyTimer(){}
     
     void start(){}
-    void stop(){}
+    double stop(){return 0;}
     void discardTiming(){}
     bool isTiming(){ return false; }
   };
@@ -108,7 +108,7 @@ namespace timing {
     ~Timer();
     
     void start();
-    void stop();
+    double stop();
     bool isTiming();
     void discardTiming();
   private:

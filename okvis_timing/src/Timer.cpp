@@ -127,7 +127,7 @@ namespace timing {
 #endif
   }
   
-  void Timer::stop()
+  double Timer::stop()
   {
     OKVIS_ASSERT_TRUE(TimerException, m_timing,"The timer " + Timing::getTag(m_handle) + " is not running");
     double dt;
@@ -142,6 +142,7 @@ namespace timing {
 #endif
     Timing::instance().addTime(m_handle,dt);
     m_timing = false;
+    return dt;
   }
   
   bool Timer::isTiming()

@@ -595,6 +595,7 @@ int Frontend::runRansac3d2d(okvis::Estimator& estimator,
   if (numCorrespondences < 5)
     return numCorrespondences;
 
+  okvis::timing::Timer ransac3d2d("2.4.10 ransac3d2d");
   // create a RelativePoseSac problem and RANSAC
   opengv::sac::Ransac<
       opengv::sac_problems::absolute_pose::FrameAbsolutePoseSacProblem> ransac;
@@ -612,6 +613,10 @@ int Frontend::runRansac3d2d(okvis::Estimator& estimator,
 
   // assign transformation
   numInliers = ransac.inliers_.size();
+
+  double dt = ransac3d2d.stop();
+  std::cout << "ransac3d2d " << dt << "\n"; 
+
   if (numInliers >= 10) {
 
     // kick out outliers:
@@ -673,6 +678,7 @@ int Frontend::runRansac2d2d(okvis::Estimator& estimator,
     // try both the rotation-only RANSAC and the relative one:
 
     // create a RelativePoseSac problem and RANSAC
+    okvis::timing::Timer ransac2d("2.4.10 ransac2d");
     typedef opengv::sac_problems::relative_pose::FrameRotationOnlySacProblem FrameRotationOnlySacProblem;
     opengv::sac::Ransac<FrameRotationOnlySacProblem> rotation_only_ransac;
     std::shared_ptr<FrameRotationOnlySacProblem> rotation_only_problem_ptr(
@@ -688,8 +694,11 @@ int Frontend::runRansac2d2d(okvis::Estimator& estimator,
     int rotation_only_inliers = rotation_only_ransac.inliers_.size();
     float rotation_only_ratio = float(rotation_only_inliers)
         / float(numCorrespondences);
-
+      
+    double dt = ransac2d.stop();
+    std::cout << "ransac2d_rot " << dt << "\n"; 
     // now the rel_pose one:
+    ransac2d.start();
     typedef opengv::sac_problems::relative_pose::FrameRelativePoseSacProblem FrameRelativePoseSacProblem;
     opengv::sac::Ransac<FrameRelativePoseSacProblem> rel_pose_ransac;
     std::shared_ptr<FrameRelativePoseSacProblem> rel_pose_problem_ptr(
@@ -705,6 +714,9 @@ int Frontend::runRansac2d2d(okvis::Estimator& estimator,
     // assess success
     int rel_pose_inliers = rel_pose_ransac.inliers_.size();
     float rel_pose_ratio = float(rel_pose_inliers) / float(numCorrespondences);
+
+    dt = ransac2d.stop();
+    std::cout << "ransac2d_rel " << dt << "\n"; 
 
     // decide on success and fill inliers
     std::vector<bool> inliers(numCorrespondences, false);
