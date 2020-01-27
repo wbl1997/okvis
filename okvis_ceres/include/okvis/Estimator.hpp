@@ -559,6 +559,13 @@ class Estimator : public VioBackendInterface
 
  protected:
 
+  bool addCameraExtrinsicParameterBlock(
+      int camIdx, const okvis::Time& stateTime, uint64_t* id);
+
+  bool getCameraExtrinsicParameter(
+      uint64_t poseId, size_t cameraIdx,
+      okvis::kinematics::Transformation& T_SCi) const;
+
   /**
    * @brief Remove an observation from a landmark.
    * @param residualBlockId Residual ID for this landmark.

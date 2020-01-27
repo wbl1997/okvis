@@ -42,6 +42,8 @@
 #include <okvis/Estimator.hpp>
 #include <msckf/EuclideanParamBlock.hpp>
 #include <msckf/EuclideanParamBlockSized.hpp>
+#include <msckf/ExtrinsicModels.hpp>
+
 #include <okvis/ceres/PoseParameterBlock.hpp>
 #include <okvis/ceres/ImuError.hpp>
 #include <okvis/ceres/PoseError.hpp>
@@ -1050,8 +1052,7 @@ bool Estimator::getCameraSensorStates(
     uint64_t poseId, size_t cameraIdx,
     okvis::kinematics::Transformation & T_SCi) const
 {
-  return getSensorStateEstimateAs<ceres::PoseParameterBlock>(
-      poseId, cameraIdx, SensorStates::Camera, CameraSensorStates::T_SCi, T_SCi);
+  return getCameraExtrinsicParameter(poseId, cameraIdx, T_SCi);
 }
 
 // Get the ID of the current keyframe.
@@ -1443,6 +1444,60 @@ void Estimator::computeCovariance(Eigen::MatrixXd* cov) const {
   // TODO(jhuai): compute marginal covariance for navigation states following
   // http://ceres-solver.org/nnls_covariance.html.
   *cov = Eigen::Matrix<double, 6, 6>::Identity();
+}
+
+bool Estimator::addCameraExtrinsicParameterBlock(
+    int camIdx, const okvis::Time& stateTime, uint64_t* id) {
+  *id = IdProvider::instance().newId();
+  bool added = false;
+  int extrinsicModelId = camera_rig_.getExtrinsicOptMode(camIdx);
+  const okvis::kinematics::Transformation T_SC = camera_rig_.getCameraExtrinsic(camIdx);
+  switch (extrinsicModelId) {
+    case Extrinsic_p_CB::kModelId: {
+      std::shared_ptr<okvis::ceres::EuclideanParamBlockSized<3>>
+          extrinsicsParameterBlockPtr(
+              new okvis::ceres::EuclideanParamBlockSized<3>(T_SC.r(), *id,
+                                                            stateTime));
+      added = mapPtr_->addParameterBlock(extrinsicsParameterBlockPtr,
+                                         ceres::Map::Trivial);
+      break;
+    }
+    case Extrinsic_p_BC_q_BC::kModelId:
+    default: {
+      std::shared_ptr<okvis::ceres::PoseParameterBlock>
+          extrinsicsParameterBlockPtr(
+              new okvis::ceres::PoseParameterBlock(T_SC, *id, stateTime));
+      added = mapPtr_->addParameterBlock(extrinsicsParameterBlockPtr,
+                                         ceres::Map::Pose6d);
+      break;
+    }
+  }
+  return added;
+}
+
+bool Estimator::getCameraExtrinsicParameter(
+    uint64_t poseId, size_t cameraIdx,
+    okvis::kinematics::Transformation& T_SCi) const {
+  int extrinsicModelId = camera_rig_.getExtrinsicOptMode(cameraIdx);
+  okvis::kinematics::Transformation T_SC = camera_rig_.getCameraExtrinsic(cameraIdx);
+  bool found = false;
+  switch (extrinsicModelId) {
+    case Extrinsic_p_CB::kModelId: {
+      Eigen::Vector3d p_CB;
+      found = getSensorStateEstimateAs<ceres::EuclideanParamBlockSized<3>>(
+          poseId, cameraIdx, SensorStates::Camera, CameraSensorStates::T_SCi,
+          p_CB);
+      T_SCi = okvis::kinematics::Transformation(T_SC.q() * (-p_CB), T_SC.q());
+      break;
+    }
+    case Extrinsic_p_BC_q_BC::kModelId:
+    default:
+      found = getSensorStateEstimateAs<ceres::PoseParameterBlock>(
+          poseId, cameraIdx, SensorStates::Camera, CameraSensorStates::T_SCi,
+          T_SCi);
+      break;
+  }
+  return found;
 }
 
 const okvis::Duration Estimator::half_window_(2, 0);

@@ -188,12 +188,9 @@ bool GeneralEstimator::addStates(
               .at(CameraSensorStates::TR)
               .id;
     } else {
-      const okvis::kinematics::Transformation T_SC = camera_rig_.getCameraExtrinsic(i);
-      uint64_t id = IdProvider::instance().newId();
-      std::shared_ptr<okvis::ceres::PoseParameterBlock> extrinsicsParameterBlockPtr(
-          new okvis::ceres::PoseParameterBlock(T_SC, id,
-                                               correctedStateTime));
-      if(!mapPtr_->addParameterBlock(extrinsicsParameterBlockPtr,ceres::Map::Pose6d)){
+      uint64_t id;
+      bool added = addCameraExtrinsicParameterBlock(i, correctedStateTime, &id);
+      if(!added) {
         return false;
       }
       cameraInfos.at(CameraSensorStates::T_SCi).id = id;

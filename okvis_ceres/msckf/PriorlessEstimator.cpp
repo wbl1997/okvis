@@ -138,12 +138,9 @@ bool PriorlessEstimator::addStates(
       cameraInfos.at(CameraSensorStates::T_SCi).id =
           lastElementIterator->second.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::T_SCi).id;
     } else {
-      const okvis::kinematics::Transformation T_SC = *multiFrame->T_SC(i);
-      uint64_t id = IdProvider::instance().newId();
-      std::shared_ptr<okvis::ceres::PoseParameterBlock> extrinsicsParameterBlockPtr(
-          new okvis::ceres::PoseParameterBlock(T_SC, id,
-                                               multiFrame->timestamp()));
-      if(!mapPtr_->addParameterBlock(extrinsicsParameterBlockPtr,ceres::Map::Pose6d)){
+      uint64_t id;
+      bool added = addCameraExtrinsicParameterBlock(i, multiFrame->timestamp(), &id);
+      if (!added) {
         return false;
       }
       cameraInfos.at(CameraSensorStates::T_SCi).id = id;
