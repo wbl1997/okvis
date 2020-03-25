@@ -785,6 +785,12 @@ void ThreadedKFVio::optimizationLoop() {
           result.speedAndBiases = lastOptimizedSpeedAndBiases_;
           result.stamp = lastOptimizedStateTimestamp_;
           result.onlyPublishLandmarks = false;
+          bool covStatus = estimator_.getStateVariance(&result.stateVariance_);
+          if (covStatus) {
+            LOG(INFO) << "Found covariance of dim " << result.stateVariance_.size();
+          } else {
+            LOG(INFO) << "Failed to obtain covariance";
+          }
         }
         else
           result.onlyPublishLandmarks = true;

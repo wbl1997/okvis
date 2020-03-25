@@ -1301,6 +1301,38 @@ bool Estimator::setSensorStateEstimateAs(
   return true;
 }
 
+
+bool Estimator::computeCovariance(Eigen::MatrixXd* cov) const {
+  // variance for p_WB, q_WB, v_WB, bg, ba
+  *cov = Eigen::Matrix<double, 15, 15>::Identity();
+  uint64_t T_WS_id = statesMap_.rbegin()->second.id;
+  uint64_t speedAndBias_id = statesMap_.rbegin()
+                                 ->second.sensors.at(SensorStates::Imu)
+                                 .at(0)
+                                 .at(ImuSensorStates::SpeedAndBias)
+                                 .id;
+  std::vector<uint64_t> parameterBlockIdList{T_WS_id, speedAndBias_id};
+  std::vector<
+      Eigen::Matrix<double, -1, -1, Eigen::RowMajor>,
+      Eigen::aligned_allocator<Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>>
+      varianceList;
+  bool status = mapPtr_->getParameterBlockMinimalCovariance(
+      parameterBlockIdList, &varianceList);
+  if (status) {
+    cov->topLeftCorner<6, 6>() = varianceList[0].topLeftCorner<6, 6>();
+    cov->bottomRightCorner<9, 9>() = varianceList[1];
+  }
+  return status;
+}
+
+bool Estimator::getStateVariance(
+    Eigen::Matrix<double, Eigen::Dynamic, 1>* variances) const {
+  Eigen::MatrixXd covariance;
+  bool status = computeCovariance(&covariance);
+  *variances = covariance.diagonal();
+  return status;
+}
+
 }  // namespace okvis
 
 

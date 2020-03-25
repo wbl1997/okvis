@@ -297,6 +297,17 @@ class Estimator : public VioBackendInterface
   bool getCameraSensorStates(uint64_t poseId, size_t cameraIdx,
                               okvis::kinematics::Transformation & T_SCi) const;
 
+
+  virtual bool computeCovariance(Eigen::MatrixXd* cov) const;
+
+  /**
+   * @brief get variance for nav state (p,q,v), imu(bg ba), and optionally
+   * imu augmented intrinsic parameters, camera extrinsic, intrinsic, td, tr.
+   * @param variances
+   * @return true if variance of states are computed successfully.
+   */
+  virtual bool getStateVariance(Eigen::Matrix<double, Eigen::Dynamic, 1>* variances) const;
+  
   /// @brief Get the number of states/frames in the estimator.
   /// \return The number of frames.
   size_t numFrames() const {

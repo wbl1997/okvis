@@ -360,6 +360,13 @@ class Map {
     return residualBlockId2ResidualBlockSpec_Map_;
   }
 
+  bool getParameterBlockMinimalCovariance(
+      const std::vector<uint64_t>& vParameterBlockId,
+      std::vector<Eigen::Matrix<double, -1, -1, Eigen::RowMajor>,
+                  Eigen::aligned_allocator<
+                      Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>>* covList)
+      const;
+      
   // these are public for convenient manipulation
   /// \brief Ceres options
   ::ceres::Solver::Options options;

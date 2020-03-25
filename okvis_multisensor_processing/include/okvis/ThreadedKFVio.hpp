@@ -303,6 +303,7 @@ class ThreadedKFVio : public VioInterface {
     okvis::MapPointVector landmarksVector;      ///< Vector containing the current landmarks.
     okvis::MapPointVector transferredLandmarks; ///< Vector of the landmarks that have been marginalized out.
     bool onlyPublishLandmarks;                  ///< Boolean to signalise the publisherLoop() that only the landmarks should be published
+    Eigen::Matrix<double, Eigen::Dynamic, 1> stateVariance_;
   };
 
   /// @name State variables
