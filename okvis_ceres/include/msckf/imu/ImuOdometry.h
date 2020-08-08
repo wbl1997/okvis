@@ -25,6 +25,8 @@ class ImuOdometry {
  public:
   /**
    * @brief Propagates pose, speeds and biases with given IMU measurements.
+   * Extends okvis::ceres::ImuError::propagation to handle a generic IMU error
+   * model and given linearization point for position and velocity.
    * @remark This can be used externally to perform propagation
    * @warning covariance and jacobian should be provided at the same time.
    * @param[in] imuMeasurements All the IMU measurements.
@@ -105,14 +107,6 @@ class ImuOdometry {
                                       const ImuErrorModel<double>& iem,
                                       const okvis::Time& queryTime,
                                       okvis::ImuMeasurement& queryValue);
-
-  static int propagation_leutenegger_corrected(
-      const okvis::ImuMeasurementDeque& imuMeasurements,
-      const okvis::ImuParameters& imuParams,
-      okvis::kinematics::Transformation& T_WS,
-      okvis::SpeedAndBias& speedAndBiases, const okvis::Time& t_start,
-      const okvis::Time& t_end, covariance_t* covariance = 0,
-      jacobian_t* jacobian = 0);
 }; // class ImuOdometry
 
 /**
