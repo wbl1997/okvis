@@ -24,4 +24,10 @@
   TypeName(const TypeName&) = delete;             \
   void operator=(const TypeName&) = delete
 
+// Add way of printing strongly typed enums (enum class).
+template <typename E>
+constexpr typename std::underlying_type<E>::type to_underlying(E e) noexcept {
+  return static_cast<typename std::underlying_type<E>::type>(e);
+}
+
 #endif // OKVIS_CLASS_MACROS_HPP

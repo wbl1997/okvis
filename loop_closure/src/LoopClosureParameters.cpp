@@ -2,8 +2,6 @@
 #include <okvis/LoopClosureMethod.hpp>
 
 namespace okvis {
-PipelineParams::PipelineParams(const std::string& name) : name_(name) {}
-
 LoopClosureParameters::LoopClosureParameters() :
   PipelineParams("Base Loop Closure Parameters") {}
 
@@ -18,5 +16,9 @@ bool LoopClosureParameters::parseYAML(const std::string& /*filepath*/) {
 
 void LoopClosureParameters::print() const {
 
+}
+
+bool LoopClosureParameters::equals(const PipelineParams& /*obj*/) const {
+  return true;
 }
 }  // namespace okvis

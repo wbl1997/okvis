@@ -27,6 +27,7 @@ add_library(${PROJECT_NAME} STATIC
 # and link it
 target_link_libraries(${PROJECT_NAME}
   PUBLIC okvis_cv
+  PUBLIC okvis_common
   PRIVATE ${GLOG_LIBRARIES})
 
 # installation if required
