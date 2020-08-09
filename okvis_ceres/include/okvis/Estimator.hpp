@@ -611,6 +611,9 @@ class Estimator : public VioBackendInterface
 
   Eigen::Matrix<double, Eigen::Dynamic, 1> computeImuAugmentedParamsError() const;
 
+  // Remove state parameter blocks and all of their related residuals
+  okvis::Time removeState(uint64_t stateId);
+
   /// \brief SensorStates The sensor-internal states enumerated
   enum SensorStates
   {

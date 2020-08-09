@@ -1450,6 +1450,26 @@ Eigen::Matrix<double, Eigen::Dynamic, 1> Estimator::computeImuAugmentedParamsErr
   return imu_rig_.computeImuAugmentedParamsError(0);
 }
 
+okvis::Time Estimator::removeState(uint64_t stateId) {
+  std::map<uint64_t, States>::iterator it = statesMap_.find(stateId);
+  okvis::Time removedStateTime = it->second.timestamp;
+  it->second.global[GlobalStates::T_WS].exists = false;  // remember we removed
+  it->second.sensors.at(SensorStates::Imu)
+      .at(0)
+      .at(ImuSensorStates::SpeedAndBias)
+      .exists = false;  // remember we removed
+  mapPtr_->removeParameterBlock(it->second.global[GlobalStates::T_WS].id);
+  mapPtr_->removeParameterBlock(it->second.sensors.at(SensorStates::Imu)
+                                    .at(0)
+                                    .at(ImuSensorStates::SpeedAndBias)
+                                    .id);
+
+
+  multiFramePtrMap_.erase(stateId);
+  statesMap_.erase(it);
+  return removedStateTime;
+}
+
 bool Estimator::computeCovariance(Eigen::MatrixXd* cov) const {
   // variance for p_WB, q_WB, v_WB, bg, ba
   *cov = Eigen::Matrix<double, 15, 15>::Identity();
