@@ -822,43 +822,42 @@ void Estimator::printStates(uint64_t poseId, std::ostream & buffer) const {
   buffer << std::endl;
 }
 
-bool Estimator::print(const std::string& dumpFile, const uint64_t pose_id) const
-{
-    std::ofstream stream(dumpFile, std::ios_base::app);
-    if (!stream.is_open()) {
-      return false;
-    } else {
-      stream << "States: frameIdInSource, state timestamp, T_WS(xyz, xyzw), "
-                "v_WS, bg, ba" << std::endl;
-    }
-    uint64_t poseId = pose_id;
-    if (pose_id == 0) {
-        if(statesMap_.rbegin()->second.isKeyframe)
-            poseId = statesMap_.rbegin()->first; //output the keyframe states for VICLAM
-        else
-            return false;
-    }
-    const States& stateInQuestion = statesMap_.at(poseId);
+void Estimator::printNavStateAndBiases(std::ostream& stream, uint64_t poseId) const {
+  std::shared_ptr<ceres::PoseParameterBlock> poseParamBlockPtr =
+      std::static_pointer_cast<ceres::PoseParameterBlock>(
+          mapPtr_->parameterBlockPtr(poseId));
+  kinematics::Transformation T_WS = poseParamBlockPtr->estimate();
 
-    std::shared_ptr<ceres::PoseParameterBlock> poseParamBlockPtr =std::static_pointer_cast<ceres::PoseParameterBlock>(
-                mapPtr_->parameterBlockPtr(poseId));
-    kinematics::Transformation T_WS = poseParamBlockPtr->estimate();
-    okvis::Time currentTime = stateInQuestion.timestamp;
+  const States& stateInQuestion = statesMap_.at(poseId);
+  okvis::Time currentTime = stateInQuestion.timestamp;
 
-    stream << multiFramePtrMap_.at(poseId)->idInSource << " "
-           << currentTime << " " << std::setfill(' ')
-           << T_WS.parameters().transpose();
-    // update imu sensor states
-    const int imuIdx =0;
-    if(stateInQuestion.sensors.at(SensorStates::Imu).at(imuIdx).at(ImuSensorStates::SpeedAndBias).exists){
-        uint64_t SBId= stateInQuestion.sensors.at(SensorStates::Imu).at(imuIdx).at(ImuSensorStates::SpeedAndBias).id;
-        std::shared_ptr<ceres::SpeedAndBiasParameterBlock> sbParamBlockPtr =std::static_pointer_cast<ceres::SpeedAndBiasParameterBlock>(
-                    mapPtr_->parameterBlockPtr(SBId));
-        SpeedAndBiases sb = sbParamBlockPtr->estimate();
-        stream << " " << sb.transpose();
-    }
-    stream << std::endl;
-    return true;
+  Eigen::Quaterniond q_WS = T_WS.q();
+  if (q_WS.w() < 0) {
+    q_WS.coeffs() *= -1;
+  }
+  stream << currentTime << " " << multiFramePtrMap_.rbegin()->second->idInSource
+         << " " << T_WS.parameters().transpose().format(kSpaceInitFmt);
+
+  // imu sensor states
+  const int imuIdx = 0;
+  uint64_t SBId = stateInQuestion.sensors.at(SensorStates::Imu)
+                      .at(imuIdx)
+                      .at(ImuSensorStates::SpeedAndBias)
+                      .id;
+  std::shared_ptr<ceres::SpeedAndBiasParameterBlock> sbParamBlockPtr =
+      std::static_pointer_cast<ceres::SpeedAndBiasParameterBlock>(
+          mapPtr_->parameterBlockPtr(SBId));
+  SpeedAndBiases sb = sbParamBlockPtr->estimate();
+  stream << " " << sb.transpose().format(kSpaceInitFmt);
+}
+
+bool Estimator::print(std::ostream& stream) const {
+  uint64_t poseId = statesMap_.rbegin()->first;
+  printNavStateAndBiases(stream, poseId);
+  Eigen::VectorXd stateStd;
+  getStateStd(&stateStd);
+  stream << " " << stateStd.transpose().format(kSpaceInitFmt);
+  return true;
 }
 
 // Initialise pose from IMU measurements. For convenience as static.
@@ -1116,43 +1115,6 @@ bool Estimator::isInImuWindow(uint64_t frameId) const {
     return false; // no IMU added
   }
   return statesMap_.at(frameId).sensors.at(SensorStates::Imu).at(0).at(ImuSensorStates::SpeedAndBias).exists;
-}
-
-bool Estimator::print(std::ostream& stream) const {
-  uint64_t poseId = statesMap_.rbegin()->first;
-  std::shared_ptr<ceres::PoseParameterBlock> poseParamBlockPtr =
-      std::static_pointer_cast<ceres::PoseParameterBlock>(
-          mapPtr_->parameterBlockPtr(poseId));
-  kinematics::Transformation T_WS = poseParamBlockPtr->estimate();
-  okvis::Time currentTime = statesMap_.rbegin()->second.timestamp;
-  assert(multiFramePtrMap_.rbegin()->first == poseId);
-
-  Eigen::IOFormat spaceInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols,
-                               " ", " ", "", "", "", "");
-  Eigen::Quaterniond q_WS = T_WS.q();
-  if (q_WS.w() < 0) {
-    q_WS.coeffs() *= -1;
-  }
-  std::stringstream time;
-  time << currentTime.sec << std::setw(9) << std::setfill('0')
-       << currentTime.nsec; // setfill is sticky but setw is not.
-  stream << time.str() << " " << multiFramePtrMap_.rbegin()->second->idInSource
-         << " " << std::setfill(' ')
-         << T_WS.r().transpose().format(spaceInitFmt) << " "
-         << q_WS.coeffs().transpose().format(spaceInitFmt);
-  // imu sensor states
-  const int imuIdx = 0;
-  const States stateInQuestion = statesMap_.rbegin()->second;
-  uint64_t SBId = stateInQuestion.sensors.at(SensorStates::Imu)
-                      .at(imuIdx)
-                      .at(ImuSensorStates::SpeedAndBias)
-                      .id;
-  std::shared_ptr<ceres::SpeedAndBiasParameterBlock> sbParamBlockPtr =
-      std::static_pointer_cast<ceres::SpeedAndBiasParameterBlock>(
-          mapPtr_->parameterBlockPtr(SBId));
-  SpeedAndBiases sb = sbParamBlockPtr->estimate();
-  stream << " " << sb.transpose().format(spaceInitFmt);
-  return true;
 }
 
 // Set pose for a given pose ID.

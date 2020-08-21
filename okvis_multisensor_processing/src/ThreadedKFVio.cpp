@@ -928,7 +928,7 @@ void ThreadedKFVio::optimizationLoop() {
 
 void ThreadedKFVio::dumpCalibrationParameters(uint64_t latestNFrameId, OptimizationResults* result) const {
   int frameIdInSource = -1;
-  bool isKF= false;
+  bool isKF = false;
   estimator_->getFrameId(latestNFrameId, frameIdInSource, isKF);
   result->frameIdInSource = frameIdInSource;
   result->isKeyframe = isKF;

@@ -408,9 +408,9 @@ class Estimator : public VioBackendInterface
    */
   virtual bool print(std::ostream& stream) const;
 
-  virtual void printTrackLengthHistogram(std::ostream& /*stream*/) const {}
+  void printNavStateAndBiases(std::ostream& stream, uint64_t poseId) const;
 
-  bool print(const std::string& dumpFile, const uint64_t poseId) const;
+  virtual void printTrackLengthHistogram(std::ostream& /*stream*/) const {}
 
   bool getFrameId(uint64_t poseId, int & frameIdInSource, bool & isKF) const;
 
@@ -892,6 +892,11 @@ bool vectorContains(const std::vector<T> & vector, const T & query){
   }
   return false;
 }
+
+// Space separated output format for Eigen matrices.
+static const Eigen::IOFormat kSpaceInitFmt(Eigen::StreamPrecision,
+                                           Eigen::DontAlignCols, " ", " ", "",
+                                           "", "", "");
 }  // namespace okvis
 
 #include "implementation/Estimator.hpp"
