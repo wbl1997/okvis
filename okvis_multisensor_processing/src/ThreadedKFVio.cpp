@@ -906,10 +906,14 @@ void ThreadedKFVio::optimizationLoop() {
             ++it;
           }
         }
-        visualizationDataPtr->keyFrames = estimator_->multiFrame(
-            estimator_->currentKeyframeId());
-        estimator_->get_T_WS(estimator_->currentKeyframeId(),
-                            visualizationDataPtr->T_WS_keyFrame);
+        uint64_t lastKeyframeId = estimator_->currentKeyframeId();
+        if (lastKeyframeId > 0u) {
+          visualizationDataPtr->keyFrames = estimator_->multiFrame(lastKeyframeId);
+          estimator_->get_T_WS(lastKeyframeId, visualizationDataPtr->T_WS_keyFrame);
+        } else {
+          visualizationDataPtr->keyFrames = nullptr;
+          visualizationDataPtr->T_WS_keyFrame.setIdentity();
+        }
       }
       afterOptimizationTimer.stop();
       optimizationDone_ = true;
