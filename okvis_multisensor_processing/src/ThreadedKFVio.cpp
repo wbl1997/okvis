@@ -940,13 +940,13 @@ void ThreadedKFVio::dumpCalibrationParameters(uint64_t latestNFrameId, Optimizat
   result->vector_of_T_SCi.clear();
   result->opt_T_SCi_coeffs.clear();
   for (size_t i = 0; i < parameters_.nCameraSystem.numCameras(); ++i) {
-    okvis::kinematics::Transformation T_SC;
-    estimator_->getCameraSensorStates(latestNFrameId, i, T_SC);
-    result->vector_of_T_SCi.emplace_back(T_SC);
+    okvis::kinematics::Transformation T_XC;
+    estimator_->getCameraSensorStates(latestNFrameId, i, T_XC);
+    result->vector_of_T_SCi.emplace_back(T_XC);
 
     int extrinsic_opt_type = estimator_->getCameraExtrinsicOptType(i);
     Eigen::VectorXd optimized_coeffs;
-    ExtrinsicModelToParamValues(extrinsic_opt_type, T_SC, &optimized_coeffs);
+    ExtrinsicModelToParamValues(extrinsic_opt_type, T_XC, &optimized_coeffs);
     result->opt_T_SCi_coeffs.emplace_back(optimized_coeffs);
   }
 

@@ -443,6 +443,21 @@ class Estimator : public VioBackendInterface
   int getCameraExtrinsicOptType(size_t cameraIdx) const;
 
   /**
+   * @brief getCameraSensorExtrinsics get extrinsic parameters T_BC for a
+   * camera.
+   * @attention In contrast, getCameraSensorStates get internal extrinsic
+   * parameters T_BC or T_C0C for a camera depending on the extrinsic
+   * representation.
+   * @param poseId
+   * @param cameraIdx
+   * @param T_BCi
+   * @return
+   */
+  bool getCameraSensorExtrinsics(
+      uint64_t poseId, size_t cameraIdx,
+      okvis::kinematics::Transformation& T_BCi) const;
+
+  /**
    * @brief getCameraCalibrationEstimate get the estimate of OPTIMIZED camera
    * calibration parameters
    * @param cameraParams[out] including projection and distortion intrinsic
@@ -681,6 +696,8 @@ class Estimator : public VioBackendInterface
   // A value greater than (t_d + t_r)/2 is recommended.
   // Note camera observations in MSCKF will not occur at the latest frame.
   static const okvis::Duration half_window_;
+
+  const size_t kMainCameraIndex = 0u;
 
  protected:
   template <class GEOMETRY_TYPE>

@@ -1545,6 +1545,31 @@ int Estimator::getCameraExtrinsicOptType(size_t cameraIdx) const {
   return camera_rig_.getExtrinsicOptMode(cameraIdx);
 }
 
+bool Estimator::getCameraSensorExtrinsics(
+    uint64_t poseId, size_t cameraIdx,
+    okvis::kinematics::Transformation& T_BCi) const {
+  if (camera_rig_.getExtrinsicOptMode(cameraIdx) ==
+      Extrinsic_p_C0C_q_C0C::kModelId) {
+    OKVIS_ASSERT_NE_DBG(
+        Exception, kMainCameraIndex, cameraIdx,
+        "Extrinsic_p_C0C_q_C0C should not happen with the main camera.");
+    okvis::kinematics::Transformation T_BC0;
+    bool status = getSensorStateEstimateAs<ceres::PoseParameterBlock>(
+        poseId, kMainCameraIndex, SensorStates::Camera,
+        CameraSensorStates::T_SCi, T_BC0);
+    okvis::kinematics::Transformation T_C0Ci;
+    status &= getSensorStateEstimateAs<ceres::PoseParameterBlock>(
+        poseId, cameraIdx, SensorStates::Camera, CameraSensorStates::T_SCi,
+        T_C0Ci);
+    T_BCi = T_BC0 * T_C0Ci;
+    return status;
+  } else {
+    return getSensorStateEstimateAs<ceres::PoseParameterBlock>(
+        poseId, cameraIdx, SensorStates::Camera, CameraSensorStates::T_SCi,
+        T_BCi);
+  }
+}
+
 void Estimator::getCameraCalibrationEstimate(
     Eigen::Matrix<double, Eigen::Dynamic, 1>* /*cameraParams*/) const {
 }
