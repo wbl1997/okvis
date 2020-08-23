@@ -436,8 +436,10 @@ bool Estimator::removeObservation(uint64_t landmarkId, uint64_t poseId,
   }
 
   // remove residual block
-  mapPtr_->removeResidualBlock(reinterpret_cast< ::ceres::ResidualBlockId>(it->second));
-
+  if (it->second) { // nullptr becomes possible since we separated feature matching and adding residuals.
+    mapPtr_->removeResidualBlock(
+        reinterpret_cast<::ceres::ResidualBlockId>(it->second));
+  }
   // remove also in local map
   mapPoint.observations.erase(it);
 
@@ -927,7 +929,7 @@ void Estimator::optimize(size_t numIter, size_t /*numThreads*/,
   } else {
     mapPtr_->options.minimizer_progress_to_stdout = false;
   }
-
+  addReprojectionFactors();
   // call solver
   mapPtr_->solve();
 
@@ -1405,6 +1407,49 @@ bool Estimator::addLandmarkObservation(uint64_t landmarkId, uint64_t poseId,
   landmarksMap_.at(landmarkId)
       .observations.emplace(
           kid, 0u);
+  return true;
+}
+
+bool Estimator::addReprojectionFactors() {
+  okvis::cameras::NCameraSystem::DistortionType distortionType =
+      camera_rig_.getDistortionType(0);
+
+  for (PointMap::iterator pit = landmarksMap_.begin();
+       pit != landmarksMap_.end(); ++pit) {
+    // examine starting from the rear of a landmark's observations, add
+    // reprojection factors for those with null residual pointers, terminate
+    // until a valid residual pointer is hit.
+    MapPoint& mp = pit->second;
+    std::map<okvis::KeypointIdentifier, uint64_t>::reverse_iterator breakIter =
+        mp.observations.rend();
+    for (std::map<okvis::KeypointIdentifier, uint64_t>::reverse_iterator riter =
+             mp.observations.rbegin();
+         riter != mp.observations.rend(); ++riter) {
+      ::ceres::ResidualBlockId retVal = 0u;
+      if (riter->second == 0u) {
+// TODO(jhuai): Placing the switch statement outside the double for loop saves
+// most branchings for switch.
+#define DISTORTION_MODEL_CASE(camera_geometry_t)                               \
+  retVal = addPointFrameResidual<camera_geometry_t>(pit->first, riter->first); \
+  riter->second = reinterpret_cast<uint64_t>(retVal);
+
+        switch (distortionType) { DISTORTION_MODEL_SWITCH_CASES }
+
+#undef DISTORTION_MODEL_CASE
+      } else {
+        breakIter = riter;
+        break;
+      }
+    }
+
+    for (std::map<okvis::KeypointIdentifier, uint64_t>::reverse_iterator riter =
+             breakIter;
+         riter != mp.observations.rend(); ++riter) {
+      OKVIS_ASSERT_NE_DBG(
+          Exception, riter->second, 0u,
+          "Residuals should be contiguous unless epipolar factors are used!");
+    }
+  }
   return true;
 }
 

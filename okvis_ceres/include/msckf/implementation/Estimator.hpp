@@ -11,29 +11,35 @@
 /// \brief okvis Main namespace of this package.
 namespace okvis {
 
-template<class GEOMETRY_TYPE>
+template <class GEOMETRY_TYPE>
 ::ceres::ResidualBlockId Estimator::addPointFrameResidual(
-    uint64_t landmarkId,
-    uint64_t poseId,
-    size_t camIdx,
-    const Eigen::Vector2d& measurement,
-    const Eigen::Matrix2d& information,
-    std::shared_ptr<const GEOMETRY_TYPE> cameraGeometry) {
-  std::shared_ptr < ceres::ReprojectionError
-      < GEOMETRY_TYPE
-          >> reprojectionError(
-              new ceres::ReprojectionError<GEOMETRY_TYPE>(
-                  cameraGeometry,
-                  camIdx, measurement, information));
+    uint64_t landmarkId, const KeypointIdentifier& kpi) {
+  // get the keypoint measurement
+  okvis::MultiFramePtr multiFramePtr = multiFramePtrMap_.at(kpi.frameId);
+  Eigen::Vector2d measurement;
+  multiFramePtr->getKeypoint(kpi.cameraIndex, kpi.keypointIndex, measurement);
+  Eigen::Matrix2d information = Eigen::Matrix2d::Identity();
+  double size = 1.0;
+  multiFramePtr->getKeypointSize(kpi.cameraIndex, kpi.keypointIndex, size);
+  information *= 64.0 / (size * size);
+
+  std::shared_ptr<const GEOMETRY_TYPE> cameraGeometry =
+      camera_rig_.template geometryAs<GEOMETRY_TYPE>(kpi.cameraIndex);
+
+  std::shared_ptr<ceres::ReprojectionError<GEOMETRY_TYPE>> reprojectionError(
+      new ceres::ReprojectionError<GEOMETRY_TYPE>(cameraGeometry, kpi.cameraIndex,
+                                                  measurement, information));
 
   ::ceres::ResidualBlockId retVal = mapPtr_->addResidualBlock(
       reprojectionError,
       cauchyLossFunctionPtr_ ? cauchyLossFunctionPtr_.get() : NULL,
-      mapPtr_->parameterBlockPtr(poseId),
+      mapPtr_->parameterBlockPtr(kpi.frameId),
       mapPtr_->parameterBlockPtr(landmarkId),
-      mapPtr_->parameterBlockPtr(
-          statesMap_.at(poseId).sensors.at(SensorStates::Camera).at(camIdx).at(
-              CameraSensorStates::T_SCi).id));
+      mapPtr_->parameterBlockPtr(statesMap_.at(kpi.frameId)
+                                     .sensors.at(SensorStates::Camera)
+                                     .at(kpi.cameraIndex)
+                                     .at(CameraSensorStates::T_SCi)
+                                     .id));
   return retVal;
 }
 
@@ -87,24 +93,11 @@ bool Estimator::replaceEpipolarWithReprojectionErrors(uint64_t lmId) {
       mapPtr_->removeResidualBlock(
           reinterpret_cast<::ceres::ResidualBlockId>(obsIter->second));
     }
-    const KeypointIdentifier& kpi = obsIter->first;
-    // get the keypoint measurement
-    okvis::MultiFramePtr multiFramePtr = multiFramePtrMap_.at(kpi.frameId);
-    Eigen::Vector2d measurement;
-    multiFramePtr->getKeypoint(kpi.cameraIndex, kpi.keypointIndex, measurement);
-    Eigen::Matrix2d information = Eigen::Matrix2d::Identity();
-    double size = 1.0;
-    multiFramePtr->getKeypointSize(kpi.cameraIndex, kpi.keypointIndex, size);
-    information *= 64.0 / (size * size);
 
-    std::shared_ptr<const okvis::cameras::CameraBase> baseCameraGeometry =
-        camera_rig_.getCameraGeometry(kpi.cameraIndex);
-    std::shared_ptr<const CAMERA_GEOMETRY_T> argCameraGeometry =
-        std::static_pointer_cast<const CAMERA_GEOMETRY_T>(baseCameraGeometry);
-    ::ceres::ResidualBlockId retVal = addPointFrameResidual(
-        lmId, kpi.frameId, kpi.cameraIndex,
-        measurement, information, argCameraGeometry);
-    obsIter->second = reinterpret_cast<uint64_t>(retVal);
+    // jhuai: we will add reprojection factors in the optimize() step, hence, less
+    // coupling between feature tracking frontend and estimator, and flexibility
+    // in choosing which landmark's observations to use in the opt problem.
+    obsIter->second = 0u;
   }
   return true;
 }
@@ -140,22 +133,10 @@ uint64_t Estimator::mergeTwoLandmarks(uint64_t lmIdA, uint64_t lmIdB) {
     }
     multiFramePtr->setLandmarkId(kpi.cameraIndex, kpi.keypointIndex, lmIdA);
 
-    Eigen::Vector2d measurement;
-    multiFramePtr->getKeypoint(kpi.cameraIndex, kpi.keypointIndex, measurement);
-    Eigen::Matrix2d information = Eigen::Matrix2d::Identity();
-    double size = 1.0;
-    multiFramePtr->getKeypointSize(kpi.cameraIndex, kpi.keypointIndex, size);
-    information *= 64.0 / (size * size);
-
-    std::shared_ptr<const okvis::cameras::CameraBase> baseCameraGeometry =
-        camera_rig_.getCameraGeometry(kpi.cameraIndex);
-    std::shared_ptr<const CAMERA_GEOMETRY_T> argCameraGeometry =
-        std::static_pointer_cast<const CAMERA_GEOMETRY_T>(baseCameraGeometry);
-    ::ceres::ResidualBlockId retVal =
-        addPointFrameResidual(lmIdA, kpi.frameId, kpi.cameraIndex, measurement,
-                              information, argCameraGeometry);
-    // remember
-    obsMapA.emplace(kpi, reinterpret_cast<uint64_t>(retVal));
+    // jhuai: we will add reprojection factors in the optimize() step, hence, less
+    // coupling between feature tracking frontend and estimator, and flexibility
+    // in choosing which landmark's observations to use in the opt problem.
+    obsMapA.emplace(kpi, 0u);
   }
   mapPtr_->removeParameterBlock(lmIdB);
   landmarksMap_.erase(lmItB);

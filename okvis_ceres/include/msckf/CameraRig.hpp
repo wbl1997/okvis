@@ -5,11 +5,14 @@
 
 #include <msckf/ExtrinsicModels.hpp>
 #include <msckf/ProjParamOptModels.hpp>
+
+#include <okvis/assert_macros.hpp>
 #include <okvis/cameras/CameraBase.hpp>
 #include <okvis/cameras/EquidistantDistortion.hpp>
 #include <okvis/cameras/FovDistortion.hpp>
 #include <okvis/cameras/NCameraSystem.hpp>
 #include <okvis/cameras/NoDistortion.hpp>
+#include <okvis/cameras/PinholeCamera.hpp>
 #include <okvis/cameras/RadialTangentialDistortion.hpp>
 #include <okvis/cameras/RadialTangentialDistortion8.hpp>
 
@@ -129,6 +132,18 @@ class CameraRig {
       int camera_id) const {
     return camera_geometries_[camera_id];
   }
+
+  // get the specific geometry (will be fast to use)
+  template<class GEOMETRY_T>
+  std::shared_ptr<const GEOMETRY_T> geometryAs(int camera_id) const {
+  #ifndef NDEBUG
+    OKVIS_ASSERT_TRUE(
+        std::runtime_error, std::dynamic_pointer_cast<const GEOMETRY_T>(camera_geometries_[camera_id]),
+        "incorrect pointer cast requested. " << camera_geometries_[camera_id]->distortionType());
+  #endif
+    return std::static_pointer_cast<const GEOMETRY_T>(camera_geometries_[camera_id]);
+  }
+
   inline std::shared_ptr<cameras::CameraBase> getMutableCameraGeometry(
       int camera_id) const {
     return camera_geometries_[camera_id];

@@ -605,6 +605,32 @@ class Estimator : public VioBackendInterface
   bool addLandmarkObservation(uint64_t landmarkId, uint64_t poseId,
                               size_t camIdx, size_t keypointIdx);
 
+  /**
+   * @brief addReprojectionFactors add reprojection factors for all observations
+   * of landmarks whose residuals are NULL.
+   *
+   * OKVIS original frontend finds feature matches and immediately adds
+   * reprojection factors to the ceres problem for all landmarks that can be
+   * triangulated with a small chi2 cost, even when they are at infinity.
+   * That is, every landmark in landmarksMap_ is accounted for in the optimizer.
+   *
+   * jhuai cuts the procedure into two steps, renewing the feature tracks with
+   * feature matches done in the frontend, and adding reprojection factors to
+   * the ceres problem done in Estimator::optimize(). This function carries out
+   * the latter step.
+   *
+   * @attention This function considers implications from mergeTwoLandmarks
+   * and replaceEpipolarWithReprojectionErrors, and addEpipolarConstraint.
+   *
+   * @warning But this function interferes with cases arising from
+   * addLandmarkObservation in using epipolar constraints, i.e., all
+   * observations of a landmark are not asscoiated with any residual prior to
+   * forming an epipolar factor for the landmark.
+   *
+   * @return
+   */
+  bool addReprojectionFactors();
+
   template<class PARAMETER_BLOCK_T>
   bool getSensorStateEstimateAs(uint64_t poseId, int sensorIdx, int sensorType,
                                 int stateType, typename PARAMETER_BLOCK_T::estimate_t & state) const;
@@ -657,14 +683,9 @@ class Estimator : public VioBackendInterface
   static const okvis::Duration half_window_;
 
  protected:
-  template<class GEOMETRY_TYPE>
-  ::ceres::ResidualBlockId addPointFrameResidual(
-      uint64_t landmarkId,
-      uint64_t poseId,
-      size_t camIdx,
-      const Eigen::Vector2d& measurement,
-      const Eigen::Matrix2d& information,
-      std::shared_ptr<const GEOMETRY_TYPE> cameraGeometry);
+  template <class GEOMETRY_TYPE>
+  ::ceres::ResidualBlockId addPointFrameResidual(uint64_t landmarkId,
+                                                 const KeypointIdentifier& kpi);
 
   /**
    * @brief Remove an observation from a landmark.

@@ -55,27 +55,11 @@ template<class GEOMETRY_TYPE>
     return NULL;
   }
 
-  // get the keypoint measurement
-  okvis::MultiFramePtr multiFramePtr = multiFramePtrMap_.at(poseId);
-  Eigen::Vector2d measurement;
-  multiFramePtr->getKeypoint(camIdx, keypointIdx, measurement);
-  Eigen::Matrix2d information = Eigen::Matrix2d::Identity();
-  double size = 1.0;
-  multiFramePtr->getKeypointSize(camIdx, keypointIdx, size);
-  information *= 64.0 / (size * size);
-
-  std::shared_ptr<const GEOMETRY_TYPE> cameraGeometry =
-          multiFramePtr->template geometryAs<GEOMETRY_TYPE>(camIdx);
-  ::ceres::ResidualBlockId retVal = addPointFrameResidual(
-      landmarkId, poseId, camIdx,
-      measurement, information, cameraGeometry);
-
-  // remember
-  landmarksMap_.at(landmarkId).observations.insert(
-      std::pair<okvis::KeypointIdentifier, uint64_t>(
-          kid, reinterpret_cast<uint64_t>(retVal)));
-
-  return retVal;
+  // jhuai: we will add reprojection factors in the optimize() step, hence, less
+  // coupling between feature tracking frontend and estimator, and flexibility
+  // in choosing which landmark's observations to use in the opt problem.
+  landmarksMap_.at(landmarkId).observations.emplace(kid, 0u);
+  return NULL;
 }
 
 }  // namespace okvis
