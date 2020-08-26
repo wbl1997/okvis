@@ -31,13 +31,11 @@ add_library(${PROJECT_NAME}
   msckf/CameraRig.cpp
   msckf/CameraTimeParamBlock.cpp
   msckf/ExtrinsicModels.cpp
-  msckf/GeneralEstimator.cpp
   msckf/MultipleTransformPointJacobian.cpp
   msckf/ParallaxAnglePoint.cpp
   msckf/PointLandmarkModels.cpp
   msckf/PointLandmarkSimulation.cpp
   msckf/PointSharedData.cpp
-  msckf/PriorlessEstimator.cpp
   msckf/SimulatedMotionForParallaxAngleTest.cpp
   msckf/checkSensorRig.cpp
   msckf/imu/BoundedImuDeque.cpp

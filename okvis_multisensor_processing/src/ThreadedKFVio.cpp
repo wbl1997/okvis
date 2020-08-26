@@ -48,8 +48,6 @@
 #include <okvis/KeyframeForLoopDetection.hpp>
 
 #include <msckf/checkSensorRig.hpp>
-#include <msckf/GeneralEstimator.hpp>
-#include <msckf/PriorlessEstimator.hpp>
 
 /// \brief okvis Main namespace of this package.
 namespace okvis {
@@ -100,18 +98,7 @@ ThreadedKFVio::ThreadedKFVio(okvis::VioParameters& parameters)
       maxImuInputQueueSize_(2 * max_camera_input_queue_size *
                             parameters.imu.rate /
                             parameters.sensors_information.cameraRate) {
-  switch (parameters.optimization.algorithm) {
-    case EstimatorAlgorithm::General:
-      estimator_.reset(new okvis::GeneralEstimator());
-      break;
-    case EstimatorAlgorithm::Priorless:
-      estimator_.reset(new okvis::PriorlessEstimator());
-      break;
-    case EstimatorAlgorithm::OKVIS:
-    default:
-      estimator_.reset(new okvis::Estimator());
-      break;
-  }
+  estimator_.reset(new okvis::Estimator());
   configureBackendAndFrontendPartly(parameters);
   setBlocking(false);
   init();

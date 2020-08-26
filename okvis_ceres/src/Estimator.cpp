@@ -1427,8 +1427,8 @@ bool Estimator::addReprojectionFactors() {
          riter != mp.observations.rend(); ++riter) {
       ::ceres::ResidualBlockId retVal = 0u;
       if (riter->second == 0u) {
-// TODO(jhuai): Placing the switch statement outside the double for loop saves
-// most branchings for switch.
+// TODO(jhuai): Placing the switch statement outside the double for loops saves
+// most branchings of switch.
 #define DISTORTION_MODEL_CASE(camera_geometry_t)                               \
   retVal = addPointFrameResidual<camera_geometry_t>(pit->first, riter->first); \
   riter->second = reinterpret_cast<uint64_t>(retVal);
