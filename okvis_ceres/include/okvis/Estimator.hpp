@@ -440,6 +440,25 @@ class Estimator : public VioBackendInterface
 
   bool getImageDelay(uint64_t poseId, int camIdx, okvis::Duration *td) const;
 
+  /**
+   * @brief gatherMapPointObservations gather all observations of a landmark
+   * @param mp
+   * @param obsDirections undistorted observation directions, [x, y, 1]
+   * @param T_WCs  T_WB * T_BC for each observation.
+   * @param obsInPixel observation in pixels
+   * @param imageNoiseStd the std dev of image noise at both x and y direction.
+   * twice as long as obsDirections.
+   * @return
+   */
+  size_t gatherMapPointObservations(
+      const MapPoint& mp,
+      std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>>*
+          obsDirections,
+      std::vector<okvis::kinematics::Transformation,
+                  Eigen::aligned_allocator<okvis::kinematics::Transformation>>*
+          T_CWs,
+      std::vector<double>* imageNoiseStd) const;
+
   int getCameraExtrinsicOptType(size_t cameraIdx) const;
 
   /**

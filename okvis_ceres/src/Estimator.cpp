@@ -1480,27 +1480,7 @@ okvis::Time Estimator::removeState(uint64_t stateId) {
 bool Estimator::computeCovariance(Eigen::MatrixXd* cov) const {
   // variance for p_WB, q_WB, v_WB, bg, ba
   *cov = Eigen::Matrix<double, 15, 15>::Identity();
-  uint64_t T_WS_id = statesMap_.rbegin()->second.id;
-  uint64_t speedAndBias_id = statesMap_.rbegin()
-                                 ->second.sensors.at(SensorStates::Imu)
-                                 .at(0)
-                                 .at(ImuSensorStates::SpeedAndBias)
-                                 .id;
-  std::vector<uint64_t> parameterBlockIdList{T_WS_id, speedAndBias_id};
-  std::vector<
-      Eigen::Matrix<double, -1, -1, Eigen::RowMajor>,
-      Eigen::aligned_allocator<Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>>
-      varianceList;
-  bool status = false;
-  return status;
-  // TODO(jhuai): Severe Jacobian rank deficiency in computing covariance.
-  status = mapPtr_->getParameterBlockMinimalCovariance(
-      parameterBlockIdList, &varianceList);
-  if (status) {
-    cov->topLeftCorner<6, 6>() = varianceList[0];
-    cov->bottomRightCorner<9, 9>() = varianceList[1];
-  }
-  return status;
+  return false;
 }
 
 // getters
@@ -1539,6 +1519,67 @@ bool Estimator::getImageDelay(uint64_t poseId, int camIdx,
   tdd = mapPtr_->parameterBlockPtr(id)->parameters()[0];
   *td = okvis::Duration(tdd);
   return true;
+}
+
+size_t Estimator::gatherMapPointObservations(
+    const MapPoint& mp,
+    std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>>*
+        obsDirections,
+    std::vector<okvis::kinematics::Transformation,
+                Eigen::aligned_allocator<okvis::kinematics::Transformation>>*
+        T_CWs,
+    std::vector<double>* imageNoiseStd) const {
+  T_CWs->clear();
+  obsDirections->clear();
+  imageNoiseStd->clear();
+
+  const std::map<okvis::KeypointIdentifier, uint64_t>& observations =
+      mp.observations;
+  size_t numPotentialObs = mp.observations.size();
+  T_CWs->reserve(numPotentialObs);
+  obsDirections->reserve(numPotentialObs);
+  imageNoiseStd->reserve(numPotentialObs);
+
+  uint64_t minValidStateId = statesMap_.begin()->first;
+  for (auto itObs = observations.begin(), iteObs = observations.end();
+       itObs != iteObs; ++itObs) {
+    uint64_t poseId = itObs->first.frameId;
+
+    if (poseId < minValidStateId) {
+      continue;
+    }
+    Eigen::Vector2d measurement;
+    auto multiFrameIter = multiFramePtrMap_.find(poseId);
+    //    OKVIS_ASSERT_TRUE(Exception, multiFrameIter !=
+    //    multiFramePtrMap_.end(), "multiframe not found");
+    okvis::MultiFramePtr multiFramePtr = multiFrameIter->second;
+    multiFramePtr->getKeypoint(itObs->first.cameraIndex,
+                               itObs->first.keypointIndex, measurement);
+
+    // use the latest estimates for camera intrinsic parameters
+    Eigen::Vector3d backProjectionDirection;
+    std::shared_ptr<const cameras::CameraBase> cameraGeometry =
+        camera_rig_.getCameraGeometry(itObs->first.cameraIndex);
+    bool validDirection =
+        cameraGeometry->backProject(measurement, &backProjectionDirection);
+    if (!validDirection) {
+      continue;
+    }
+    obsDirections->push_back(backProjectionDirection);
+
+    okvis::kinematics::Transformation T_WB;
+    get_T_WS(poseId, T_WB);
+    okvis::kinematics::Transformation T_BC =
+        camera_rig_.getCameraExtrinsic(itObs->first.cameraIndex);
+    T_CWs->emplace_back((T_WB * T_BC).inverse());
+
+    double kpSize = 1.0;
+    multiFramePtr->getKeypointSize(itObs->first.cameraIndex,
+                                   itObs->first.keypointIndex, kpSize);
+    imageNoiseStd->push_back(kpSize / 8);
+    imageNoiseStd->push_back(kpSize / 8);
+  }
+  return obsDirections->size();
 }
 
 int Estimator::getCameraExtrinsicOptType(size_t cameraIdx) const {
