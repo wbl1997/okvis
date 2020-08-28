@@ -52,7 +52,7 @@ EstimatorAlgorithm EstimatorAlgorithmNameToId(std::string description) {
   std::unordered_map<std::string, EstimatorAlgorithm> descriptionToId{
       {"OKVIS", EstimatorAlgorithm::OKVIS},
       {"GENERAL", EstimatorAlgorithm::General},
-      {"Consistent", EstimatorAlgorithm::Consistent},
+      {"CONSISTENT", EstimatorAlgorithm::Consistent},
       {"MSCKF", EstimatorAlgorithm::MSCKF},
       {"TFVIO", EstimatorAlgorithm::TFVIO},
       {"INVARIANTEKF", EstimatorAlgorithm::InvariantEKF},

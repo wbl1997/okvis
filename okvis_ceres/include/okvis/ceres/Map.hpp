@@ -332,6 +332,11 @@ class Map {
 
   /// @}
 
+  /**
+   * @brief printMapInfo print basic info of the problem's graph.
+   */
+  void printMapInfo() const;
+
   bool getParameterBlockMinimalCovariance(
       uint64_t parameterBlockId,
       Eigen::Matrix<double, -1, -1, Eigen::RowMajor>* param_covariance) const;

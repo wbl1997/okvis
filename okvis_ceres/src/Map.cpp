@@ -715,6 +715,48 @@ Map::ParameterBlockCollection Map::parameters(
   return it->second;
 }
 
+void Map::printMapInfo() const {
+  std::stringstream ss;
+  ss << "Overall parameter global dim " << problem_->NumParameters()
+     << ", #residual overall dim " << problem_->NumResiduals();
+
+  std::vector<size_t> numberVariables(10, 0u);
+  std::vector<size_t> numberConstants(10, 0u);
+  for (auto iter = id2ParameterBlock_Map_.begin(); iter != id2ParameterBlock_Map_.end(); ++iter) {
+    size_t minDim = iter->second->minimalDimension();
+    bool fixed = iter->second->fixed();
+    if (fixed) {
+      numberConstants[minDim - 1]++;
+    } else {
+      numberVariables[minDim - 1]++;
+    }
+  }
+
+  std::vector<size_t> numberResiduals(20, 0u);
+  for (auto iter = residualBlockId2ResidualBlockSpec_Map_.begin();
+       iter != residualBlockId2ResidualBlockSpec_Map_.end(); ++iter) {
+    size_t resDim = iter->second.errorInterfacePtr->residualDim();
+    resDim = resDim + 1 > numberResiduals.size() ? numberResiduals.size() - 1
+                                                 : resDim;
+    numberResiduals[resDim - 1]++;
+  }
+  ss << "\n#Constant parameter at each minimal dimension:";
+  for (auto val : numberConstants) {
+    ss << " " << val;
+  }
+
+  ss << "\n#Variable parameter at each minimal dimension:";
+  for (auto val : numberVariables) {
+    ss << " " << val;
+  }
+
+  ss << "\n#Residual at each residual dimension:";
+  for (auto val : numberResiduals) {
+    ss << " " << val;
+  }
+  LOG(INFO) << ss.str();
+}
+
 bool Map::getParameterBlockMinimalCovariance(
     uint64_t parameterBlockId,
     Eigen::Matrix<double, -1, -1, Eigen::RowMajor>* param_covariance) const {
@@ -758,9 +800,11 @@ bool Map::getParameterBlockMinimalCovariance(
   }
 
   ::ceres::Covariance::Options covariance_options;
-  // covariance_options.sparse_linear_algebra_library_type =
-  // ::ceres::SUITE_SPARSE;
+  covariance_options.sparse_linear_algebra_library_type = ::ceres::SUITE_SPARSE;
+//  covariance_options.sparse_linear_algebra_library_type = ::ceres::EIGEN_SPARSE;
+//  covariance_options.algorithm_type = ::ceres::DENSE_SVD;
   covariance_options.algorithm_type = ::ceres::SPARSE_QR;
+  covariance_options.null_space_rank = -1;
   covariance_options.num_threads = 1;  // common::getNumHardwareThreads();
   covariance_options.min_reciprocal_condition_number = 1e-32;
   covariance_options.apply_loss_function = true;
@@ -774,6 +818,7 @@ bool Map::getParameterBlockMinimalCovariance(
                                                parameterBlock->parameters()));
   }
   if (!covariance.Compute(covariance_blocks, problem_.get())) {
+    printMapInfo();
     return false;
   }
 
