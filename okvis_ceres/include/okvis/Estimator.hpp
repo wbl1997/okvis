@@ -230,8 +230,8 @@ class Estimator : public VioBackendInterface
    */
   bool isLandmarkAdded(uint64_t landmarkId) const {
     bool isAdded = landmarksMap_.find(landmarkId) != landmarksMap_.end();
-    OKVIS_ASSERT_TRUE_DBG(Exception, isAdded == mapPtr_->parameterBlockExists(landmarkId),
-                   "id="<<landmarkId<<" inconsistent. isAdded = " << isAdded);
+//    OKVIS_ASSERT_TRUE_DBG(Exception, isAdded == mapPtr_->parameterBlockExists(landmarkId),
+//                   "id="<<landmarkId<<" inconsistent. isAdded = " << isAdded);
     return isAdded;
   }
 

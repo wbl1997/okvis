@@ -181,7 +181,8 @@ struct MapPoint
         distance(0.0),
         anchorStateId(0),
         residualizeCase(NotInState_NotTrackedNow),
-        usedForUpdate(false)
+        usedForUpdate(false),
+        initialized(false)
   {
   }
   /**
@@ -199,7 +200,8 @@ struct MapPoint
         distance(distance),
         anchorStateId(0),
         residualizeCase(NotInState_NotTrackedNow),
-        usedForUpdate(false)
+        usedForUpdate(false),
+        initialized(false)
   {
   }
   uint64_t id;            ///< ID of the point. E.g. landmark ID.
@@ -222,6 +224,7 @@ struct MapPoint
 
   ResidualizeCase residualizeCase;
   bool usedForUpdate; // a point not in states has some observations used for MSCKF update
+  bool initialized; // is this landmark initialized in position? in effect identical to HomogeneousPointParameterBlock::initialized_.
 };
 
 typedef std::vector<MapPoint, Eigen::aligned_allocator<MapPoint> > MapPointVector;

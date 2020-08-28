@@ -45,8 +45,8 @@ template<class GEOMETRY_TYPE>
                                                    uint64_t poseId,
                                                    size_t camIdx,
                                                    size_t keypointIdx) {
-  OKVIS_ASSERT_TRUE_DBG(Exception, isLandmarkAdded(landmarkId),
-                        "landmark not added");
+//  OKVIS_ASSERT_TRUE_DBG(Exception, isLandmarkAdded(landmarkId),
+//                        "landmark not added");
 
   // avoid double observations
   okvis::KeypointIdentifier kid(poseId, camIdx, keypointIdx);

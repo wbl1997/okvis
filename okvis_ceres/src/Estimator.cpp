@@ -376,12 +376,12 @@ bool Estimator::addStates(
 // Add a landmark.
 bool Estimator::addLandmark(uint64_t landmarkId,
                             const Eigen::Vector4d & landmark) {
-  std::shared_ptr<okvis::ceres::HomogeneousPointParameterBlock> pointParameterBlock(
-      new okvis::ceres::HomogeneousPointParameterBlock(landmark, landmarkId));
-  if (!mapPtr_->addParameterBlock(pointParameterBlock,
-                                  okvis::ceres::Map::HomogeneousPoint)) {
-    return false;
-  }
+//  std::shared_ptr<okvis::ceres::HomogeneousPointParameterBlock> pointParameterBlock(
+//      new okvis::ceres::HomogeneousPointParameterBlock(landmark, landmarkId));
+//  if (!mapPtr_->addParameterBlock(pointParameterBlock,
+//                                  okvis::ceres::Map::HomogeneousPoint)) {
+//    return false;
+//  }
 
   // remember
   double dist = std::numeric_limits<double>::max();
@@ -936,23 +936,28 @@ void Estimator::optimize(size_t numIter, size_t /*numThreads*/,
   // update landmarks
   {
     for(auto it = landmarksMap_.begin(); it!=landmarksMap_.end(); ++it){
-      Eigen::MatrixXd H(3,3);
-      mapPtr_->getLhs(it->first,H);
-      Eigen::SelfAdjointEigenSolver< Eigen::Matrix3d > saes(H);
-      Eigen::Vector3d eigenvalues = saes.eigenvalues();
-      const double smallest = (eigenvalues[0]);
-      const double largest = (eigenvalues[2]);
-      if(smallest<1.0e-12){
-        // this means, it has a non-observable depth
-        it->second.quality = 0.0;
-      } else {
-        // OK, well constrained
-        it->second.quality = sqrt(smallest)/sqrt(largest);
-      }
+      if (it->second.residualizeCase == InState_TrackedNow) {
+        Eigen::MatrixXd H(3, 3);
+        mapPtr_->getLhs(it->first, H);
+        Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> saes(H);
+        Eigen::Vector3d eigenvalues = saes.eigenvalues();
+        const double smallest = (eigenvalues[0]);
+        const double largest = (eigenvalues[2]);
+        if (smallest < 1.0e-12) {
+          // this means, it has a non-observable depth
+          it->second.quality = 0.0;
+        } else {
+          // OK, well constrained
+          it->second.quality = sqrt(smallest) / sqrt(largest);
+        }
 
-      // update coordinates
-      it->second.pointHomog = std::static_pointer_cast<okvis::ceres::HomogeneousPointParameterBlock>(
-          mapPtr_->parameterBlockPtr(it->first))->estimate();
+        // update coordinates
+        it->second.pointHomog =
+            std::static_pointer_cast<
+                okvis::ceres::HomogeneousPointParameterBlock>(
+                mapPtr_->parameterBlockPtr(it->first))
+                ->estimate();
+      }
     }
   }
 
@@ -1003,8 +1008,9 @@ bool Estimator::getLandmark(uint64_t landmarkId,
 bool Estimator::isLandmarkInitialized(uint64_t landmarkId) const {
   OKVIS_ASSERT_TRUE_DBG(Exception, isLandmarkAdded(landmarkId),
                      "landmark not added");
-  return std::static_pointer_cast<okvis::ceres::HomogeneousPointParameterBlock>(
-      mapPtr_->parameterBlockPtr(landmarkId))->initialized();
+//  return std::static_pointer_cast<okvis::ceres::HomogeneousPointParameterBlock>(
+//      mapPtr_->parameterBlockPtr(landmarkId))->initialized();
+  return landmarksMap_.at(landmarkId).initialized;
 }
 
 // Get a copy of all the landmarks as a PointMap.
@@ -1152,6 +1158,7 @@ bool Estimator::setCameraSensorStates(
 bool Estimator::setLandmark(
     uint64_t landmarkId, const Eigen::Vector4d & landmark)
 {
+  if (landmarksMap_.at(landmarkId).residualizeCase == InState_TrackedNow) {
   std::shared_ptr<ceres::ParameterBlock> parameterBlockPtr = mapPtr_
       ->parameterBlockPtr(landmarkId);
 #ifndef NDEBUG
@@ -1166,7 +1173,7 @@ bool Estimator::setLandmark(
   std::static_pointer_cast<ceres::HomogeneousPointParameterBlock>(
       parameterBlockPtr)->setEstimate(landmark);
 #endif
-
+  }
   // also update in map
   landmarksMap_.at(landmarkId).pointHomog = landmark;
   return true;
@@ -1177,8 +1184,9 @@ void Estimator::setLandmarkInitialized(uint64_t landmarkId,
                                                bool initialized) {
   OKVIS_ASSERT_TRUE_DBG(Exception, isLandmarkAdded(landmarkId),
                      "landmark not added");
-  std::static_pointer_cast<okvis::ceres::HomogeneousPointParameterBlock>(
-      mapPtr_->parameterBlockPtr(landmarkId))->setInitialized(initialized);
+//  std::static_pointer_cast<okvis::ceres::HomogeneousPointParameterBlock>(
+//      mapPtr_->parameterBlockPtr(landmarkId))->setInitialized(initialized);
+  landmarksMap_.at(landmarkId).initialized = initialized;
 }
 
 // private stuff
@@ -1416,6 +1424,17 @@ bool Estimator::addReprojectionFactors() {
 
   for (PointMap::iterator pit = landmarksMap_.begin();
        pit != landmarksMap_.end(); ++pit) {
+    if (pit->second.residualizeCase == NotInState_NotTrackedNow) {
+      std::shared_ptr<okvis::ceres::HomogeneousPointParameterBlock>
+          pointParameterBlock(new okvis::ceres::HomogeneousPointParameterBlock(
+              pit->second.pointHomog, pit->first));
+      bool paramBlockedAdded = mapPtr_->addParameterBlock(
+          pointParameterBlock, okvis::ceres::Map::HomogeneousPoint);
+      OKVIS_ASSERT_TRUE_DBG(Exception, paramBlockedAdded,
+                            "Failed to add landmark param block!");
+
+      pit->second.residualizeCase = InState_TrackedNow;
+    }
     // examine starting from the rear of a landmark's observations, add
     // reprojection factors for those with null residual pointers, terminate
     // until a valid residual pointer is hit.
