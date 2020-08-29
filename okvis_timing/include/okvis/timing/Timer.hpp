@@ -97,7 +97,7 @@ namespace timing {
     ~DummyTimer(){}
     
     void start(){}
-    double stop(bool =false){return 0;}
+    double stop(bool = false) { return 0; }
     void discardTiming(){}
     bool isTiming(){ return false; }
   };
@@ -109,7 +109,7 @@ namespace timing {
     ~Timer();
     
     void start();
-    double stop(bool bSaveTime= false);
+    double stop(bool logTime = false);
     bool isTiming();
     void discardTiming();
   private:
@@ -150,8 +150,8 @@ namespace timing {
     
     static  std::vector<double> getAllElements(size_t handle);
   private:
-    void addTime(size_t handle, double seconds); //huai: add time to the accumulator_set
-    void addTime2(size_t handle, double seconds); //huai: add time to both the accumulator_set and a storing vector
+    void addTime(size_t handle, double seconds); // huai: add time to the accumulator_set
+    void addTimeAndLog(size_t handle, double seconds); // huai: add time to both the accumulator_set and a storing vector
 
     static Timing & instance();
     

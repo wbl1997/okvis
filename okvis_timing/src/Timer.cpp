@@ -127,7 +127,7 @@ namespace timing {
 #endif
   }
   
-  double Timer::stop(bool bSaveTime)
+  double Timer::stop(bool logTime)
   {
     OKVIS_ASSERT_TRUE(TimerException, m_timing,"The timer " + Timing::getTag(m_handle) + " is not running");
     double dt;
@@ -140,8 +140,8 @@ namespace timing {
     boost::posix_time::time_duration t = now - m_time;
     dt = ((double)t.total_nanoseconds() * 1e-9);
 #endif
-    if(bSaveTime)
-        Timing::instance().addTime2(m_handle,dt);
+    if(logTime)
+        Timing::instance().addTimeAndLog(m_handle,dt);
     else
         Timing::instance().addTime(m_handle,dt);
     m_timing = false;
@@ -163,10 +163,11 @@ namespace timing {
     m_timers[handle].m_acc(seconds);
   }
   
-  void Timing::addTime2(size_t handle, double seconds){
+  void Timing::addTimeAndLog(size_t handle, double seconds){
       m_timers[handle].m_acc(seconds);
       m_timers[handle].m_times.push_back(seconds);
   }
+
   std::vector<double> Timing::getAllElements(size_t handle){
     OKVIS_ASSERT_TRUE(TimerException, handle < instance().m_timers.size(), "Handle is out of range: " << handle << ", number of timers: " << instance().m_timers.size());
     return instance().m_timers[handle].m_times;
