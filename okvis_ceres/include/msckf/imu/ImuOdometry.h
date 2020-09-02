@@ -31,8 +31,8 @@ class ImuOdometry {
    * @warning covariance and jacobian should be provided at the same time.
    * @param[in] imuMeasurements All the IMU measurements.
    * @param[in] imuParams The parameters to be used.
-   * @param[inout] T_WS Start pose.
-   * @param[inout] speedAndBiases Start speed and biases.
+   * @param[in,out] T_WS Start pose.
+   * @param[in,out] speedAndBiases Start speed and biases.
    * @param[in] t_start Start time.
    * @param[in] t_end End time.
    * @param[in,out] covariance Covariance for the propagated state.
@@ -51,9 +51,31 @@ class ImuOdometry {
       okvis::kinematics::Transformation& T_WS, Eigen::Vector3d& v_WS,
       const ImuErrorModel<double>& iem, const okvis::Time& t_start,
       const okvis::Time& t_end,
-      Eigen::MatrixXd* covariance_t = 0,
-      Eigen::MatrixXd* jacobian = 0,
-      const Eigen::Matrix<double, 6, 1>* linearizationPointAtTStart = 0);
+      Eigen::MatrixXd* covariance = nullptr,
+      Eigen::MatrixXd* jacobian = nullptr,
+      const Eigen::Matrix<double, 6, 1>* linearizationPointAtTStart = nullptr);
+
+  /**
+   * @brief propagationRightInvariantError
+   * @param imuMeasurements
+   * @param imuParams
+   * @param T_WS
+   * @param v_WS
+   * @param iem
+   * @param t_start
+   * @param t_end
+   * @param covariance error vector order \delta[\phi, v, p, ba, bg]
+   * @param jacobian
+   * @return
+   */
+  static int propagationRightInvariantError(
+      const okvis::ImuMeasurementDeque& imuMeasurements,
+      const okvis::ImuParameters& imuParams,
+      okvis::kinematics::Transformation& T_WS, Eigen::Vector3d& v_WS,
+      const ImuErrorModel<double>& iem, const okvis::Time& t_start,
+      const okvis::Time& t_end,
+      Eigen::Matrix<double, 15, 15>* covariance = nullptr,
+      Eigen::Matrix<double, 15, 15>* jacobian = nullptr);
 
   // t_start is greater than t_end
   static int propagationBackward(
@@ -70,8 +92,8 @@ class ImuOdometry {
       okvis::SpeedAndBiases& speedAndBias,
       const ImuErrorModel<double>& iem, const okvis::Time& t_start,
       const okvis::Time& t_end,
-      Eigen::MatrixXd* P_ptr = 0,
-      Eigen::MatrixXd* F_tot_ptr = 0);
+      Eigen::MatrixXd* P_ptr = nullptr,
+      Eigen::MatrixXd* F_tot_ptr = nullptr);
 
   /**
    * @brief propagationBackward_RungeKutta propagate pose, speed and biases.
