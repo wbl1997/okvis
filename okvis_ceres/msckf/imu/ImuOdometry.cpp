@@ -51,6 +51,11 @@ int ImuOdometry::propagation(
   // record the linearization point for position p_WS, and v_WS at two
   // subsequent steps
   Eigen::Matrix<double, 6, 1> lP;
+  if (use_first_estimate) {
+    lP = *linearizationPointAtTStart;
+  } else {
+    lP << r_0, v_WS;
+  }
   Eigen::Matrix<double, 6, 1> lP_1;
 
   // increments (initialise with identity)
@@ -121,9 +126,6 @@ int ImuOdometry::propagation(
     // transform from actual states to local S0 frame
     P_delta = T * (*covariance) * T.transpose();
     jacobian->setIdentity();
-    if (use_first_estimate) {
-      lP = *linearizationPointAtTStart;
-    }
   }
   double Delta_t = 0;  // integrated time up to Si since S0 frame
   bool hasStarted = false;
@@ -564,6 +566,7 @@ int ImuOdometry::propagationRightInvariantError(
 
   // linearization point for position p_WS, and v_WS at two subsequent steps.
   Eigen::Matrix<double, 6, 1> lP;
+  lP << r_0, v_WS;
   Eigen::Matrix<double, 6, 1> lP_1;
 
   // increments (initialise with identity), denote t_start by $t_0$
@@ -723,14 +726,11 @@ int ImuOdometry::propagationRightInvariantError(
                                  imuParams.sigma_aw_c * imuParams.sigma_aw_c;
       GQGt_1.block<3, 3>(12, 12) = Eigen::Matrix3d::Identity() *
                                    imuParams.sigma_gw_c * imuParams.sigma_gw_c;
-      covariance->topLeftCorner<15, 15>() +=
-          0.5 * dt *
-          (F_delta.topLeftCorner<15, 15>() * GQGt *
-               F_delta.topLeftCorner<15, 15>().transpose() +
-           GQGt_1);
+      *covariance += 0.5 * dt * (F_delta * GQGt * F_delta.transpose() + GQGt_1);
 
-      jacobian->topLeftCorner<9, 9>() =
-          F_delta.topLeftCorner<9, 9>() * jacobian->topLeftCorner<9, 9>();
+      jacobian->block<3, 3>(3, 0) = gx * Delta_t;
+      jacobian->block<3, 3>(6, 0) = gx * Delta_t * Delta_t * 0.5;
+      jacobian->block<3, 3>(6, 3) = Eigen::Matrix3d::Identity() * Delta_t;
       jacobian->topRightCorner(9, covRows - 9) =
           F_delta.topLeftCorner<9, 9>() *
               jacobian->topRightCorner(9, covRows - 9) +
