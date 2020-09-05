@@ -1,3 +1,12 @@
+/**
+ * @file   InverseTransformPointJacobian.h
+ * @brief  Jacobians for T^{-1} * p.
+ * where p is a 4D homogeneous point,
+ * T = [Expmap(\alpha) * R   t + \delta t;
+ *       0^T                 1].
+ * @author Jianzhu Huai
+ */
+
 #ifndef INCLUDE_MSCKF_INVERSE_TRANSFORM_POINT_JACOBIAN_HPP
 #define INCLUDE_MSCKF_INVERSE_TRANSFORM_POINT_JACOBIAN_HPP
 
@@ -17,7 +26,7 @@ class InverseTransformPointJacobian {
       const okvis::kinematics::Transformation& T_AB,
       const Eigen::Vector4d& hpA);
 
-  inline void dhpB_dT_AB(Eigen::Matrix<double, 4, 6>* j) const;
+  inline virtual void dhpB_dT_AB(Eigen::Matrix<double, 4, 6>* j) const;
 
   inline void dhpB_dhpA(Eigen::Matrix<double, 4, 4>* j) const;
 

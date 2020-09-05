@@ -1,8 +1,20 @@
+/**
+ * @file   MultipleTransformPointJacobian.h
+ * @brief  Jacobians for T_1^{a_1} * ... * T_n^{a_2} * p.
+ * where p is a 4D homogeneous point,
+ * T = [Expmap(\alpha) * R   t + \delta t;
+ *       0^T                 1].
+ * @author Jianzhu Huai
+ */
+
 #ifndef INCLUDE_MSCKF_MULTIPLE_TRANSFORM_POINT_JACOBIAN_HPP
 #define INCLUDE_MSCKF_MULTIPLE_TRANSFORM_POINT_JACOBIAN_HPP
 
 #include <okvis/kinematics/Transformation.hpp>
+
 #include <msckf/memory.h>
+#include <msckf/InverseTransformPointJacobian.hpp>
+#include <msckf/TransformPointJacobian.hpp>
 
 namespace okvis {
 struct TransformPointJacobianNode {
@@ -37,7 +49,22 @@ class MultipleTransformPointJacobian {
       const std::vector<int>& exponentList, const Eigen::Vector4d& point)
       : transformList_(transformList),
         exponentList_(exponentList),
-        point_(point) {
+        point_(point),
+        transformPointObject_(new TransformPointJacobian()),
+        inverseTransformPointObject_(new InverseTransformPointJacobian()) {
+    computeJacobians();
+  }
+
+  MultipleTransformPointJacobian(
+      const AlignedVector<okvis::kinematics::Transformation>& transformList,
+      const std::vector<int>& exponentList, const Eigen::Vector4d& point,
+      std::shared_ptr<TransformPointJacobian> tpj,
+      std::shared_ptr<InverseTransformPointJacobian> itpj)
+      : transformList_(transformList),
+        exponentList_(exponentList),
+        point_(point),
+        transformPointObject_(tpj),
+        inverseTransformPointObject_(itpj) {
     computeJacobians();
   }
 
@@ -47,6 +74,19 @@ class MultipleTransformPointJacobian {
     transformList_ = transformList;
     exponentList_ = exponentList;
     point_ = point;
+    transformPointObject_.reset(new TransformPointJacobian());
+    inverseTransformPointObject_.reset(new InverseTransformPointJacobian());
+    computeJacobians();
+  }
+
+  void initialize(
+      const AlignedVector<okvis::kinematics::Transformation>& transformList,
+      const std::vector<int>& exponentList, const Eigen::Vector4d& point,
+      std::shared_ptr<TransformPointJacobian> tpj,
+      std::shared_ptr<InverseTransformPointJacobian> itpj) {
+    initialize(transformList, exponentList, point);
+    transformPointObject_ = tpj;
+    inverseTransformPointObject_ = itpj;
     computeJacobians();
   }
 
@@ -83,6 +123,9 @@ class MultipleTransformPointJacobian {
       transformList_;              // T1, T2, ... Tk
   std::vector<int> exponentList_;  // a_1, a_2, ..., a_k
   Eigen::Vector4d point_;
+
+  std::shared_ptr<TransformPointJacobian> transformPointObject_;
+  std::shared_ptr<InverseTransformPointJacobian> inverseTransformPointObject_;
 
   // output
   // The cumulative transforms are: I, T1^{a_1}, T1^{a_1} * T2^{a_2}, ...,

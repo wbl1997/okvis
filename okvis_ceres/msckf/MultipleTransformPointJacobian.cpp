@@ -1,6 +1,4 @@
 #include "msckf/MultipleTransformPointJacobian.hpp"
-#include "msckf/InverseTransformPointJacobian.hpp"
-#include "msckf/TransformPointJacobian.hpp"
 
 namespace okvis {
 Eigen::Vector4d MultipleTransformPointJacobian::evaluate() const {
@@ -30,13 +28,13 @@ void MultipleTransformPointJacobian::computeJacobians() {
   for (auto riter = transformList_.rbegin(); riter != transformList_.rend();
        ++riter) {
     if (exponentList_[j] == -1) {
-      InverseTransformPointJacobian itpj(*riter, p);
-      p = itpj.evaluate();
-      itpj.dhpB_dT_AB(&dp_dHeadTransform);
+      inverseTransformPointObject_->initialize(*riter, p);
+      p = inverseTransformPointObject_->evaluate();
+      inverseTransformPointObject_->dhpB_dT_AB(&dp_dHeadTransform);
     } else {
-      TransformPointJacobian tpj(*riter, p);
-      p = tpj.evaluate();
-      tpj.dhpA_dT_AB(&dp_dHeadTransform);
+      transformPointObject_->initialize(*riter, p);
+      p = transformPointObject_->evaluate();
+      transformPointObject_->dhpA_dT_AB(&dp_dHeadTransform);
     }
     transformJacobianList_[j].point_ = p;
     transformJacobianList_[j].dpoint_dHeadTransform_ = dp_dHeadTransform;
