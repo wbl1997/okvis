@@ -206,12 +206,14 @@ public:
 
   void computePoseCovariance() const {
     Eigen::Matrix<double, -1, -1, Eigen::RowMajor> minimalPoseCov;
-    bool status = map.getParameterBlockMinimalCovariance(poseBlockId, &minimalPoseCov);
+    bool status = map.getParameterBlockMinimalCovariance(
+        poseBlockId, map.problemUnsafe(), &minimalPoseCov);
     EXPECT_TRUE(status);
     std::vector<Eigen::Matrix<double, -1, -1, Eigen::RowMajor>,
         Eigen::aligned_allocator<Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>> covList;
     std::vector<uint64_t> parameterBlockIdList{poseBlockId};
-    status = map.getParameterBlockMinimalCovariance(parameterBlockIdList, &covList);
+    status = map.getParameterBlockMinimalCovariance(
+        parameterBlockIdList, map.problemUnsafe(), &covList);
     EXPECT_TRUE(status);
     EXPECT_LT(
         (minimalPoseCov - expectedMinimalPoseCov).lpNorm<Eigen::Infinity>(),

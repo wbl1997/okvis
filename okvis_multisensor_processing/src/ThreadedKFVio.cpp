@@ -138,10 +138,14 @@ void ThreadedKFVio::init() {
   frontend_->setBriskDetectionThreshold(parameters_.optimization.detectionThreshold);
   frontend_->setBriskDetectionMaximumKeypoints(parameters_.optimization.maxNoKeypoints);
 
-  frontend_->setKeyframeInsertionOverlapThreshold(parameters_.optimization.keyframeInsertionOverlapThreshold);
-  frontend_->setKeyframeInsertionMatchingRatioThreshold(parameters_.optimization.keyframeInsertionMatchingRatioThreshold);
-  std::cout <<"Resetting overlap and matching ratio threshold "<< frontend_->getKeyframeInsertionOverlapThershold() <<" "<<
-              frontend_->getKeyframeInsertionMatchingRatioThreshold()<<std::endl;
+  frontend_->setKeyframeInsertionOverlapThreshold(
+      parameters_.optimization.keyframeInsertionOverlapThreshold);
+  frontend_->setKeyframeInsertionMatchingRatioThreshold(
+      parameters_.optimization.keyframeInsertionMatchingRatioThreshold);
+  LOG(INFO) << "Resetting overlap and matching ratio threshold "
+            << frontend_->getKeyframeInsertionOverlapThershold() << " "
+            << frontend_->getKeyframeInsertionMatchingRatioThreshold()
+            << std::endl;
 
   lastOptimizedImageDelay_ = okvis::Duration(parameters_.nCameraSystem.cameraGeometry(0)->imageDelay());
   lastOptimizedStateTimestamp_ = okvis::Time(0.0) + Estimator::half_window_;;  // s.t. last_timestamp_ - overlap >= 0 (since okvis::time(-0.02) returns big number)

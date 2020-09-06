@@ -715,10 +715,111 @@ Map::ParameterBlockCollection Map::parameters(
   return it->second;
 }
 
+::ceres::LocalParameterization* Map::selectLocalParameterization(
+    const ::ceres::LocalParameterization* query) {
+  std::vector<::ceres::LocalParameterization*> pool{
+      &homogeneousPointLocalParameterization_, &poseLocalParameterization_,
+      &poseLocalParameterization3d_, &poseLocalParameterization4d_,
+      &poseLocalParameterization2d_};
+  for (::ceres::LocalParameterization* pointer : pool) {
+    if (query == pointer) {
+      return pointer;
+    }
+  }
+  LOG(WARNING) << "Local parameterization pointer not matched!";
+  return nullptr;
+}
+
+void Map::internalAddParameterBlockById(
+    uint64_t id, std::shared_ptr<::ceres::Problem> problem) {
+  std::shared_ptr<ParameterBlock> parameterBlock = id2ParameterBlock_Map_[id];
+  const ::ceres::LocalParameterization* parameterizationPtr =
+      parameterBlock->localParameterizationPtr();
+  if (parameterizationPtr) {
+    problem->AddParameterBlock(
+        parameterBlock->parameters(), parameterBlock->dimension(),
+        selectLocalParameterization(parameterizationPtr));
+  } else {
+    problem->AddParameterBlock(parameterBlock->parameters(),
+                               parameterBlock->dimension());
+  }
+  if (parameterBlock->fixed()) {
+    problem->SetParameterBlockConstant(parameterBlock->parameters());
+  }  // else do nothing as parameters are default to be variable.
+}
+
+std::shared_ptr<::ceres::Problem> Map::cloneProblem() {
+  ::ceres::Problem::Options problemOptions;
+  problemOptions.local_parameterization_ownership =
+      ::ceres::Ownership::DO_NOT_TAKE_OWNERSHIP;
+  problemOptions.loss_function_ownership =
+      ::ceres::Ownership::DO_NOT_TAKE_OWNERSHIP;
+  problemOptions.cost_function_ownership =
+      ::ceres::Ownership::DO_NOT_TAKE_OWNERSHIP;
+  std::shared_ptr<::ceres::Problem> problem(
+      new ::ceres::Problem(problemOptions));
+  // add parameter blocks in the order of {constants}, {camera pose, speed and
+  // bias, extrinsics}, lastly {landmarks}.
+  std::vector<uint64_t> nonlmkIds;
+  nonlmkIds.reserve(20);
+  std::vector<uint64_t> constIds;
+  constIds.reserve(5);
+  std::vector<uint64_t> lmkIds;
+  lmkIds.reserve(id2ParameterBlock_Map_.size());
+
+  for (auto parameterBlockIdToPointer : id2ParameterBlock_Map_) {
+    std::shared_ptr<ParameterBlock> parameterBlock =
+        parameterBlockIdToPointer.second;
+    if (parameterBlock->dimension() == 4) {
+      lmkIds.push_back(parameterBlockIdToPointer.first);
+    } else {
+      if (parameterBlock->fixed()) {
+        constIds.push_back(parameterBlockIdToPointer.first);
+      } else {
+        nonlmkIds.push_back(parameterBlockIdToPointer.first);
+      }
+    }
+  }
+  for (auto id : constIds) {
+    internalAddParameterBlockById(id, problem);
+  }
+  for (auto id : nonlmkIds) {
+    internalAddParameterBlockById(id, problem);
+  }
+  for (auto id : lmkIds) {
+    internalAddParameterBlockById(id, problem);
+  }
+
+  // add residual blocks.
+  for (auto residualIdToSpec : residualBlockId2ResidualBlockSpec_Map_) {
+    const ::ceres::ResidualBlockId& residualId = residualIdToSpec.first;
+    const ResidualBlockSpec& spec = residualIdToSpec.second;
+    std::shared_ptr<::ceres::CostFunction> costFunctionPtr =
+        std::dynamic_pointer_cast<::ceres::CostFunction>(
+            spec.errorInterfacePtr);
+    OKVIS_ASSERT_TRUE_DBG(Exception, costFunctionPtr != 0,
+                          "An okvis::ceres::ErrorInterface not derived from "
+                          "ceres::CostFunction!");
+    auto iter = residualBlockId2ParameterBlockCollection_Map_.find(residualId);
+    OKVIS_ASSERT_TRUE_DBG(
+        Exception, iter != residualBlockId2ParameterBlockCollection_Map_.end(),
+        "Parameter block connection not found for a residual block!");
+    const ParameterBlockCollection& collection = iter->second;
+    std::vector<double*> parameter_blocks;
+    parameter_blocks.reserve(collection.size());
+    for (const ParameterBlockSpec& blockSpec : collection) {
+      parameter_blocks.push_back(blockSpec.second->parameters());
+    }
+    problem->AddResidualBlock(costFunctionPtr.get(), spec.lossFunctionPtr,
+                              parameter_blocks);
+  }
+  return problem;
+}
+
 void Map::printMapInfo() const {
   std::stringstream ss;
   ss << "Overall parameter global dim " << problem_->NumParameters()
-     << ", #residual overall dim " << problem_->NumResiduals();
+     << ", overall residual dim " << problem_->NumResiduals();
 
   std::vector<size_t> numberVariables(10, 0u);
   std::vector<size_t> numberConstants(10, 0u);
@@ -758,15 +859,14 @@ void Map::printMapInfo() const {
 }
 
 bool Map::getParameterBlockMinimalCovariance(
-    uint64_t parameterBlockId,
+    uint64_t parameterBlockId, ::ceres::Problem* problem,
     Eigen::Matrix<double, -1, -1, Eigen::RowMajor>* param_covariance) const {
   if (!parameterBlockExists(parameterBlockId)) return false;
   std::shared_ptr<ParameterBlock> parameterBlock =
       id2ParameterBlock_Map_.find(parameterBlockId)->second;
   ::ceres::Covariance::Options covariance_options;
-  // covariance_options.sparse_linear_algebra_library_type =
-  // ::ceres::SUITE_SPARSE;
-  covariance_options.algorithm_type = ::ceres::DENSE_SVD; // DENSE_SVD slow but handles rank deficiency.
+  //  covariance_options.sparse_linear_algebra_library_type = ::ceres::EIGEN_SPARSE;
+  covariance_options.algorithm_type = ::ceres::SPARSE_QR; // DENSE_SVD slow but handles rank deficiency.
   covariance_options.num_threads = 1;  // common::getNumHardwareThreads();
   covariance_options.min_reciprocal_condition_number = 1e-32;
   covariance_options.apply_loss_function = true;
@@ -774,13 +874,12 @@ bool Map::getParameterBlockMinimalCovariance(
   std::vector<std::pair<const double*, const double*> > covariance_blocks;
   covariance_blocks.push_back(std::make_pair(parameterBlock->parameters(),
                                              parameterBlock->parameters()));
-  if (!covariance.Compute(covariance_blocks, problem_.get())) {
+  if (!covariance.Compute(covariance_blocks, problem)) {
       return false;
   }
 
   size_t rows = parameterBlock->minimalDimension();
   param_covariance->resize(rows, rows);
-
   covariance.GetCovarianceBlockInTangentSpace(parameterBlock->parameters(),
                                 parameterBlock->parameters(),
                                 param_covariance->data());
@@ -788,44 +887,42 @@ bool Map::getParameterBlockMinimalCovariance(
 }
 
 bool Map::getParameterBlockMinimalCovariance(
-    const std::vector<uint64_t>& vParameterBlockId,
+    const std::vector<uint64_t>& parameterBlockIdList,
+    ::ceres::Problem* problem,
     std::vector<Eigen::Matrix<double, -1, -1, Eigen::RowMajor>,
                 Eigen::aligned_allocator<
                     Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>>*
-        vCovariance) const {
-  for (uint64_t blockId : vParameterBlockId) {
+        covarianceBlockList) const {
+  for (uint64_t blockId : parameterBlockIdList) {
     if (!parameterBlockExists(blockId)) {
-        return false;
+      return false;
     }
   }
 
   ::ceres::Covariance::Options covariance_options;
-  covariance_options.sparse_linear_algebra_library_type = ::ceres::SUITE_SPARSE;
-//  covariance_options.sparse_linear_algebra_library_type = ::ceres::EIGEN_SPARSE;
-//  covariance_options.algorithm_type = ::ceres::DENSE_SVD;
   covariance_options.algorithm_type = ::ceres::SPARSE_QR;
   covariance_options.null_space_rank = -1;
-  covariance_options.num_threads = 1;  // common::getNumHardwareThreads();
+  covariance_options.num_threads = 1;
   covariance_options.min_reciprocal_condition_number = 1e-32;
   covariance_options.apply_loss_function = true;
   ::ceres::Covariance covariance(covariance_options);
-  std::vector<std::pair<const double*, const double*> > covariance_blocks;
+  std::vector<std::pair<const double*, const double*>> covariance_blocks;
 
-  for (uint64_t blockId : vParameterBlockId) {
+  for (uint64_t blockId : parameterBlockIdList) {
     std::shared_ptr<ParameterBlock> parameterBlock =
         id2ParameterBlock_Map_.find(blockId)->second;
     covariance_blocks.push_back(std::make_pair(parameterBlock->parameters(),
                                                parameterBlock->parameters()));
   }
-  if (!covariance.Compute(covariance_blocks, problem_.get())) {
+  if (!covariance.Compute(covariance_blocks, problem)) {
     printMapInfo();
     return false;
   }
 
-  vCovariance->resize(vParameterBlockId.size());
+  covarianceBlockList->resize(parameterBlockIdList.size());
   size_t blockIndex = 0;
-  for (std::vector<uint64_t>::const_iterator cit = vParameterBlockId.begin();
-       cit != vParameterBlockId.end(); ++cit, ++blockIndex) {
+  for (std::vector<uint64_t>::const_iterator cit = parameterBlockIdList.begin();
+       cit != parameterBlockIdList.end(); ++cit, ++blockIndex) {
     std::shared_ptr<ParameterBlock> parameterBlock =
         id2ParameterBlock_Map_.find(*cit)->second;
     size_t rows = parameterBlock->minimalDimension();
@@ -835,7 +932,7 @@ bool Map::getParameterBlockMinimalCovariance(
     covariance.GetCovarianceBlockInTangentSpace(parameterBlock->parameters(),
                                                 parameterBlock->parameters(),
                                                 param_covariance.data());
-    vCovariance->at(blockIndex) = param_covariance;
+    covarianceBlockList->at(blockIndex) = param_covariance;
   }
   return true;
 }

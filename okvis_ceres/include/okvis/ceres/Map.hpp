@@ -331,6 +331,26 @@ class Map {
       ::ceres::ResidualBlockId residualBlockId) const;  // get the parameter blocks connected
 
   /// @}
+  ::ceres::Problem* problemUnsafe() const {
+    return problem_.get();
+  }
+
+  /**
+   * @brief selectLocalParameterization essentially cast away the const.
+   * @param query
+   */
+  ::ceres::LocalParameterization* selectLocalParameterization(
+      const ::ceres::LocalParameterization* query);
+
+  void internalAddParameterBlockById(
+      uint64_t id, std::shared_ptr<::ceres::Problem> problem);
+
+  /**
+   * @brief cloneProblem clone a ceres::Problem from the internal problem_.
+   * @warning member function constness is forsaken because of selectLocalParameterization.
+   * @return cloned problem.
+   */
+  std::shared_ptr<::ceres::Problem> cloneProblem();
 
   /**
    * @brief printMapInfo print basic info of the problem's graph.
@@ -339,10 +359,12 @@ class Map {
 
   bool getParameterBlockMinimalCovariance(
       uint64_t parameterBlockId,
+      ::ceres::Problem* problem,
       Eigen::Matrix<double, -1, -1, Eigen::RowMajor>* param_covariance) const;
 
   bool getParameterBlockMinimalCovariance(
-      const std::vector<uint64_t>& vParameterBlockId,
+      const std::vector<uint64_t>& parameterBlockIds,
+      ::ceres::Problem* problem,
       std::vector<Eigen::Matrix<double, -1, -1, Eigen::RowMajor>,
                   Eigen::aligned_allocator<
                       Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>>* covList)

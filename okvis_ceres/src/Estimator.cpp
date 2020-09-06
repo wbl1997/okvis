@@ -1515,7 +1515,7 @@ bool Estimator::computeCovariance(Eigen::MatrixXd* cov) const {
       varianceList;
   bool status = false;
   status = mapPtr_->getParameterBlockMinimalCovariance(
-      parameterBlockIdList, &varianceList);
+      parameterBlockIdList, mapPtr_->problemUnsafe(), &varianceList);
   if (status) {
     cov->topLeftCorner<6, 6>() = varianceList[0];
     cov->bottomRightCorner<9, 9>() = varianceList[1];
