@@ -56,7 +56,10 @@ EstimatorAlgorithm EstimatorAlgorithmNameToId(std::string description) {
       {"MSCKF", EstimatorAlgorithm::MSCKF},
       {"TFVIO", EstimatorAlgorithm::TFVIO},
       {"INVARIANTEKF", EstimatorAlgorithm::InvariantEKF},
-      {"SLIDINGWINDOWSMOOTHER", EstimatorAlgorithm::SlidingWindowSmoother}};
+      {"SLIDINGWINDOWSMOOTHER", EstimatorAlgorithm::SlidingWindowSmoother},
+      {"RISLIDINGWINDOWSMOOTHER", EstimatorAlgorithm::RiSlidingWindowSmoother},
+      {"LISLIDINGWINDOWSMOOTHER", EstimatorAlgorithm::LiSlidingWindowSmoother},
+  };
 
   auto iter = descriptionToId.find(description);
   if (iter == descriptionToId.end()) {
@@ -75,13 +78,18 @@ struct EstimatorAlgorithmHash {
 
 std::string EstimatorAlgorithmIdToName(EstimatorAlgorithm id) {
   std::unordered_map<EstimatorAlgorithm, std::string, EstimatorAlgorithmHash>
-      idToDescription{{EstimatorAlgorithm::OKVIS, "OKVIS"},
-                      {EstimatorAlgorithm::General, "General"},
-                      {EstimatorAlgorithm::Consistent, "Consistent"},
-                      {EstimatorAlgorithm::MSCKF, "MSCKF"},
-                      {EstimatorAlgorithm::TFVIO, "TFVIO"},
-                      {EstimatorAlgorithm::InvariantEKF, "InvariantEKF"},
-                      {EstimatorAlgorithm::SlidingWindowSmoother, "SlidingWindowSmoother"}};
+      idToDescription{
+          {EstimatorAlgorithm::OKVIS, "OKVIS"},
+          {EstimatorAlgorithm::General, "General"},
+          {EstimatorAlgorithm::Consistent, "Consistent"},
+          {EstimatorAlgorithm::MSCKF, "MSCKF"},
+          {EstimatorAlgorithm::TFVIO, "TFVIO"},
+          {EstimatorAlgorithm::InvariantEKF, "InvariantEKF"},
+          {EstimatorAlgorithm::SlidingWindowSmoother, "SlidingWindowSmoother"},
+          {EstimatorAlgorithm::RiSlidingWindowSmoother,
+           "RiSlidingWindowSmoother"},
+          {EstimatorAlgorithm::LiSlidingWindowSmoother,
+           "LiSlidingWindowSmoother"}};
   auto iter = idToDescription.find(id);
   if (iter == idToDescription.end()) {
     return "OKVIS";

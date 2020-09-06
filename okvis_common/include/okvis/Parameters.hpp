@@ -238,12 +238,14 @@ struct WindParameters{
 
 enum class EstimatorAlgorithm {
   OKVIS = 0,  ///< Okvis original keyframe-based estimator.
-  General = 1,  ///< Adapted keyframe-based estimator using only epipolar constraints.
-  Consistent = 2,  ///< Consistent keyframe-based estimator.
-  SlidingWindowSmoother = 3, ///< Gtsam::IncrementalFixedLagSmoother.
-  MSCKF = 4,  ///< MSCKF with first estimate Jacobians and second latest marginalization.
-  TFVIO = 5,  ///< Triangulate-free VIO with only epipolar constraints.
-  InvariantEKF = 6, ///< MSCKF with right invariant errors.
+  General,  ///< Adapted keyframe-based estimator using only epipolar constraints.
+  Consistent,  ///< Consistent keyframe-based estimator.
+  SlidingWindowSmoother, ///< Gtsam::FixedLagSmoother.
+  RiSlidingWindowSmoother, ///< Gtsam::FixedLagSmoother with right invariant errors.
+  LiSlidingWindowSmoother, ///< Gtsam::FixedLagSmoother with left invariant errors.
+  MSCKF,  ///< MSCKF with first estimate Jacobians and second latest marginalization.
+  TFVIO,  ///< Triangulate-free VIO with only epipolar constraints.
+  InvariantEKF, ///< MSCKF with right invariant errors.
 };
 
 EstimatorAlgorithm EstimatorAlgorithmNameToId(std::string description);
