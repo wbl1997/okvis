@@ -19,6 +19,8 @@ class InverseTransformPointJacobian {
 
   inline InverseTransformPointJacobian();
 
+  inline virtual ~InverseTransformPointJacobian();
+
   inline void initialize(const okvis::kinematics::Transformation& T_AB,
                          const Eigen::Vector4d& hpA);
 
@@ -38,6 +40,8 @@ class InverseTransformPointJacobian {
 };
 
 InverseTransformPointJacobian::InverseTransformPointJacobian() {}
+
+InverseTransformPointJacobian::~InverseTransformPointJacobian() {}
 
 void InverseTransformPointJacobian::initialize(
     const okvis::kinematics::Transformation& T_AB, const Eigen::Vector4d& hpA) {

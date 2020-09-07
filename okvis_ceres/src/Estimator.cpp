@@ -1428,11 +1428,11 @@ bool Estimator::addReprojectionFactors() {
       std::shared_ptr<okvis::ceres::HomogeneousPointParameterBlock>
           pointParameterBlock(new okvis::ceres::HomogeneousPointParameterBlock(
               pit->second.pointHomog, pit->first));
-      bool paramBlockedAdded = mapPtr_->addParameterBlock(
-          pointParameterBlock, okvis::ceres::Map::HomogeneousPoint);
-      OKVIS_ASSERT_TRUE_DBG(Exception, paramBlockedAdded,
-                            "Failed to add landmark param block!");
-
+      if (!mapPtr_->addParameterBlock(pointParameterBlock,
+                                      okvis::ceres::Map::HomogeneousPoint)) {
+        LOG(WARNING) << "Failed to add block for landmark " << pit->first;
+        continue;
+      }
       pit->second.residualizeCase = InState_TrackedNow;
     }
     // examine starting from the rear of a landmark's observations, add
@@ -1464,9 +1464,11 @@ bool Estimator::addReprojectionFactors() {
     for (std::map<okvis::KeypointIdentifier, uint64_t>::reverse_iterator riter =
              breakIter;
          riter != mp.observations.rend(); ++riter) {
-      OKVIS_ASSERT_NE_DBG(
-          Exception, riter->second, 0u,
-          "Residuals should be contiguous unless epipolar factors are used!");
+      if (riter->second == 0u) {
+        LOG(WARNING) << "For landmark " << mp.id
+                     << ", residuals should be contiguously null or filled "
+                        "unless epipolar factors are used!";
+      }
     }
   }
   return true;

@@ -19,6 +19,8 @@ class TransformPointJacobian {
 
   inline TransformPointJacobian();
 
+  inline virtual ~TransformPointJacobian();
+
   inline void initialize(const okvis::kinematics::Transformation& T_AB,
                          const Eigen::Vector4d& hpB);
 
@@ -37,6 +39,8 @@ class TransformPointJacobian {
 };
 
 TransformPointJacobian::TransformPointJacobian() {}
+
+TransformPointJacobian::~TransformPointJacobian() {}
 
 void TransformPointJacobian::initialize(
     const okvis::kinematics::Transformation& T_AB, const Eigen::Vector4d& hpB) {
