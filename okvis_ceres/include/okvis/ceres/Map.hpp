@@ -342,7 +342,7 @@ class Map {
   ::ceres::LocalParameterization* selectLocalParameterization(
       const ::ceres::LocalParameterization* query);
 
-  void internalAddParameterBlockById(
+  std::shared_ptr<ParameterBlock> internalAddParameterBlockById(
       uint64_t id, std::shared_ptr<::ceres::Problem> problem);
 
   /**
@@ -350,7 +350,10 @@ class Map {
    * @warning member function constness is forsaken because of selectLocalParameterization.
    * @return cloned problem.
    */
-  std::shared_ptr<::ceres::Problem> cloneProblem();
+  std::shared_ptr<::ceres::Problem> cloneProblem(
+      std::unordered_map<uint64_t,
+                         std::shared_ptr<okvis::ceres::ParameterBlock>>*
+          blockId2BlockCopyPtr);
 
   /**
    * @brief printMapInfo print basic info of the problem's graph.

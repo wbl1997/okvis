@@ -730,25 +730,50 @@ Map::ParameterBlockCollection Map::parameters(
   return nullptr;
 }
 
-void Map::internalAddParameterBlockById(
+std::shared_ptr<ParameterBlock> Map::internalAddParameterBlockById(
     uint64_t id, std::shared_ptr<::ceres::Problem> problem) {
   std::shared_ptr<ParameterBlock> parameterBlock = id2ParameterBlock_Map_[id];
   const ::ceres::LocalParameterization* parameterizationPtr =
       parameterBlock->localParameterizationPtr();
+  std::shared_ptr<ParameterBlock> parameterBlockCopy;
+  switch (parameterBlock->dimension()) {
+    case 7:
+      parameterBlockCopy.reset(new PoseParameterBlock(
+          *std::static_pointer_cast<PoseParameterBlock>(parameterBlock)));
+      break;
+    case 4:
+      parameterBlockCopy.reset(new HomogeneousPointParameterBlock(
+          *std::static_pointer_cast<HomogeneousPointParameterBlock>(
+              parameterBlock)));
+      break;
+    case 9:
+      parameterBlockCopy.reset(new SpeedAndBiasParameterBlock(
+          *std::static_pointer_cast<SpeedAndBiasParameterBlock>(
+              parameterBlock)));
+      break;
+    default:
+      LOG(WARNING) << "Parameter block of dim " << parameterBlock->dimension()
+                   << " not recognized!";
+      break;
+  }
+
   if (parameterizationPtr) {
     problem->AddParameterBlock(
-        parameterBlock->parameters(), parameterBlock->dimension(),
+        parameterBlockCopy->parameters(), parameterBlockCopy->dimension(),
         selectLocalParameterization(parameterizationPtr));
   } else {
-    problem->AddParameterBlock(parameterBlock->parameters(),
-                               parameterBlock->dimension());
+    problem->AddParameterBlock(parameterBlockCopy->parameters(),
+                               parameterBlockCopy->dimension());
   }
   if (parameterBlock->fixed()) {
-    problem->SetParameterBlockConstant(parameterBlock->parameters());
+    problem->SetParameterBlockConstant(parameterBlockCopy->parameters());
   }  // else do nothing as parameters are default to be variable.
+  return parameterBlockCopy;
 }
 
-std::shared_ptr<::ceres::Problem> Map::cloneProblem() {
+std::shared_ptr<::ceres::Problem> Map::cloneProblem(
+    std::unordered_map<uint64_t, std::shared_ptr<okvis::ceres::ParameterBlock>>*
+        blockId2BlockCopyPtr) {
   ::ceres::Problem::Options problemOptions;
   problemOptions.local_parameterization_ownership =
       ::ceres::Ownership::DO_NOT_TAKE_OWNERSHIP;
@@ -780,14 +805,21 @@ std::shared_ptr<::ceres::Problem> Map::cloneProblem() {
       }
     }
   }
+
   for (auto id : constIds) {
-    internalAddParameterBlockById(id, problem);
+    std::shared_ptr<ParameterBlock> blockCopyPtr =
+        internalAddParameterBlockById(id, problem);
+    blockId2BlockCopyPtr->emplace(id, blockCopyPtr);
   }
   for (auto id : nonlmkIds) {
-    internalAddParameterBlockById(id, problem);
+    std::shared_ptr<ParameterBlock> blockCopyPtr =
+        internalAddParameterBlockById(id, problem);
+    blockId2BlockCopyPtr->emplace(id, blockCopyPtr);
   }
   for (auto id : lmkIds) {
-    internalAddParameterBlockById(id, problem);
+    std::shared_ptr<ParameterBlock> blockCopyPtr =
+        internalAddParameterBlockById(id, problem);
+    blockId2BlockCopyPtr->emplace(id, blockCopyPtr);
   }
 
   // add residual blocks.
@@ -808,7 +840,8 @@ std::shared_ptr<::ceres::Problem> Map::cloneProblem() {
     std::vector<double*> parameter_blocks;
     parameter_blocks.reserve(collection.size());
     for (const ParameterBlockSpec& blockSpec : collection) {
-      parameter_blocks.push_back(blockSpec.second->parameters());
+      std::shared_ptr<ParameterBlock> blockCopyPtr = blockId2BlockCopyPtr->at(blockSpec.second->id());
+      parameter_blocks.push_back(blockCopyPtr->parameters());
     }
     problem->AddResidualBlock(costFunctionPtr.get(), spec.lossFunctionPtr,
                               parameter_blocks);
@@ -842,18 +875,24 @@ void Map::printMapInfo() const {
     numberResiduals[resDim - 1]++;
   }
   ss << "\n#Constant parameter at each minimal dimension:";
+  int index = 1;
   for (auto val : numberConstants) {
-    ss << " " << val;
+    if (val) ss << " (" << index << ":" << val << ")";
+    ++index;
   }
 
   ss << "\n#Variable parameter at each minimal dimension:";
+  index = 1;
   for (auto val : numberVariables) {
-    ss << " " << val;
+    if (val) ss << " (" << index << ":" << val << ")";
+    ++index;
   }
 
   ss << "\n#Residual at each residual dimension:";
+  index = 1;
   for (auto val : numberResiduals) {
-    ss << " " << val;
+    if (val) ss << " (" << index << ":" << val << ")";
+    ++index;
   }
   LOG(INFO) << ss.str();
 }
