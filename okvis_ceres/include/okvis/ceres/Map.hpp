@@ -361,17 +361,23 @@ class Map {
   void printMapInfo() const;
 
   bool getParameterBlockMinimalCovariance(
-      uint64_t parameterBlockId,
-      ::ceres::Problem* problem,
+      uint64_t parameterBlockId, ::ceres::Problem* problem,
       Eigen::Matrix<double, -1, -1, Eigen::RowMajor>* param_covariance) const;
 
   bool getParameterBlockMinimalCovariance(
-      const std::vector<uint64_t>& parameterBlockIds,
-      ::ceres::Problem* problem,
+      const std::vector<uint64_t>& parameterBlockIds, ::ceres::Problem* problem,
       std::vector<Eigen::Matrix<double, -1, -1, Eigen::RowMajor>,
                   Eigen::aligned_allocator<
                       Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>>* covList)
       const;
+
+  /**
+   * @brief computeNavStateCovariance
+   * essentially it is a const member function.
+   * @return
+   */
+  bool computeNavStateCovariance(uint64_t poseId, uint64_t speedAndBiasId,
+                                 Eigen::MatrixXd* cov);
 
   // Jacobian checker
   /**

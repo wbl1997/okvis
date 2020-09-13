@@ -186,6 +186,10 @@ class MarginalizationError : public ::ceres::CostFunction, public ErrorInterface
     return "MarginalizationError";
   }
 
+  const Eigen::MatrixXd& H() const {
+    return H_;
+  }
+
 
  protected:
   Map* mapPtr_; ///< The underlying map.

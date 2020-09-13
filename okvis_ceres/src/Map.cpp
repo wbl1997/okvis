@@ -42,6 +42,7 @@
 #include <ceres/ordered_groups.h>
 #include <okvis/ceres/HomogeneousPointParameterBlock.hpp>
 #include <okvis/ceres/MarginalizationError.hpp>
+#include <okvis/kinematics/MatrixPseudoInverse.hpp>
 
 /// \brief okvis Main namespace of this package.
 namespace okvis {
@@ -973,6 +974,36 @@ bool Map::getParameterBlockMinimalCovariance(
                                                 param_covariance.data());
     covarianceBlockList->at(blockIndex) = param_covariance;
   }
+  return true;
+}
+
+bool Map::computeNavStateCovariance(uint64_t poseId, uint64_t speedAndBiasId,
+                                    Eigen::MatrixXd* cov) {
+  ceres::MarginalizationError marginalizer(*this);
+  for (auto residualIdToSpec : residualBlockId2ResidualBlockSpec_Map_) {
+    const ::ceres::ResidualBlockId& residualId = residualIdToSpec.first;
+    marginalizer.addResidualBlock(residualId, true);
+  }
+
+  std::set<uint64_t> paramBlockIdSet;
+  for (auto parameterBlockIdToPointer : id2ParameterBlock_Map_) {
+    if (parameterBlockIdToPointer.second->fixed()) {
+      continue;
+    }
+    paramBlockIdSet.insert(parameterBlockIdToPointer.first);
+  }
+  size_t foundPose = paramBlockIdSet.erase(poseId);
+  size_t foundSpeedAndBias = paramBlockIdSet.erase(speedAndBiasId);
+  OKVIS_ASSERT_EQ(Exception, foundPose + foundSpeedAndBias, 2u,
+                  "Pose or SpeedAndBias not found in parameter block list!");
+
+  std::vector<uint64_t> allParamBlockIds(paramBlockIdSet.begin(),
+                                         paramBlockIdSet.end());
+  std::vector<bool> keepBlocks(allParamBlockIds.size(), true);
+  marginalizer.marginalizeOut(allParamBlockIds, keepBlocks);
+  OKVIS_ASSERT_EQ(Exception, marginalizer.H().rows(), 15,
+                  "The only block left in H should has 15 rows!");
+  MatrixPseudoInverse::pseudoInverseSymm(marginalizer.H(), *cov);
   return true;
 }
 

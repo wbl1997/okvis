@@ -791,7 +791,7 @@ bool MarginalizationError::marginalizeOut(
   }
   for (size_t i = 0; i < parameterBlockIdsCopy.size(); ++i) {
     if (keepParameterBlocksCopy.at(parameterBlockIdsCopy[i])) {
-      OKVIS_THROW(Exception,"unmarginalizeLandmark(parameterBlockIdsCopy[i]) not implemented.")
+//      OKVIS_THROW(Exception,"unmarginalizeLandmark(parameterBlockIdsCopy[i]) not implemented.")
     } else {
       mapPtr_->removeParameterBlock(parameterBlockIdsCopy[i]);
     }
@@ -903,7 +903,10 @@ bool MarginalizationError::EvaluateWithMinimalJacobians(
   computeDeltaChi(parameters, Delta_Chi);
 
   for (size_t i = 0; i < parameterBlockInfos_.size(); ++i) {
-
+    if (parameterBlockInfos_.at(i).minimalDimension == 0u) {
+      // This is true for fixed parameter blocks, e.g., T_BC.
+      continue;
+    }
     // decompose the jacobians: minimal ones are easy
     if (jacobiansMinimal != NULL) {
       if (jacobiansMinimal[i] != NULL) {
