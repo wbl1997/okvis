@@ -839,6 +839,21 @@ bool Estimator::initPoseFromImu(
   return true;
 }
 
+bool hasMultipleObservationsInOneImage(const MapPoint& mapPoint) {
+  uint64_t lastFrameId = 0u;
+  size_t duplicates = 0u;
+  for(std::map<okvis::KeypointIdentifier, uint64_t>::const_iterator obsIt = mapPoint.observations.begin();
+      obsIt!= mapPoint.observations.end(); ++obsIt) {
+    if(obsIt->first.frameId == lastFrameId) {
+      ++duplicates;
+    }
+    lastFrameId = obsIt->first.frameId;
+  }
+  if (duplicates > 0u) {
+    LOG(WARNING) << "#duplicates " << duplicates << " for lmk " << mapPoint.id;
+  }
+}
+
 // Start ceres optimization.
 #ifdef USE_OPENMP
 void Estimator::optimize(size_t numIter, size_t numThreads,
@@ -879,6 +894,7 @@ void Estimator::optimize(size_t numIter, size_t /*numThreads*/,
   // update landmarks
   {
     for(auto it = landmarksMap_.begin(); it!=landmarksMap_.end(); ++it){
+      hasMultipleObservationsInOneImage(it->second);
       Eigen::MatrixXd H(3,3);
       mapPtr_->getLhs(it->first,H);
       Eigen::SelfAdjointEigenSolver< Eigen::Matrix3d > saes(H);
