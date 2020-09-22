@@ -186,7 +186,7 @@ class VioBackendInterface {
    * @param[out] landmarks The landmarks.
    * @return number of landmarks.
    */
-  virtual size_t getLandmarks(PointMap & landmarks) const = 0; // return a copy for thread safety
+  virtual size_t getLandmarks(MapPointVector& landmarks) const = 0; // return a copy for thread safety
 
   /**
    * @brief Get a multiframe.
