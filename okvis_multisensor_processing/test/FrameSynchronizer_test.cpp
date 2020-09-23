@@ -43,6 +43,8 @@ static const size_t num_cameras = 2;
 static const size_t num_test_frames = 10;
 
 class FrameSynchronizerTest : public ::testing::Test {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
  protected:
 
   FrameSynchronizerTest()
