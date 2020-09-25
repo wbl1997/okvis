@@ -857,8 +857,10 @@ void Estimator::printNavStateAndBiases(std::ostream& stream, uint64_t poseId) co
 bool Estimator::print(std::ostream& stream) const {
   uint64_t poseId = statesMap_.rbegin()->first;
   printNavStateAndBiases(stream, poseId);
-  Eigen::VectorXd stateStd;
-  getStateStd(&stateStd);
+
+  Eigen::MatrixXd covariance;
+  computeCovariance(&covariance);
+  Eigen::VectorXd stateStd = covariance.diagonal().cwiseSqrt();
   stream << " " << stateStd.transpose().format(kSpaceInitFmt);
   return true;
 }
@@ -1501,9 +1503,6 @@ okvis::Time Estimator::removeState(uint64_t stateId) {
 
 bool Estimator::computeCovariance(Eigen::MatrixXd* cov) const {
   // variance for p_WB, q_WB, v_WB, bg, ba
-  *cov = Eigen::Matrix<double, 15, 15>::Identity();
-  return false;
-  // jhuai: Skip the below unless necessary as it is slow.
   uint64_t poseId = statesMap_.rbegin()->second.id;
   uint64_t speedAndBiasId = statesMap_.rbegin()
                                 ->second.sensors.at(SensorStates::Imu)
@@ -1516,10 +1515,9 @@ bool Estimator::computeCovariance(Eigen::MatrixXd* cov) const {
 // getters
 bool Estimator::getStateStd(
     Eigen::Matrix<double, Eigen::Dynamic, 1>* stateStd) const {
-  Eigen::MatrixXd covariance;
-  bool status = computeCovariance(&covariance);
-  *stateStd = covariance.diagonal().cwiseSqrt();
-  return status;
+  // skip computing covariance in processing real world data.
+  *stateStd = Eigen::MatrixXd::Constant(15, 1, 1.0);
+  return true;
 }
 
 bool Estimator::getImageDelay(uint64_t poseId, int camIdx,
