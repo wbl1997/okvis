@@ -5,8 +5,12 @@
 #include <msckf/CameraRig.hpp>
 
 namespace okvis {
-bool doesExtrinsicModelFitImuModel(std::string extrinsicModel,
-                                   std::string imuModel);
+bool doesExtrinsicModelFitImuModel(const std::string& extrinsicModel,
+                                   const std::string& imuModel);
+
+bool doesExtrinsicModelFitOkvisBackend(
+    const okvis::cameras::NCameraSystem& cameraSystem,
+    EstimatorAlgorithm algorithm);
 }  // namespace okvis
 
 #endif // INCLUDE_MSCKF_CHECK_SENSOR_RIG_HPP_

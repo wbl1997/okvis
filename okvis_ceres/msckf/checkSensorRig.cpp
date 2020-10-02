@@ -1,8 +1,8 @@
 #include <msckf/checkSensorRig.hpp>
 
 namespace okvis {
-bool doesExtrinsicModelFitImuModel(std::string extrinsicModel,
-                                   std::string imuModel) {
+bool doesExtrinsicModelFitImuModel(const std::string& extrinsicModel,
+                                   const std::string& imuModel) {
   int extrinsicModelId = okvis::ExtrinsicModelNameToId(extrinsicModel, nullptr);
   int imuModelId = okvis::ImuModelNameToId(imuModel);
   switch (imuModelId) {
@@ -23,6 +23,27 @@ bool doesExtrinsicModelFitImuModel(std::string extrinsicModel,
       break;
     default:
       break;
+  }
+  return true;
+}
+
+bool doesExtrinsicModelFitOkvisBackend(
+    const okvis::cameras::NCameraSystem& cameraSystem,
+    EstimatorAlgorithm algorithm) {
+  size_t numCameras = cameraSystem.numCameras();
+
+  if (algorithm == EstimatorAlgorithm::OKVIS) {
+    for (size_t index = 1u; index < numCameras; ++index) {
+      std::string extrinsicModel = cameraSystem.extrinsicOptRep(index);
+      int extrinsicModelId =
+          okvis::ExtrinsicModelNameToId(extrinsicModel, nullptr);
+      if (extrinsicModelId == Extrinsic_p_C0C_q_C0C::kModelId) {
+        LOG(WARNING) << "When the OKVIS backend is used, the second camera's "
+                        "extrinsic model should NOT be P_C0C_Q_C0C which leads "
+                        "to wrong extrinsics in frontend!";
+        return false;
+      }
+    }
   }
   return true;
 }

@@ -992,6 +992,9 @@ void ThreadedKFVio::saveStatistics(const std::string &filename) const {
 void ThreadedKFVio::configureBackendAndFrontendPartly(okvis::VioParameters& parameters) {
   doesExtrinsicModelFitImuModel(parameters.nCameraSystem.extrinsicOptRep(0u),
                                 parameters.imu.model_type);
+  doesExtrinsicModelFitOkvisBackend(parameters.nCameraSystem,
+                                    parameters.optimization.algorithm);
+
   frontend_->setLandmarkTriangulationParameters(
       parameters.optimization.triangulationTranslationThreshold,
       parameters.optimization.triangulationMaxDepth);
