@@ -133,6 +133,11 @@ class PointSharedData {
   void computePoseAndVelocityForJacobians(bool useLinearizationPoint);
   /// @}
 
+  /**
+   * @brief computeSharedJacobians compute Jacobians common to every
+   * observation of the landmark.
+   * @param cameraObservationModelId
+   */
   void computeSharedJacobians(int cameraObservationModelId);
 
   /// @name Functions for anchors.
