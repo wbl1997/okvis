@@ -8,8 +8,8 @@ InitialNavState::InitialNavState()
       p_WS(0, 0, 0),
       q_WS(1, 0, 0, 0),
       v_WS(0, 0, 0),
-      std_p_WS(0.01, 0.01, 0.01),
-      std_q_WS(M_PI / 180, M_PI / 180, 3 * M_PI / 180),
+      std_p_WS(1e-4, 1e-4, 1e-4),
+      std_q_WS(M_PI / 180, M_PI / 180, 1e-4),
       std_v_WS(0.1, 0.1, 0.1) {}
 
 // v_WS, and std_v_WS are to be recalculated later according to updated p_WS and

@@ -269,7 +269,10 @@ bool Estimator::addStates(
   if (statesMap_.size() == 1) {
     // let's add a prior
     Eigen::Matrix<double,6,6> information = Eigen::Matrix<double,6,6>::Zero();
-    information(5,5) = 1.0e8; information(0,0) = 1.0e8; information(1,1) = 1.0e8; information(2,2) = 1.0e8;
+    information(5, 5) = std::pow(1.0 / pvstd_.std_q_WS[2], 2);
+    information(0, 0) = std::pow(1.0 / pvstd_.std_p_WS[0], 2);
+    information(1, 1) = std::pow(1.0 / pvstd_.std_p_WS[1], 2);
+    information(2, 2) = std::pow(1.0 / pvstd_.std_p_WS[2], 2);
     std::shared_ptr<ceres::PoseError > poseError(new ceres::PoseError(T_WS, information));
     /*auto id2= */ mapPtr_->addResidualBlock(poseError,NULL,poseParameterBlock);
     //mapPtr_->isJacobianCorrect(id2,1.0e-6);
@@ -782,7 +785,10 @@ bool Estimator::applyMarginalizationStrategy(
 		okvis::kinematics::Transformation T_WS_0;
 		get_T_WS(statesMap_.begin()->first, T_WS_0);
 	  Eigen::Matrix<double,6,6> information = Eigen::Matrix<double,6,6>::Zero();
-	  information(5,5) = 1.0e14; information(0,0) = 1.0e14; information(1,1) = 1.0e14; information(2,2) = 1.0e14;
+		information(5, 5) = std::pow(1.0 / pvstd_.std_q_WS[2], 2);
+		information(0, 0) = std::pow(1.0 / pvstd_.std_p_WS[0], 2);
+		information(1, 1) = std::pow(1.0 / pvstd_.std_p_WS[1], 2);
+		information(2, 2) = std::pow(1.0 / pvstd_.std_p_WS[2], 2);
 	  std::shared_ptr<ceres::PoseError > poseError(new ceres::PoseError(T_WS_0, information));
 	  mapPtr_->addResidualBlock(poseError,NULL,mapPtr_->parameterBlockPtr(statesMap_.begin()->first));
 	}
