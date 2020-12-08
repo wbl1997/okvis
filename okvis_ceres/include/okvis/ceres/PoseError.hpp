@@ -119,6 +119,12 @@ class PoseError : public ::ceres::SizedCostFunction<6 /* number of residuals */,
     return information_;
   }
 
+  /// \brief Get the square root information matrix.
+  /// \return The information (weight) matrix.
+  const information_t& rootInformation() const {
+    return squareRootInformation_;
+  }
+
   /// \brief Get the covariance matrix.
   /// \return The inverse information (covariance) matrix.
   const information_t& covariance() const {

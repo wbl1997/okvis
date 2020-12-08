@@ -5,6 +5,8 @@
  * @author Jianzhu Huai
  */
 
+#include <okvis/kinematics/MatrixPseudoInverse.hpp>
+
 /// \brief okvis Main namespace of this package.
 namespace okvis {
 /// \brief ceres Namespace for ceres-related functionality implemented in okvis.
@@ -34,10 +36,11 @@ EuclideanParamError<kParamDim>::EuclideanParamError(const Eigen::Matrix<double, 
 template<int kParamDim>
 void EuclideanParamError<kParamDim>::setInformation(const information_t & information) {
   information_ = information;
-  covariance_ = information.inverse();
+  MatrixPseudoInverse::pseudoInverseSymm(information, covariance_);
   // perform the Cholesky decomposition on order to obtain the correct error weighting
-  Eigen::LLT<information_t> lltOfInformation(information_);
-  squareRootInformation_ = lltOfInformation.matrixL().transpose();
+  information_t L;
+  computeMatrixSqrt(information_, L);
+  squareRootInformation_ = L.transpose();
 }
 
 // This evaluates the error term and additionally computes the Jacobians.

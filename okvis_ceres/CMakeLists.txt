@@ -82,9 +82,10 @@ if(BUILD_TESTS)
     test/TestImuError.cpp
     test/TestMap.cpp
     test/TestMarginalization.cpp
-    test/TestMarginalizationError.cpp
+    test/TestPseudoInverse.cpp
     test/TestParallaxAnglePoint.cpp
     test/TestPointSharedData.cpp
+    test/TestPoseError.cpp
     test/TestTransformMultiply.cpp
     test/TestTransformPointJacobian.cpp
   )

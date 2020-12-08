@@ -1,3 +1,9 @@
+/**
+ * @file    MatrixPseudoInverse.cpp
+ * @brief   Functions for matrix pseudo inverse, and matrix square root.
+ * @author  Jianzhu Huai
+ */
+
 #ifndef INCLUDE_OKVIS_MATRIX_PSEUDO_INVERSE_HPP
 #define INCLUDE_OKVIS_MATRIX_PSEUDO_INVERSE_HPP
 
@@ -7,6 +13,40 @@
 #include <okvis/assert_macros.hpp>
 
 namespace okvis {
+
+/**
+ * \brief Compute the square root of a matrix using the LDLt decomposition for
+ * square, positive semidefinite matrices
+ *
+ * To reconstruct the input matrix, \f$ \mathbf A \f$, from the returned matrix,
+ * \f$ \mathbf S \f$, use, \f$ \mathbf A = \mathbf S \mathbf S^T \f$.
+ *
+ *
+ * @param inMatrix      The square matrix whose square root should be computed.
+ * @param outMatrixSqrt The output square root.
+ */
+template <typename DERIVED1, typename DERIVED2>
+/*Eigen::ComputationInfo*/ void
+computeMatrixSqrt(const Eigen::MatrixBase<DERIVED1> &inMatrix,
+                  const Eigen::MatrixBase<DERIVED2> &outMatrixSqrt) {
+  OKVIS_ASSERT_EQ_DBG(std::runtime_error, inMatrix.rows(), inMatrix.cols(),
+                      "This method is only valid for square input matrices");
+
+  DERIVED2 &result = const_cast<DERIVED2 &>(outMatrixSqrt.derived());
+
+  // This is tricky. Using the output matrix type causes the input matrix
+  // type to be upgraded to a real numeric matrix. This is useful if,
+  // for example, the inMatrix is something like Eigen::Matrix3d::Identity(),
+  // which is not an actual matrix. Using DERIVED1 as the template argument
+  // in that case will cause a firestorm of compiler errors.
+  Eigen::LDLT<DERIVED2> ldlt(inMatrix.derived());
+  result = ldlt.matrixL();
+  result = ldlt.transpositionsP().transpose() * result;
+  result *= ldlt.vectorD().array().sqrt().matrix().asDiagonal();
+
+  // return ldlt.info();
+}
+
 class MatrixPseudoInverse
 {
 public:
@@ -31,16 +71,36 @@ public:
   /**
    * @brief Pseudo inversion and square root (Cholesky decomposition) of a symmetric matrix.
    * @warning   This uses Eigen-decomposition, it assumes the input is symmetric positive semi-definite
-   *            (negative Eigenvalues are set to zero).
+   *            (negative Eigenvalues are set to zero). Also if the input is positive semi-definite,
+   *            its zero eigenvalues are at the lower part of the diagonal.
    * @tparam Derived Matrix type (auto-deducible).
-   * @param[in] a Input Matrix
-   * @param[out] result Output, i.e. the Cholesky decomposition of a pseudo-inverse.
+   * @param[in] a Input Matrix, \f$A\f$.
+   * @param[out] result Output, \f$L\f$, i.e. the Cholesky decomposition of a pseudo-inverse, \f$A^{-1} = L L^*\f$.
    * @param[in] epsilon The tolerance.
    * @param[out] rank The rank, if of interest.
    * @return
    */
   template<typename Derived>
   static bool pseudoInverseSymmSqrt(
+      const Eigen::MatrixBase<Derived>&a,
+      const Eigen::MatrixBase<Derived>&result, double epsilon =
+          std::numeric_limits<typename Derived::Scalar>::epsilon(),
+      int* rank = NULL);
+
+  /**
+   * @brief Pseudo square root (Cholesky decomposition) of a symmetric matrix.
+   * @warning   This uses Eigen-decomposition, it assumes the input is symmetric positive semi-definite
+   *            (negative Eigenvalues are set to zero). Also if the input is positive semi-definite,
+   *            its zero eigenvalues are at the lower part of the diagonal.
+   * @tparam Derived Matrix type (auto-deducible).
+   * @param[in] a Input Matrix, \f$A\f$.
+   * @param[out] result Output, \f$L\f$, i.e. the Cholesky decomposition of a pseudo-inverse, \f$A = L L^*\f$.
+   * @param[in] epsilon The tolerance.
+   * @param[out] rank The rank, if of interest.
+   * @return
+   */
+  template<typename Derived>
+  static bool pseudoSymmSqrt(
       const Eigen::MatrixBase<Derived>&a,
       const Eigen::MatrixBase<Derived>&result, double epsilon =
           std::numeric_limits<typename Derived::Scalar>::epsilon(),
@@ -138,6 +198,39 @@ bool MatrixPseudoInverse::pseudoInverseSymmSqrt(
           Eigen::VectorXd(
               (saes.eigenvalues().array() > tolerance).select(
                   saes.eigenvalues().array().inverse(), 0)).array().sqrt())
+          .asDiagonal();
+
+  if (rank) {
+    *rank = 0;
+    for (int i = 0; i < a.rows(); ++i) {
+      if (saes.eigenvalues()[i] > tolerance)
+        (*rank)++;
+    }
+  }
+
+  return true;
+}
+
+template <typename Derived>
+bool MatrixPseudoInverse::pseudoSymmSqrt(
+    const Eigen::MatrixBase<Derived> &a,
+    const Eigen::MatrixBase<Derived> &result, double epsilon, int *rank) {
+
+  OKVIS_ASSERT_TRUE_DBG(Exception, a.rows() == a.cols(),
+                        "matrix supplied is not quadratic");
+
+  Eigen::SelfAdjointEigenSolver<Derived> saes(a);
+
+  typename Derived::Scalar tolerance =
+      epsilon * a.cols() * saes.eigenvalues().array().maxCoeff();
+
+  const_cast<Eigen::MatrixBase<Derived> &>(result) =
+      (saes.eigenvectors()) *
+      Eigen::VectorXd(
+          Eigen::VectorXd((saes.eigenvalues().array() > tolerance)
+                              .select(saes.eigenvalues().array(), 0))
+              .array()
+              .sqrt())
           .asDiagonal();
 
   if (rank) {

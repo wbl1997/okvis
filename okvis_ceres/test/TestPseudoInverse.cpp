@@ -1,12 +1,15 @@
+/**
+ * @file    TestPseudoInverse.cpp
+ * @brief   Unit test for MatrixPseudoInverse
+ * @author  Jianzhu Huai
+ */
+
 #include <gtest/gtest.h>
-#include <glog/logging.h>
 
 #include <msckf/VectorNormalizationJacobian.hpp>
 #include <okvis/kinematics/MatrixPseudoInverse.hpp>
-#include <okvis/ceres/MarginalizationError.hpp>
-#include <Eigen/Core>
 
-TEST(MarginalizationError, pseudoInverseSymmSqrtFullRank) {
+TEST(matrixTestSuite, pseudoInverseSymmSqrtFullRank) {
   double rootScale = 5;
   double scale = rootScale * rootScale;
   Eigen::Matrix3d lambda = Eigen::Matrix3d::Identity() * scale;
@@ -32,8 +35,8 @@ TEST(MarginalizationError, pseudoInverseSymmSqrtFullRank) {
 }
 
 class SimpleProjection {
- public:
-  SimpleProjection () {
+public:
+  SimpleProjection() {
     K << 600, 0, 320, 0, 600, 240, 0, 0, 1;
     Kinv << 1.0 / 600, 0, -320.0 / 600, 0, 1.0 / 600, -240.0 / 600, 0, 0, 1;
   }
@@ -43,14 +46,14 @@ class SimpleProjection {
    * @param uv
    * @param j d(u,v)/d(x,y)
    */
-  void projectWithJacobian(const Eigen::Vector3d& xy1, Eigen::Vector2d& uv,
-                           Eigen::Matrix<double, 2, 2>* j) const {
+  void projectWithJacobian(const Eigen::Vector3d &xy1, Eigen::Vector2d &uv,
+                           Eigen::Matrix<double, 2, 2> *j) const {
     uv = (K * xy1).head<2>();
     *j = K.topLeftCorner<2, 2>();
   }
 
-  void backProjectWithJacobian(const Eigen::Vector2d& uv, Eigen::Vector3d& xy1,
-                               Eigen::Matrix<double, 2, 2>* j) const {
+  void backProjectWithJacobian(const Eigen::Vector2d &uv, Eigen::Vector3d &xy1,
+                               Eigen::Matrix<double, 2, 2> *j) const {
     Eigen::Vector3d uv1;
     uv1 << uv, 1;
     xy1 = Kinv * uv1;
@@ -61,7 +64,7 @@ class SimpleProjection {
   Eigen::Matrix3d Kinv;
 };
 
-TEST(MarginalizationError, pseudoInverseSymmSqrt) {
+TEST(matrixTestSuite, pseudoInverseSymmSqrt) {
   Eigen::Vector2d uv = Eigen::Vector2d::Random();
   uv[0] *= 320;
   uv[1] *= 240;
@@ -122,4 +125,39 @@ TEST(MarginalizationError, pseudoInverseSymmSqrt) {
       << "eigen pinv\n"
       << pinv << "\nokvis pinv\n"
       << result;
+}
+
+TEST(matrixTestSuite, pseudoInverseSymmSqrtRankDeficient) {
+  Eigen::Matrix3d blindMatrix = Eigen::Matrix3d::Identity();
+  blindMatrix(1, 1) = 0;
+
+  Eigen::Matrix3d resultSqrt;
+  int rankSqrt;
+  okvis::MatrixPseudoInverse::pseudoSymmSqrt(
+      blindMatrix, resultSqrt, std::numeric_limits<double>::epsilon(),
+      &rankSqrt);
+
+  EXPECT_EQ(rankSqrt, 2);
+  EXPECT_LT((resultSqrt * resultSqrt.transpose() - blindMatrix)
+                .lpNorm<Eigen::Infinity>(),
+            1e-8)
+      << "actual sqrt\n"
+      << resultSqrt << "\nexpected sqrt\n"
+      << blindMatrix;
+}
+
+TEST(matrixTestSuite, testMatrixSqrt) {
+  for (int i = 0; i < 100; ++i) {
+    Eigen::Matrix<double, 3, 3> U;
+    U.setRandom();
+    Eigen::Matrix3d R =
+        U.transpose() * U + 5.0 * Eigen::Matrix<double, 3, 3>::Identity();
+    Eigen::MatrixXd sqrtR;
+    okvis::computeMatrixSqrt(R, sqrtR);
+    Eigen::MatrixXd reconstructedR = sqrtR * sqrtR.transpose();
+    EXPECT_LT((R - reconstructedR).lpNorm<Eigen::Infinity>(), 1e-9)
+        << "Large error in reconstructing the matrix from the square root in "
+           "iteration "
+        << i;
+  }
 }

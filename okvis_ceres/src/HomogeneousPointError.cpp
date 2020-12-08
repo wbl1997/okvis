@@ -38,6 +38,7 @@
 
 #include <okvis/ceres/HomogeneousPointError.hpp>
 #include <okvis/ceres/HomogeneousPointLocalParameterization.hpp>
+#include <okvis/kinematics/MatrixPseudoInverse.hpp>
 
 /// \brief okvis Main namespace of this package.
 namespace okvis {
@@ -61,10 +62,11 @@ HomogeneousPointError::HomogeneousPointError(
 // Construct with measurement and variance.
 void HomogeneousPointError::setInformation(const information_t & information) {
   information_ = information;
-  covariance_ = information.inverse();
+  MatrixPseudoInverse::pseudoInverseSymm(information, covariance_);
   // perform the Cholesky decomposition on order to obtain the correct error weighting
-  Eigen::LLT<information_t> lltOfInformation(information_);
-  _squareRootInformation = lltOfInformation.matrixL().transpose();
+  information_t L;
+  computeMatrixSqrt(information_, L);
+  _squareRootInformation = L.transpose();
 }
 
 // This evaluates the error term and additionally computes the Jacobians.
