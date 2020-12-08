@@ -998,8 +998,7 @@ void ThreadedKFVio::configureBackendAndFrontendPartly(okvis::VioParameters& para
   frontend_->setLandmarkTriangulationParameters(
       parameters.optimization.triangulationTranslationThreshold,
       parameters.optimization.triangulationMaxDepth);
-  estimator_->setInitialNavState(
-      InitialNavState(parameters.initialState));
+  estimator_->setInitialNavState(parameters.initialState);
   estimator_->setUseEpipolarConstraint(parameters.optimization.useEpipolarConstraint);
   estimator_->setCameraObservationModel(parameters.optimization.cameraObservationModelId);
   estimator_->setPointLandmarkOptions(parameters.pointLandmarkOptions);

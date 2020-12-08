@@ -8,8 +8,8 @@ InitialNavState::InitialNavState()
       p_WS(0, 0, 0),
       q_WS(1, 0, 0, 0),
       v_WS(0, 0, 0),
-      std_p_WS(0.01, 0.01, 0.01),
-      std_q_WS(M_PI / 180, M_PI / 180, 3 * M_PI / 180),
+      std_p_WS(1e-4, 1e-4, 1e-4),
+      std_q_WS(30 * M_PI / 180, 30 * M_PI / 180, 1e-4),
       std_v_WS(0.1, 0.1, 0.1) {}
 
 // v_WS, and std_v_WS are to be recalculated later according to updated p_WS and
@@ -29,6 +29,22 @@ void InitialNavState::updatePose(const okvis::kinematics::Transformation& T_WS,
   stateTime = state_time;
   p_WS = T_WS.r();
   q_WS = T_WS.q();
+}
+
+void InitialNavState::toInformation(
+    Eigen::Matrix<double, 6, 6> *information) const {
+  information->setZero();
+  Eigen::Vector3d positionVariance = std_p_WS.cwiseAbs2();
+  Eigen::Vector3d orientationVariance = std_q_WS.cwiseAbs2();
+  information->diagonal().head<3>() = positionVariance.cwiseInverse();
+  information->diagonal().tail<3>() = orientationVariance.cwiseInverse();
+}
+
+void InitialNavState::toCovariance(
+    Eigen::Matrix<double, 6, 6> *covariance) const {
+  covariance->setZero();
+  covariance->diagonal().head<3>() = std_p_WS.cwiseAbs2();
+  covariance->diagonal().tail<3>() = std_q_WS.cwiseAbs2();
 }
 
 InitialNavState& InitialNavState::operator=(const InitialNavState& other) {
