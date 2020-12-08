@@ -171,6 +171,10 @@ public:
     map.solve();
   }
 
+  /**
+   * @brief computeAnalyticPoseCovariance compute analytical covariance of the optimized pose.
+   * This implementation works because the landmarks and extrinsic parameters are fixed.
+   */
   void computeAnalyticPoseCovariance() {
     expectedMinimalPoseCov.setZero();
     int index = 0;

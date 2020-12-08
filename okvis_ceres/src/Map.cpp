@@ -980,8 +980,14 @@ bool Map::getParameterBlockMinimalCovariance(
 bool Map::computeNavStateCovariance(uint64_t poseId, uint64_t speedAndBiasId,
                                     Eigen::MatrixXd* cov) {
   ceres::MarginalizationError marginalizer(*this);
+  Map::ResidualBlockCollection poseResiduals = residuals(poseId);
+  const ::ceres::ResidualBlockId& priorityResidualId = poseResiduals.begin()->residualBlockId;
+  marginalizer.addResidualBlock(priorityResidualId, true);
   for (auto residualIdToSpec : residualBlockId2ResidualBlockSpec_Map_) {
     const ::ceres::ResidualBlockId& residualId = residualIdToSpec.first;
+    if (residualId == priorityResidualId) {
+      continue;
+    }
     marginalizer.addResidualBlock(residualId, true);
   }
 
