@@ -80,7 +80,7 @@ TEST(matrixTestSuite, pseudoInverseSymmSqrt) {
   msckf::VectorNormalizationJacobian normalJac(xy1);
   Eigen::Matrix3d dunit_dxy1;
   normalJac.dxi_dvec(&dunit_dxy1);
-  Eigen::Vector2d covuvDiagonal = Eigen::Vector2d::Random();
+  Eigen::Vector2d covuvDiagonal = Eigen::Vector2d::Random().cwiseAbs();
   covuvDiagonal[0] += 0.5;
   covuvDiagonal[1] += 0.5;
   Eigen::Matrix2d covuv = covuvDiagonal.asDiagonal();

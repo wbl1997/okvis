@@ -148,6 +148,7 @@ TEST(okvisTestSuite, Estimator) {
     estimator.addCameraParameterStds(extrinsicsEstimationParameters);
     estimator.addCameraParameterStds(extrinsicsEstimationParameters);
     estimator.addImu(imuParameters);
+    estimator.addCameraSystem(*cameraSystem);
     std::shared_ptr<okvis::MultiFrame> prevkeymf;
 
     const size_t K = 6;

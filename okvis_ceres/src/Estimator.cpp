@@ -1512,6 +1512,35 @@ bool Estimator::computeCovariance(Eigen::MatrixXd* cov) const {
   return mapPtr_->computeNavStateCovariance(poseId, speedAndBiasId, cov);
 }
 
+bool Estimator::computeCovarianceCeres(
+    Eigen::MatrixXd *cov, ::ceres::CovarianceAlgorithmType covAlgorithm) const {
+  uint64_t poseId = statesMap_.rbegin()->second.id;
+  uint64_t speedAndBiasId = statesMap_.rbegin()
+                                ->second.sensors.at(SensorStates::Imu)
+                                .at(0)
+                                .at(ImuSensorStates::SpeedAndBias)
+                                .id;
+  std::vector<
+      Eigen::Matrix<double, -1, -1, Eigen::RowMajor>,
+      Eigen::aligned_allocator<Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>>
+      covarianceBlockList;
+  bool status = mapPtr_->getParameterBlockMinimalCovariance(
+      {poseId, speedAndBiasId}, mapPtr_->problemUnsafe(), &covarianceBlockList,
+      covAlgorithm);
+  if (status) {
+    cov->resize(6 + 9, 6 + 9);
+    cov->topLeftCorner<6, 6>() = covarianceBlockList[0];
+    cov->topRightCorner<6, 9>() = covarianceBlockList[1];
+    cov->bottomLeftCorner<9, 6>() = covarianceBlockList[1].transpose();
+    cov->bottomRightCorner<9, 9>() = covarianceBlockList[2];
+  } else {
+    LOG(INFO)
+        << "The ceres::Covariance with SPARSE_QR often raises rank deficient "
+           "Jacobian exception because there are low-disparity landmarks.";
+  }
+  return status;
+}
+
 // getters
 bool Estimator::getStateStd(
     Eigen::Matrix<double, Eigen::Dynamic, 1>* stateStd) const {

@@ -118,7 +118,7 @@ public:
       ::ceres::ResidualBlockId id = map.addResidualBlock(
           cost_function, useCauchyLoss ? lossFunction.get() : nullptr, poseParameterBlock_ptr,
           homogeneousPointParameterBlock_ptr, extrinsicsParameterBlock_ptr);
-      OKVIS_ASSERT_TRUE(Exception,map.isJacobianCorrect(id),"wrong Jacobian");
+      EXPECT_TRUE(map.isJacobianCorrect(id)) <<"wrong Jacobian";
 
       if (i % 10 == 0) {
         if (i % 20 == 0)

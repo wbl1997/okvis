@@ -900,13 +900,14 @@ void Map::printMapInfo() const {
 
 bool Map::getParameterBlockMinimalCovariance(
     uint64_t parameterBlockId, ::ceres::Problem* problem,
-    Eigen::Matrix<double, -1, -1, Eigen::RowMajor>* param_covariance) const {
+    Eigen::Matrix<double, -1, -1, Eigen::RowMajor>* param_covariance,
+    ::ceres::CovarianceAlgorithmType covAlgorithm) const {
   if (!parameterBlockExists(parameterBlockId)) return false;
   std::shared_ptr<ParameterBlock> parameterBlock =
       id2ParameterBlock_Map_.find(parameterBlockId)->second;
   ::ceres::Covariance::Options covariance_options;
   //  covariance_options.sparse_linear_algebra_library_type = ::ceres::EIGEN_SPARSE;
-  covariance_options.algorithm_type = ::ceres::SPARSE_QR; // DENSE_SVD slow but handles rank deficiency.
+  covariance_options.algorithm_type = covAlgorithm;
   covariance_options.num_threads = 1;  // common::getNumHardwareThreads();
   covariance_options.min_reciprocal_condition_number = 1e-32;
   covariance_options.apply_loss_function = true;
@@ -932,7 +933,8 @@ bool Map::getParameterBlockMinimalCovariance(
     std::vector<Eigen::Matrix<double, -1, -1, Eigen::RowMajor>,
                 Eigen::aligned_allocator<
                     Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>>*
-        covarianceBlockList) const {
+        covarianceBlockList,
+    ::ceres::CovarianceAlgorithmType covAlgorithm) const {
   for (uint64_t blockId : parameterBlockIdList) {
     if (!parameterBlockExists(blockId)) {
       return false;
@@ -940,7 +942,7 @@ bool Map::getParameterBlockMinimalCovariance(
   }
 
   ::ceres::Covariance::Options covariance_options;
-  covariance_options.algorithm_type = ::ceres::SPARSE_QR;
+  covariance_options.algorithm_type = covAlgorithm;
   covariance_options.null_space_rank = -1;
   covariance_options.num_threads = 1;
   covariance_options.min_reciprocal_condition_number = 1e-32;
@@ -948,31 +950,41 @@ bool Map::getParameterBlockMinimalCovariance(
   ::ceres::Covariance covariance(covariance_options);
   std::vector<std::pair<const double*, const double*>> covariance_blocks;
 
-  for (uint64_t blockId : parameterBlockIdList) {
-    std::shared_ptr<ParameterBlock> parameterBlock =
-        id2ParameterBlock_Map_.find(blockId)->second;
-    covariance_blocks.push_back(std::make_pair(parameterBlock->parameters(),
-                                               parameterBlock->parameters()));
+  for (std::vector<uint64_t>::const_iterator cit = parameterBlockIdList.begin();
+       cit != parameterBlockIdList.end(); ++cit) {
+    std::shared_ptr<ParameterBlock> blocki =
+        id2ParameterBlock_Map_.find(*cit)->second;
+    for (std::vector<uint64_t>::const_iterator icit = cit;
+         icit != parameterBlockIdList.end(); ++icit) {
+      std::shared_ptr<ParameterBlock> blockj =
+          id2ParameterBlock_Map_.find(*icit)->second;
+      covariance_blocks.push_back(
+          std::make_pair(blocki->parameters(), blockj->parameters()));
+    }
   }
   if (!covariance.Compute(covariance_blocks, problem)) {
     printMapInfo();
     return false;
   }
-
-  covarianceBlockList->resize(parameterBlockIdList.size());
-  size_t blockIndex = 0;
+  covarianceBlockList->resize(parameterBlockIdList.size() *
+                              (parameterBlockIdList.size() + 1) / 2);
+  size_t covBlockIndex = 0u;
   for (std::vector<uint64_t>::const_iterator cit = parameterBlockIdList.begin();
-       cit != parameterBlockIdList.end(); ++cit, ++blockIndex) {
-    std::shared_ptr<ParameterBlock> parameterBlock =
+       cit != parameterBlockIdList.end(); ++cit) {
+    std::shared_ptr<ParameterBlock> blocki =
         id2ParameterBlock_Map_.find(*cit)->second;
-    size_t rows = parameterBlock->minimalDimension();
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        param_covariance(rows, rows);
-
-    covariance.GetCovarianceBlockInTangentSpace(parameterBlock->parameters(),
-                                                parameterBlock->parameters(),
-                                                param_covariance.data());
-    covarianceBlockList->at(blockIndex) = param_covariance;
+    size_t rows = blocki->minimalDimension();
+    for (std::vector<uint64_t>::const_iterator icit = cit;
+         icit != parameterBlockIdList.end(); ++icit, ++covBlockIndex) {
+      std::shared_ptr<ParameterBlock> blockj =
+          id2ParameterBlock_Map_.find(*icit)->second;
+      size_t cols = blockj->minimalDimension();
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+          param_covariance(rows, cols);
+      covariance.GetCovarianceBlockInTangentSpace(
+          blocki->parameters(), blockj->parameters(), param_covariance.data());
+      covarianceBlockList->at(covBlockIndex) = param_covariance;
+    }
   }
   return true;
 }
@@ -996,7 +1008,9 @@ bool Map::computeNavStateCovariance(uint64_t poseId, uint64_t speedAndBiasId,
     if (parameterBlockIdToPointer.second->fixed()) {
       continue;
     }
-    paramBlockIdSet.insert(parameterBlockIdToPointer.first);
+    // only use parameters that have at least one residual block.
+    if (id2ResidualBlock_Multimap_.count(parameterBlockIdToPointer.first))
+      paramBlockIdSet.insert(parameterBlockIdToPointer.first);
   }
   size_t foundPose = paramBlockIdSet.erase(poseId);
   size_t foundSpeedAndBias = paramBlockIdSet.erase(speedAndBiasId);

@@ -392,6 +392,16 @@ class Estimator : public VioBackendInterface
   virtual bool computeCovariance(Eigen::MatrixXd* cov) const;
 
   /**
+   * @brief computeCovarianceCeres compute covariance by ceres::Covariance.
+   * @param[out] cov covariance of p_WS, q_WS, v_WS, b_g, b_a.
+   * @param[in] covAlgorithm.
+   * @return true if covariance is computed successfully, false otherwise.
+   */
+  bool
+  computeCovarianceCeres(Eigen::MatrixXd *cov,
+                         ::ceres::CovarianceAlgorithmType covAlgorithm) const;
+
+  /**
    * @brief get std. dev. of state for nav state (p,q,v), imu(bg ba), and optionally
    * imu augmented intrinsic parameters, camera extrinsic, intrinsic, td, tr.
    * @param stateStd

@@ -360,16 +360,36 @@ class Map {
    */
   void printMapInfo() const;
 
+  /**
+   * @brief getParameterBlockMinimalCovariance
+   * @param parameterBlockId
+   * @param problem
+   * @param param_covariance Row Major covariance block for the parameter block.
+   * @param covAlgorithm SPARSE_QR or DENSE_SVD. DENSE_SVD is slow but handles rank deficient hessians.
+   * @return true if covariance is computed successfully, false otherwise.
+   */
   bool getParameterBlockMinimalCovariance(
-      uint64_t parameterBlockId, ::ceres::Problem* problem,
-      Eigen::Matrix<double, -1, -1, Eigen::RowMajor>* param_covariance) const;
+      uint64_t parameterBlockId, ::ceres::Problem *problem,
+      Eigen::Matrix<double, -1, -1, Eigen::RowMajor> *param_covariance,
+      ::ceres::CovarianceAlgorithmType covAlgorithm =
+          ::ceres::CovarianceAlgorithmType::SPARSE_QR) const;
 
+  /**
+   * @brief getParameterBlockMinimalCovariance
+   * @param parameterBlockIds
+   * @param problem
+   * @param covList list of Row Major covariance blocks for parameter block index pairs,
+   * (0, 0), (0, 1), ... (0, n-1), (1, 1), (1, 2), ....
+   * @param covAlgorithm SPARSE_QR or DENSE_SVD. DENSE_SVD is slow but handles rank deficient hessians.
+   * @return true if covariance is computed successfully, false otherwise.
+   */
   bool getParameterBlockMinimalCovariance(
-      const std::vector<uint64_t>& parameterBlockIds, ::ceres::Problem* problem,
+      const std::vector<uint64_t> &parameterBlockIds, ::ceres::Problem *problem,
       std::vector<Eigen::Matrix<double, -1, -1, Eigen::RowMajor>,
                   Eigen::aligned_allocator<
-                      Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>>* covList)
-      const;
+                      Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>> *covList,
+      ::ceres::CovarianceAlgorithmType covAlgorithm =
+          ::ceres::CovarianceAlgorithmType::SPARSE_QR) const;
 
   /**
    * @brief computeNavStateCovariance
