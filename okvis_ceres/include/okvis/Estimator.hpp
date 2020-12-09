@@ -389,12 +389,20 @@ class Estimator : public VioBackendInterface
     return -1;
   }
 
+  /**
+   * @brief computeCovariance compute covariance by okvis marginalization module
+   * which handles rank deficiency caused by low-disparity landmarks.
+   * @param cov covariance of p_WS, q_WS, v_WS, b_g, b_a.
+   * @return true if covariance is computed successfully, false otherwise.
+   */
   virtual bool computeCovariance(Eigen::MatrixXd* cov) const;
 
   /**
-   * @brief computeCovarianceCeres compute covariance by ceres::Covariance.
+   * @brief computeCovarianceCeres compute covariance by ceres::Covariance which
+   * can handle rank deficiency if DENSE_SVD is used.
    * @param[out] cov covariance of p_WS, q_WS, v_WS, b_g, b_a.
-   * @param[in] covAlgorithm.
+   * @param[in] covAlgorithm SPARSE_QR or DENSE_SVD. DENSE_SVD is slow but
+   * handles rank deficiency.
    * @return true if covariance is computed successfully, false otherwise.
    */
   bool
