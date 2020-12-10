@@ -168,7 +168,7 @@ void PointSharedData::removeExtraObservationsLegacy(
   auto itFrameIds = stateInfoForObservations_.begin();
   auto itRoi = imageNoise2dStdList->begin();
   size_t numPoses = stateInfoForObservations_.size();
-  for (size_t kale = 0; kale < numPoses; ++kale) {
+  for (size_t poseIndex = 0u; poseIndex < numPoses; ++poseIndex) {
     uint64_t poseId = itFrameIds->frameId;
     if (std::find(orderedSelectedFrameIds.begin(),
                   orderedSelectedFrameIds.end(),

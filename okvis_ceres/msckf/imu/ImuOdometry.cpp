@@ -944,7 +944,7 @@ int ImuOdometry::propagation_RungeKutta(
   Eigen::Vector3d p_WS_W = T_WS.r();
   Eigen::Quaterniond q_WS = T_WS.q();
 
-  bool bStarted = false;
+  bool hasStarted = false;
   int numUsedImuMeasurements = 0;
   auto iterLast = imuMeasurements.end();
   for (auto iter = imuMeasurements.begin(); iter != imuMeasurements.end();
@@ -954,8 +954,8 @@ int ImuOdometry::propagation_RungeKutta(
       continue;
     }
 
-    if (bStarted == false) {
-      bStarted = true;
+    if (hasStarted == false) {
+      hasStarted = true;
       if (iter->timeStamp >= finishTime)  // in case the interval of start and
                                           // finish time is very small
       {
@@ -1021,7 +1021,7 @@ int ImuOdometry::propagationBackward_RungeKutta(
   Eigen::Vector3d p_WS_W = T_WS.r();
   Eigen::Quaterniond q_WS = T_WS.q();
 
-  bool bStarted = false;
+  bool hasStarted = false;
   int numUsedImuMeasurements = 0;
   auto iterLast = imuMeasurements.rend();
   for (auto iter = imuMeasurements.rbegin(); iter != imuMeasurements.rend();
@@ -1031,8 +1031,8 @@ int ImuOdometry::propagationBackward_RungeKutta(
       continue;
     }
 
-    if (bStarted == false) {
-      bStarted = true;
+    if (hasStarted == false) {
+      hasStarted = true;
       if (iter->timeStamp <= finishTime)  // in case the interval of start and
                                           // finish time is very small
       {
