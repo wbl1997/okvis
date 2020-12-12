@@ -242,8 +242,8 @@ enum class EstimatorAlgorithm {
   Consistent,  ///< Consistent keyframe-based estimator.
   SlidingWindowSmoother, ///< Gtsam::FixedLagSmoother.
   RiSlidingWindowSmoother, ///< Gtsam::FixedLagSmoother with right invariant errors.
-  LiSlidingWindowSmoother, ///< Gtsam::FixedLagSmoother with left invariant errors.
-  MSCKF,  ///< MSCKF with first estimate Jacobians and second latest marginalization.
+  HybridFilter, ///< MSCKF + EKF-SLAM with first estimate Jacobians.
+  MSCKF,  ///< MSCKF with first estimate Jacobians and keyframe-based marginalization.
   TFVIO,  ///< Triangulate-free VIO with only epipolar constraints.
   InvariantEKF, ///< MSCKF with right invariant errors.
 };

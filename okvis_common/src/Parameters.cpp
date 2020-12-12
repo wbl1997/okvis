@@ -58,7 +58,7 @@ EstimatorAlgorithm EstimatorAlgorithmNameToId(std::string description) {
       {"INVARIANTEKF", EstimatorAlgorithm::InvariantEKF},
       {"SLIDINGWINDOWSMOOTHER", EstimatorAlgorithm::SlidingWindowSmoother},
       {"RISLIDINGWINDOWSMOOTHER", EstimatorAlgorithm::RiSlidingWindowSmoother},
-      {"LISLIDINGWINDOWSMOOTHER", EstimatorAlgorithm::LiSlidingWindowSmoother},
+      {"HYBRIDFILTER", EstimatorAlgorithm::HybridFilter},
   };
 
   auto iter = descriptionToId.find(description);
@@ -88,8 +88,8 @@ std::string EstimatorAlgorithmIdToName(EstimatorAlgorithm id) {
           {EstimatorAlgorithm::SlidingWindowSmoother, "SlidingWindowSmoother"},
           {EstimatorAlgorithm::RiSlidingWindowSmoother,
            "RiSlidingWindowSmoother"},
-          {EstimatorAlgorithm::LiSlidingWindowSmoother,
-           "LiSlidingWindowSmoother"}};
+          {EstimatorAlgorithm::HybridFilter,
+           "HybridFilter"}};
   auto iter = idToDescription.find(id);
   if (iter == idToDescription.end()) {
     return "OKVIS";
