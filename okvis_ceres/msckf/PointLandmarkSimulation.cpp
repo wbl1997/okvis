@@ -20,7 +20,6 @@ void PointLandmarkSimulation::projectLandmarksToNFrame(
     std::vector<size_t> lmk_indices;
     std::vector<cv::KeyPoint> keypoints;
     std::vector<int> frameKeypointIndices(homogeneousPoints.size(), -1);
-    // TODO(jhuai): consider the time offset and rolling shutter effect.
     for (size_t j = 0; j < homogeneousPoints.size(); ++j) {
       Eigen::Vector2d projection;
       Eigen::Vector4d point_C = cameraSystemRef->T_SC(i)->inverse() *

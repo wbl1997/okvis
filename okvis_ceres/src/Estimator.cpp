@@ -588,12 +588,13 @@ bool Estimator::applyMarginalizationStrategy(
         it->second.global[GlobalStates::T_WS].id);
 
     for (size_t r = 0; r < residuals.size(); ++r) {
-      if(std::dynamic_pointer_cast<ceres::PoseError>(
-           residuals[r].errorInterfacePtr)){ // avoids linearising initial pose error
-				mapPtr_->removeResidualBlock(residuals[r].residualBlockId);
-				reDoFixation = true;
-        continue;
-      }
+// jhuai: I don't see why avoiding linearising the initial pose error, and redo fixation leads to inconsistent covariance.
+//      if(std::dynamic_pointer_cast<ceres::PoseError>(
+//           residuals[r].errorInterfacePtr)){ // avoids linearising initial pose error
+//				mapPtr_->removeResidualBlock(residuals[r].residualBlockId);
+//				reDoFixation = true;
+//        continue;
+//      }
       std::shared_ptr<ceres::ReprojectionErrorBase> reprojectionError =
           std::dynamic_pointer_cast<ceres::ReprojectionErrorBase>(
           residuals[r].errorInterfacePtr);
