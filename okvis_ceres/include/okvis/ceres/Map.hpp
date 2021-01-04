@@ -392,11 +392,13 @@ class Map {
           ::ceres::CovarianceAlgorithmType::SPARSE_QR) const;
 
   /**
-   * @brief computeNavStateCovariance
-   * essentially it is a const member function.
-   * @return
+   * @brief computeNavStateCovariance compute covariance of the navigation state
+   * by using the first estimates for computing Jacobians.
+   * Note essentially it is a const member function.
+   * @return True if successful.
    */
   bool computeNavStateCovariance(uint64_t poseId, uint64_t speedAndBiasId,
+                                 ::ceres::ResidualBlockId marginalResidualId,
                                  Eigen::MatrixXd* cov);
 
   // Jacobian checker

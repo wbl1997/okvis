@@ -1503,14 +1503,14 @@ okvis::Time Estimator::removeState(uint64_t stateId) {
 }
 
 bool Estimator::computeCovariance(Eigen::MatrixXd* cov) const {
-  // variance for p_WB, q_WB, v_WB, bg, ba
   uint64_t poseId = statesMap_.rbegin()->second.id;
   uint64_t speedAndBiasId = statesMap_.rbegin()
                                 ->second.sensors.at(SensorStates::Imu)
                                 .at(0)
                                 .at(ImuSensorStates::SpeedAndBias)
                                 .id;
-  return mapPtr_->computeNavStateCovariance(poseId, speedAndBiasId, cov);
+  return mapPtr_->computeNavStateCovariance(poseId, speedAndBiasId,
+                                            marginalizationResidualId_, cov);
 }
 
 bool Estimator::computeCovarianceCeres(
