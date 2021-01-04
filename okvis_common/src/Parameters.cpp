@@ -119,7 +119,8 @@ Optimization::Optimization()
       triangulationTranslationThreshold(-1.0),
       triangulationMaxDepth(1000.0),
       useEpipolarConstraint(false),
-      cameraObservationModelId(0) {}
+      cameraObservationModelId(0),
+      getCovariance(false) {}
 
 FrontendOptions::FrontendOptions(bool initWithoutEnoughParallax,
                                  bool stereoWithEpipolarCheck,

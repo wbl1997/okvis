@@ -815,13 +815,6 @@ void ThreadedKFVio::optimizationLoop() {
           estimator_->oldestFrameTimestamp() + optimizedImageDelay - Estimator::half_window_;
 
       marginalizationTimer.start();
-      estimator_->setKeyframeRedundancyThresholds(
-          parameters_.optimization.translationThreshold,
-          parameters_.optimization.rotationThreshold,
-          parameters_.optimization.trackingRateThreshold,
-          parameters_.optimization.minTrackLength,
-          parameters_.optimization.numKeyframes,
-          parameters_.optimization.numImuFrames);
       estimator_->applyMarginalizationStrategy(
           parameters_.optimization.numKeyframes,
           parameters_.optimization.numImuFrames,
@@ -999,8 +992,7 @@ void ThreadedKFVio::configureBackendAndFrontendPartly(okvis::VioParameters& para
       parameters.optimization.triangulationTranslationThreshold,
       parameters.optimization.triangulationMaxDepth);
   estimator_->setInitialNavState(parameters.initialState);
-  estimator_->setUseEpipolarConstraint(parameters.optimization.useEpipolarConstraint);
-  estimator_->setCameraObservationModel(parameters.optimization.cameraObservationModelId);
+  estimator_->setOptimizationOptions(parameters.optimization);
   estimator_->setPointLandmarkOptions(parameters.pointLandmarkOptions);
   estimator_->setPoseGraphOptions(parameters.poseGraphOptions);
 

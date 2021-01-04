@@ -280,6 +280,7 @@ struct Optimization{
 
   bool useEpipolarConstraint;
   int cameraObservationModelId;
+  bool getCovariance;
 
   Optimization();
 };

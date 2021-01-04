@@ -435,7 +435,7 @@ class Estimator : public VioBackendInterface
   // return number of observations for a landmark in the landmark map
   size_t numObservations(uint64_t landmarkId) const;
 
-  size_t minTrackLength() const { return minTrackLength_; }
+  size_t minTrackLength() const { return optimizationOptions_.minTrackLength; }
 
   /**
    * @brief minimal dim of parameters of camera of index camIdx.
@@ -446,14 +446,6 @@ class Estimator : public VioBackendInterface
     return (fixCameraExtrinsicParams_[camIdx] ? 0 : camera_rig_.getMinimalExtrinsicDimen(camIdx)) +
            (fixCameraIntrinsicParams_[camIdx] ? 0 : camera_rig_.getMinimalProjectionDimen(camIdx) +
            camera_rig_.getDistortionDimen(camIdx)) + 2u;  // 2 for td and tr
-  }
-
-  int landmarkModelId() const {
-    return pointLandmarkOptions_.landmarkModelId;
-  }
-
-  int cameraObservationModelId() const {
-    return cameraObservationModelId_;
   }
 
   bool getImageDelay(uint64_t poseId, int camIdx, okvis::Duration *td) const;
@@ -579,20 +571,8 @@ class Estimator : public VioBackendInterface
      pvstd_ = rhs;
   }
 
-  virtual void setKeyframeRedundancyThresholds(double /*dist*/, double /*angle*/,
-                                               double /*trackingRate*/,
-                                               size_t minTrackLength,
-                                               size_t /*numKeyframes*/,
-                                               size_t /*numImuFrames*/) {
-    minTrackLength_ = minTrackLength;
-  }
-
-  void setUseEpipolarConstraint(bool use) {
-    useEpipolarConstraint_ = use;
-  }
-
-  void setCameraObservationModel(int cameraObservationModelId) {
-    cameraObservationModelId_ = cameraObservationModelId;
+  void setOptimizationOptions(const Optimization& optimizationOptions) {
+    optimizationOptions_ = optimizationOptions;
   }
 
   void setPointLandmarkOptions(const PointLandmarkOptions& plOptions) {
@@ -927,10 +907,6 @@ class Estimator : public VioBackendInterface
 
   std::vector<std::shared_ptr<okvis::LoopFrameAndMatches>> loopFrameAndMatchesList_;
 
-  // minimum track length for a feature track to be used in the estimator.
-  // It should be at least 3 for the track to be informative to the estimator.
-  size_t minTrackLength_;
-
   // whether camera intrinsic parameters will be estimated? If true,
   // the camera intrinsic parameter blocks (including distortion) will not be created.
   std::vector<bool> fixCameraIntrinsicParams_;
@@ -940,10 +916,7 @@ class Estimator : public VioBackendInterface
   // when the extrinsic noise is zero.
   std::vector<bool> fixCameraExtrinsicParams_;
 
-  // use epipolar constraints in case of low disparity or triangulation failure?
-  bool useEpipolarConstraint_;
-
-  int cameraObservationModelId_; // see CameraRig.hpp
+  Optimization optimizationOptions_;
 
   PointLandmarkOptions pointLandmarkOptions_; // see PointLandmarkModels.hpp
 

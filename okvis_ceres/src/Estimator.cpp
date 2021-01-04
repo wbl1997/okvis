@@ -62,10 +62,7 @@ Estimator::Estimator(
       referencePoseId_(0),
       cauchyLossFunctionPtr_(new ::ceres::CauchyLoss(1)),
       huberLossFunctionPtr_(new ::ceres::HuberLoss(1)),
-      marginalizationResidualId_(0),
-      minTrackLength_(3u),
-      useEpipolarConstraint_(false),
-      cameraObservationModelId_(0)
+      marginalizationResidualId_(0)
 {
 }
 
@@ -75,10 +72,7 @@ Estimator::Estimator()
       referencePoseId_(0),
       cauchyLossFunctionPtr_(new ::ceres::CauchyLoss(1)),
       huberLossFunctionPtr_(new ::ceres::HuberLoss(1)),
-      marginalizationResidualId_(0),
-      minTrackLength_(3u),
-      useEpipolarConstraint_(false),
-      cameraObservationModelId_(0)
+      marginalizationResidualId_(0)
 {
 }
 
@@ -588,13 +582,13 @@ bool Estimator::applyMarginalizationStrategy(
         it->second.global[GlobalStates::T_WS].id);
 
     for (size_t r = 0; r < residuals.size(); ++r) {
-// jhuai: I don't see why avoiding linearising the initial pose error, and redo fixation leads to inconsistent covariance.
-//      if(std::dynamic_pointer_cast<ceres::PoseError>(
-//           residuals[r].errorInterfacePtr)){ // avoids linearising initial pose error
-//				mapPtr_->removeResidualBlock(residuals[r].residualBlockId);
-//				reDoFixation = true;
-//        continue;
-//      }
+      // jhuai: redo fixation leads to inconsistent covariance.
+      if(!optimizationOptions_.getCovariance && std::dynamic_pointer_cast<ceres::PoseError>(
+           residuals[r].errorInterfacePtr)){ // avoids linearising initial pose error
+        mapPtr_->removeResidualBlock(residuals[r].residualBlockId);
+        reDoFixation = true;
+        continue;
+      }
       std::shared_ptr<ceres::ReprojectionErrorBase> reprojectionError =
           std::dynamic_pointer_cast<ceres::ReprojectionErrorBase>(
           residuals[r].errorInterfacePtr);
