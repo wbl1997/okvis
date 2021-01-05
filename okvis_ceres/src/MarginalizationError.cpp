@@ -254,16 +254,18 @@ bool MarginalizationError::addResidualBlock(
 
 #ifdef USE_NEW_LINEARIZATION_POINT
       // switch linearization point - easy to do on the linearized part...
-      size_t i = it->second;
-      Eigen::VectorXd Delta_Chi_i(parameterBlockInfos_[i].minimalDimension);
-      parameterBlockInfos_[i].parameterBlockPtr->minus(
-          parameterBlockInfos_[i].linearizationPoint.get(),
-          parameterBlockInfos_[i].parameterBlockPtr->parameters(),
-          Delta_Chi_i.data());
-      b0_ -=
-      H_.block(0,parameterBlockInfos_[i].orderingIdx,H_.rows(),parameterBlockInfos_[i].minimalDimension)*
-      Delta_Chi_i;
-      parameterBlockInfos_[i].resetLinearizationPoint( parameterBlockInfos_[i].parameterBlockPtr);
+      if (!parameterBlockSpec.second->fixed()) {
+        size_t i = it->second;
+        Eigen::VectorXd Delta_Chi_i(parameterBlockInfos_[i].minimalDimension);
+        parameterBlockInfos_[i].parameterBlockPtr->minus(
+            parameterBlockInfos_[i].linearizationPoint.get(),
+            parameterBlockInfos_[i].parameterBlockPtr->parameters(),
+            Delta_Chi_i.data());
+        b0_ -=
+        H_.block(0,parameterBlockInfos_[i].orderingIdx,H_.rows(),parameterBlockInfos_[i].minimalDimension)*
+        Delta_Chi_i;
+        parameterBlockInfos_[i].resetLinearizationPoint( parameterBlockInfos_[i].parameterBlockPtr);
+      }
 #endif
       info = parameterBlockInfos_.at(it->second);
     }
