@@ -91,6 +91,12 @@ class VioBackendInterface {
       const ExtrinsicsEstimationParameters& extrinsicsEstimationParameters) = 0;
 
   /**
+   * @brief addCameraSystem add the cameraSystem to the estimator.
+   * @param cameras
+   */
+  virtual void addCameraSystem(const okvis::cameras::NCameraSystem& cameras) = 0;
+
+  /**
    * @brief Add an IMU to the configuration.
    * @warning Currently there is only one IMU supported.
    * @param imuParameters The IMU parameters.
@@ -156,6 +162,10 @@ class VioBackendInterface {
    * @return True if successful.
    */
   virtual bool setOptimizationTimeLimit(double timeLimit, int minIterations) = 0;
+
+  virtual bool
+  applyMarginalizationStrategy(size_t numKeyframes, size_t numImuFrames,
+                               okvis::MapPointVector &removedLandmarks) = 0;
 
   /**
    * @brief Checks whether the landmark is added to the estimator.

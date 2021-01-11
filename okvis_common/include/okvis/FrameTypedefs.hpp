@@ -205,22 +205,14 @@ struct MapPoint
   {
   }
   uint64_t id;            ///< ID of the point. E.g. landmark ID.
-  Eigen::Vector4d pointHomog;  ///< Homogeneous coordinate of the point.
-  /// In okvis, msckf, it is always hp_W, in hybridfilter, it is either
-  /// hp_W or hp_A (anchor camera frame) depending on anchorStateId==0 or not
+  Eigen::Vector4d pointHomog;  ///< Homogeneous coordinate of the point in the World frame.
+
   double quality;         ///< Quality of the point. Usually between 0 and 1.
   double distance;        ///< Distance to origin of the frame the coordinates are given in.
   std::map<okvis::KeypointIdentifier, uint64_t> observations;   ///< Observations of this point.
 
-  uint64_t anchorStateId;  ///< id of the state onto which the inverse depth
-  /// parameterization of this point anchors,
-  /// if 0, means not anchored or included in the states yet, if positive,
-  /// anchored the anchored camera id in the camera cluster is always 0
-  Eigen::Quaterniond q_GA;  ///< the quaternion from the nominal anchor camera
-  /// frame to the global frame,
-  Eigen::Vector3d p_BA_G;  ///< position of the anchor camera frame in the body
-  /// frame expressed in the global frame
-  /// it is fixed since initialization unless anchor changes
+  uint64_t anchorStateId;
+  size_t anchorCameraId;
 
   ResidualizeCase residualizeCase;
   bool usedForUpdate; // a point not in states has some observations used for MSCKF update

@@ -3,6 +3,7 @@
 
 // adapted from maplab/aslam_cv2/aslam_cv_common/include/aslam/common/memory.h
 
+#include <deque>
 #include <functional>
 #include <map>
 #include <memory>
@@ -14,11 +15,12 @@
 #include <Eigen/Core>
 #include <Eigen/StdVector>
 
-template <template <typename, typename> class Container, typename Type>
-using Aligned = Container<Type, Eigen::aligned_allocator<Type>>;
-
+namespace Eigen {
 template <typename Type>
 using AlignedVector = std::vector<Type, Eigen::aligned_allocator<Type>>;
+
+template <typename T>
+using AlignedDeque = std::deque<T, Eigen::aligned_allocator<T>>;
 
 template <typename KeyType, typename ValueType>
 using AlignedMap =
@@ -39,6 +41,6 @@ template <typename Type>
 using AlignedUnorderedSet =
     std::unordered_set<Type, std::hash<Type>, std::equal_to<Type>,
                        Eigen::aligned_allocator<Type>>;
+} // namespace Eigen
 
-#endif  // ASLAM_COMMON_MEMORY_H_
-
+#endif // ASLAM_COMMON_MEMORY_H_

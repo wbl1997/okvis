@@ -45,7 +45,7 @@ class MultipleTransformPointJacobian {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   MultipleTransformPointJacobian() {}
   MultipleTransformPointJacobian(
-      const AlignedVector<okvis::kinematics::Transformation>& transformList,
+      const Eigen::AlignedVector<okvis::kinematics::Transformation>& transformList,
       const std::vector<int>& exponentList, const Eigen::Vector4d& point)
       : transformList_(transformList),
         exponentList_(exponentList),
@@ -56,7 +56,7 @@ class MultipleTransformPointJacobian {
   }
 
   MultipleTransformPointJacobian(
-      const AlignedVector<okvis::kinematics::Transformation>& transformList,
+      const Eigen::AlignedVector<okvis::kinematics::Transformation>& transformList,
       const std::vector<int>& exponentList, const Eigen::Vector4d& point,
       std::shared_ptr<TransformPointJacobian> tpj,
       std::shared_ptr<InverseTransformPointJacobian> itpj)
@@ -69,7 +69,7 @@ class MultipleTransformPointJacobian {
   }
 
   void initialize(
-      const AlignedVector<okvis::kinematics::Transformation>& transformList,
+      const Eigen::AlignedVector<okvis::kinematics::Transformation>& transformList,
       const std::vector<int>& exponentList, const Eigen::Vector4d& point) {
     transformList_ = transformList;
     exponentList_ = exponentList;
@@ -80,7 +80,7 @@ class MultipleTransformPointJacobian {
   }
 
   void initialize(
-      const AlignedVector<okvis::kinematics::Transformation>& transformList,
+      const Eigen::AlignedVector<okvis::kinematics::Transformation>& transformList,
       const std::vector<int>& exponentList, const Eigen::Vector4d& point,
       std::shared_ptr<TransformPointJacobian> tpj,
       std::shared_ptr<InverseTransformPointJacobian> itpj) {
@@ -119,7 +119,7 @@ class MultipleTransformPointJacobian {
 
  private:
   // input
-  AlignedVector<okvis::kinematics::Transformation>
+  Eigen::AlignedVector<okvis::kinematics::Transformation>
       transformList_;              // T1, T2, ... Tk
   std::vector<int> exponentList_;  // a_1, a_2, ..., a_k
   Eigen::Vector4d point_;
@@ -130,7 +130,7 @@ class MultipleTransformPointJacobian {
   // output
   // The cumulative transforms are: I, T1^{a_1}, T1^{a_1} * T2^{a_2}, ...,
   // T1^{a_1} * T2^{a_2} *... * Tk^{a_k}
-  AlignedVector<TransformPointJacobianNode> transformJacobianList_;
+  Eigen::AlignedVector<TransformPointJacobianNode> transformJacobianList_;
 };
 } // okvis
 #endif // INCLUDE_MSCKF_MULTIPLE_TRANSFORM_POINT_JACOBIAN_HPP

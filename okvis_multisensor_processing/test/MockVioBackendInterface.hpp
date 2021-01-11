@@ -45,6 +45,9 @@ class MockVioBackendInterface : public VioBackendInterface {
  public:
   MOCK_METHOD1(addCameraParameterStds,
       int(const ExtrinsicsEstimationParameters & extrinsicsEstimationParameters));
+
+  MOCK_METHOD1(addCameraSystem, void(const okvis::cameras::NCameraSystem& cameras));
+
   MOCK_METHOD1(addImu,
       int(const ImuParameters & imuParameters));
   MOCK_METHOD0(clearCameras,
