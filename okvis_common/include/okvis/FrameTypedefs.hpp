@@ -157,14 +157,40 @@ struct Match
 };
 typedef std::vector<Match> Matches;
 
-// each landmark's case of residualizing
-// MSCKF only handles the first two cases
-enum ResidualizeCase {
-  NotInState_NotTrackedNow = 0, // a point not in the states is not tracked in current frame
-  NotToAdd_TrackedNow, // a point not in states is tracked in current frame but not to be added to states
-  ToAdd_TrackedNow, // a point not in states is tracked in current frame and to be added to states
-  InState_NotTrackedNow, // a point in the states is not tracked in current frame
-  InState_TrackedNow, // a point in states is tracked in current frame
+struct FeatureTrackStatus {
+  enum MeasurementType {
+    kPremature = 0,
+    kMsckfTrack,
+    kSlamObservation,
+    kSlamInitialization
+  };
+
+  enum MeasurementFate {
+    kUndetermined = 0,
+    kSuccessful,
+    kComputingJacobiansFailed,
+    kPotentialOutlier,
+  };
+
+  FeatureTrackStatus()
+      : inState(false), numMissFrames(0u), measurementType(kPremature),
+        measurementFate(kUndetermined) {}
+
+  void updateTrackStat(bool observedInCurrentFrame) {
+    if (observedInCurrentFrame) {
+      numMissFrames = 0u;
+    } else {
+      ++numMissFrames;
+    }
+  }
+
+  bool inState;
+  size_t numMissFrames; // number of successive miss frames since its last
+                     // observing frame. For instance, if it is not observed in
+                     // the last and current frame, it would be 2.
+
+  MeasurementType measurementType;
+  MeasurementFate measurementFate;
 };
 
 /**
@@ -180,8 +206,7 @@ struct MapPoint
         quality(0.0),
         distance(0.0),
         anchorStateId(0),
-        residualizeCase(NotInState_NotTrackedNow),
-        usedForUpdate(false),
+        anchorCameraId(0u),
         initialized(false)
   {
   }
@@ -199,11 +224,50 @@ struct MapPoint
         quality(quality),
         distance(distance),
         anchorStateId(0),
-        residualizeCase(NotInState_NotTrackedNow),
-        usedForUpdate(false),
+        anchorCameraId(0u),
         initialized(false)
   {
   }
+
+  bool trackedInCurrentFrame(uint64_t currentFrameId) const {
+    return observations.rbegin()->first.frameId == currentFrameId;
+  }
+
+  bool shouldRemove(size_t maxHibernationFrames) const {
+    bool toRemove(false);
+    if (status.measurementType == FeatureTrackStatus::kMsckfTrack &&
+        status.measurementFate == FeatureTrackStatus::kSuccessful) {
+      toRemove = true;
+    }
+    if (status.numMissFrames >= maxHibernationFrames) {
+      toRemove = true;
+    }
+    return toRemove;
+  }
+
+  bool shouldChangeAnchor(uint64_t minStateId) const {
+    return anchorStateId != 0u && anchorStateId < minStateId;
+  }
+
+  /**
+   * @brief goodForMarginalization Is this map point good to be used in the frame marginalization step?
+   * This checks if this map point's observations have been used earlier as measurements.
+   * @param minCulledFrames minimum frames to be culled in one frame marginalization step.
+   * @return true if the map point is good for marginalization.
+   */
+  bool goodForMarginalization(size_t minCulledFrames) const;
+
+  void updateStatus(uint64_t currentFrameId, size_t minTrackLengthForMsckf,
+                    size_t minTrackLengthForSlam);
+
+  void setMeasurementType(FeatureTrackStatus::MeasurementType measurementType) {
+    status.measurementType = measurementType;
+  }
+
+  void setMeasurementFate(FeatureTrackStatus::MeasurementFate measurementFate) {
+    status.measurementFate = measurementFate;
+  }
+
   uint64_t id;            ///< ID of the point. E.g. landmark ID.
   Eigen::Vector4d pointHomog;  ///< Homogeneous coordinate of the point in the World frame.
 
@@ -214,9 +278,8 @@ struct MapPoint
   uint64_t anchorStateId;
   size_t anchorCameraId;
 
-  ResidualizeCase residualizeCase;
-  bool usedForUpdate; // a point not in states has some observations used for MSCKF update
-  bool initialized; // is this landmark initialized in position? in effect identical to HomogeneousPointParameterBlock::initialized_.
+  FeatureTrackStatus status;
+  bool initialized; // is this landmark initialized in position?
 };
 
 typedef std::vector<MapPoint, Eigen::aligned_allocator<MapPoint> > MapPointVector;

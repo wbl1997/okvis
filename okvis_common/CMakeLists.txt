@@ -13,6 +13,7 @@ include_directories(${EIGEN_INCLUDE_DIR})
 
 # build the library
 add_library(${PROJECT_NAME} STATIC 
+  src/FrameTypedefs.cpp
   src/FullStateWithExtrinsicsAsCallback.cpp
   src/InitialNavState.cpp
   src/Parameters.cpp

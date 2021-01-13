@@ -115,7 +115,6 @@ Optimization::Optimization()
       translationThreshold(0.4),
       rotationThreshold(0.2618),
       trackingRateThreshold(0.5),
-      minTrackLength(3u),
       triangulationTranslationThreshold(-1.0),
       triangulationMaxDepth(1000.0),
       useEpipolarConstraint(false),
@@ -135,9 +134,20 @@ PoseGraphOptions::PoseGraphOptions()
     : maxOdometryConstraintForAKeyframe(3) {}
 
 PointLandmarkOptions::PointLandmarkOptions()
-    : landmarkModelId(0), anchorAtObservationTime(false) {}
+    : landmarkModelId(0),
+      minTrackLengthForMsckf(3u),
+      anchorAtObservationTime(false),
+      maxHibernationFrames(3u), minTrackLengthForSlam(11u) {}
 
-PointLandmarkOptions::PointLandmarkOptions(int lmkModelId, bool anchorAtObsTime)
-    : landmarkModelId(lmkModelId), anchorAtObservationTime(anchorAtObsTime) {}
+PointLandmarkOptions::PointLandmarkOptions(int lmkModelId,
+                                           size_t minMsckfTrackLength,
+                                           bool anchorAtObsTime,
+                                           size_t hibernationFrames,
+                                           size_t minSlamTrackLength)
+    : landmarkModelId(lmkModelId),
+      minTrackLengthForMsckf(minMsckfTrackLength),
+      anchorAtObservationTime(anchorAtObsTime),
+      maxHibernationFrames(hibernationFrames),
+      minTrackLengthForSlam(minSlamTrackLength) {}
 
 }  // namespace okvis

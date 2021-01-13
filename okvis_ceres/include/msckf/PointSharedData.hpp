@@ -68,7 +68,6 @@ class PointSharedData {
 
   PointSharedData() : status_(PointSharedDataState::Barebones) {}
 
-  // assume the observations are in the decreasing order of state age.
   void addKeypointObservation(
       const okvis::KeypointIdentifier& kpi,
       std::shared_ptr<const okvis::ceres::ParameterBlock> T_WBj_ptr,

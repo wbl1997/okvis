@@ -273,7 +273,7 @@ struct Optimization{
   double translationThreshold;
   double rotationThreshold;
   double trackingRateThreshold;
-  size_t minTrackLength;
+
   // parameter to check motion of a feature for triangulation.
   double triangulationTranslationThreshold;
   double triangulationMaxDepth;
@@ -309,11 +309,17 @@ struct FrontendOptions {
 
 struct PointLandmarkOptions {
   int landmarkModelId;
+  size_t minTrackLengthForMsckf;
   bool anchorAtObservationTime;  ///< body frame for anchor image is at
                                  ///< observation epoch or state epoch? It only
                                  ///< affects AIDP.
+  size_t maxHibernationFrames; ///< max number of miss frames, each frame has potentially many images.
+  size_t minTrackLengthForSlam;
+
   PointLandmarkOptions();
-  PointLandmarkOptions(int lmkModelId, bool anchorAtObsTime);
+  PointLandmarkOptions(int lmkModelId, size_t minMsckfTrackLength,
+                       bool anchorAtObsTime, size_t hibernationFrames,
+                       size_t minSlamTrackLength);
 };
 
 struct PoseGraphOptions {

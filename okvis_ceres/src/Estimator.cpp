@@ -934,7 +934,7 @@ void Estimator::optimize(size_t numIter, size_t /*numThreads*/,
   // update landmarks
   {
     for(auto it = landmarksMap_.begin(); it!=landmarksMap_.end(); ++it){
-      if (it->second.residualizeCase == InState_TrackedNow) {
+      if (it->second.status.inState) {
         Eigen::MatrixXd H(3, 3);
         mapPtr_->getLhs(it->first, H);
         Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> saes(H);
@@ -1156,7 +1156,7 @@ bool Estimator::setCameraSensorStates(
 bool Estimator::setLandmark(
     uint64_t landmarkId, const Eigen::Vector4d & landmark)
 {
-  if (landmarksMap_.at(landmarkId).residualizeCase == InState_TrackedNow) {
+  if (landmarksMap_.at(landmarkId).status.inState) {
   std::shared_ptr<ceres::ParameterBlock> parameterBlockPtr = mapPtr_
       ->parameterBlockPtr(landmarkId);
 #ifndef NDEBUG
@@ -1422,7 +1422,7 @@ bool Estimator::addReprojectionFactors() {
 
   for (PointMap::iterator pit = landmarksMap_.begin();
        pit != landmarksMap_.end(); ++pit) {
-    if (pit->second.residualizeCase == NotInState_NotTrackedNow) {
+    if (!pit->second.status.inState) {
       std::shared_ptr<okvis::ceres::HomogeneousPointParameterBlock>
           pointParameterBlock(new okvis::ceres::HomogeneousPointParameterBlock(
               pit->second.pointHomog, pit->first));
@@ -1431,7 +1431,7 @@ bool Estimator::addReprojectionFactors() {
         LOG(WARNING) << "Failed to add block for landmark " << pit->first;
         continue;
       }
-      pit->second.residualizeCase = InState_TrackedNow;
+      pit->second.status.inState = true;
     }
     // examine starting from the rear of a landmark's observations, add
     // reprojection factors for those with null residual pointers, terminate

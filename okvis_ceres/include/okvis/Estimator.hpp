@@ -434,7 +434,7 @@ class Estimator : public VioBackendInterface
   // return number of observations for a landmark in the landmark map
   size_t numObservations(uint64_t landmarkId) const;
 
-  size_t minTrackLength() const { return optimizationOptions_.minTrackLength; }
+  size_t minTrackLength() const { return pointLandmarkOptions_.minTrackLengthForMsckf; }
 
   /**
    * @brief minimal dim of parameters of camera of index camIdx.

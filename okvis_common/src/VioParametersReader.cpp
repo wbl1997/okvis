@@ -219,12 +219,7 @@ void parseOptimizationOptions(cv::FileNode optNode,
   } else {
     optParams->trackingRateThreshold = 0.5;
   }
-  if (optNode["minTrackLength"].isInt()) {
-    optParams->minTrackLength = static_cast<size_t>(
-        std::max(static_cast<int>(optNode["minTrackLength"]), 3));
-  } else {
-    optParams->minTrackLength = 3u;
-  }
+
   if (optNode["triangulationTranslationThreshold"].isReal()) {
     optNode["triangulationTranslationThreshold"] >>
         optParams->triangulationTranslationThreshold;
@@ -290,6 +285,12 @@ void parsePointLandmarkOptions(cv::FileNode plNode,
     plOptions->landmarkModelId = static_cast<int>(plNode["landmarkModelId"]);
   }
   LOG(INFO) << "Landmark model Id " << plOptions->landmarkModelId;
+  if (plNode["minTrackLength"].isInt()) {
+    plOptions->minTrackLengthForMsckf = static_cast<size_t>(
+        std::max(static_cast<int>(plNode["minTrackLength"]), 3));
+  } else {
+    plOptions->minTrackLengthForMsckf = 3u;
+  }
   parseBoolean(plNode["anchorAtObservationTime"],
                plOptions->anchorAtObservationTime);
   LOG(INFO)
