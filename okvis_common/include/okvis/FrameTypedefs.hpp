@@ -245,9 +245,15 @@ struct MapPoint
     return toRemove;
   }
 
-  bool shouldChangeAnchor(uint64_t minStateId) const {
-    return anchorStateId != 0u && anchorStateId < minStateId;
-  }
+  /**
+   * @brief shouldChangeAnchor should change the anchor frame of a landmark?
+   * @param sortedToRemoveStateIds
+   * @return 0 if the landmark is not parameterized with an anchor frame or the
+   * anchor frame is NOT one of the state variables to remove, otherwise, the
+   * candidate anchor frame id is returned.
+   */
+  uint64_t
+  shouldChangeAnchor(const std::vector<uint64_t> &sortedToRemoveStateIds) const;
 
   /**
    * @brief goodForMarginalization Is this map point good to be used in the frame marginalization step?
