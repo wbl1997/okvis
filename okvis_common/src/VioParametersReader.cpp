@@ -182,8 +182,7 @@ void parseInitialState(cv::FileNode initialStateNode,
             << std::endl;
 }
 
-void parseOptimizationOptions(cv::FileNode optNode,
-                                 Optimization* optParams) {
+void parseOptimizationOptions(cv::FileNode optNode, Optimization *optParams) {
   if (optNode["keyframeInsertionOverlapThreshold"].isReal()) {
     optNode["keyframeInsertionOverlapThreshold"] >>
         optParams->keyframeInsertionOverlapThreshold;
@@ -199,10 +198,8 @@ void parseOptimizationOptions(cv::FileNode optNode,
   if (optNode["algorithm"].isString()) {
     std::string description = (std::string)optNode["algorithm"];
     optParams->algorithm = okvis::EstimatorAlgorithmNameToId(description);
-    LOG(INFO) << "Algorithm " << description << " is used for estimation.";
   } else {
     optParams->algorithm = okvis::EstimatorAlgorithm::OKVIS;
-    LOG(INFO) << "Algorithm OKVIS::Estimator is used for estimation.";
   }
   if (optNode["keyframeTranslationThreshold"].isReal()) {
     optNode["keyframeTranslationThreshold"] >> optParams->translationThreshold;
@@ -219,7 +216,6 @@ void parseOptimizationOptions(cv::FileNode optNode,
   } else {
     optParams->trackingRateThreshold = 0.5;
   }
-
   if (optNode["triangulationTranslationThreshold"].isReal()) {
     optNode["triangulationTranslationThreshold"] >>
         optParams->triangulationTranslationThreshold;
@@ -227,22 +223,12 @@ void parseOptimizationOptions(cv::FileNode optNode,
     const double threshold = -1.0;
     optParams->triangulationTranslationThreshold = threshold;
   }
-  LOG(INFO) << "Translation threshold for feature triangulation is set to "
-            << optParams->triangulationTranslationThreshold;
   if (optNode["triangulationMaxDepth"].isReal()) {
     optNode["triangulationMaxDepth"] >>
         optParams->triangulationMaxDepth;
   }
-  LOG(INFO) << "Max depth in triangulation is set to "
-            << optParams->triangulationMaxDepth;
-
-  LOG(INFO) << "If MSCKF is used, number of cloned states is set to be the sum "
-               "of numKeyframes " << optParams->numKeyframes
-            << " and numImuFrames " << optParams->numImuFrames;
-
   optParams->useEpipolarConstraint = optParams->useEpipolarConstraint;
   parseBoolean(optNode["useEpipolarConstraint"], optParams->useEpipolarConstraint);
-  LOG(INFO) << "Use epipolar constraint? " << optParams->useEpipolarConstraint;
 
   if (optNode["cameraObservationModelId"].isInt()) {
     optParams->cameraObservationModelId =
@@ -250,9 +236,7 @@ void parseOptimizationOptions(cv::FileNode optNode,
   } else {
     optParams->cameraObservationModelId = 0;
   }
-  LOG(INFO) << "Camera observation model Id "
-            << optParams->cameraObservationModelId;
-
+  LOG(INFO) << optParams->toString("Optimization parameters: ");
 }
 
 void parseFrontendOptions(cv::FileNode frontendNode,
@@ -284,7 +268,7 @@ void parsePointLandmarkOptions(cv::FileNode plNode,
   if (plNode["landmarkModelId"].isInt()) {
     plOptions->landmarkModelId = static_cast<int>(plNode["landmarkModelId"]);
   }
-  LOG(INFO) << "Landmark model Id " << plOptions->landmarkModelId;
+
   if (plNode["minTrackLength"].isInt()) {
     plOptions->minTrackLengthForMsckf = static_cast<size_t>(
         std::max(static_cast<int>(plNode["minTrackLength"]), 3));
@@ -293,9 +277,22 @@ void parsePointLandmarkOptions(cv::FileNode plNode,
   }
   parseBoolean(plNode["anchorAtObservationTime"],
                plOptions->anchorAtObservationTime);
-  LOG(INFO)
-      << "Body frame for anchor image at observation epoch (or state epoch)? "
-      << plOptions->anchorAtObservationTime;
+
+  if (plNode["maxHibernationFrames"].isInt()) {
+    plOptions->maxHibernationFrames = static_cast<size_t>(
+        std::max(static_cast<int>(plNode["maxHibernationFrames"]), 1));
+  } else {
+    plOptions->maxHibernationFrames = 3u;
+  }
+
+  if (plNode["minTrackLengthForSlam"].isInt()) {
+    plOptions->minTrackLengthForSlam = static_cast<size_t>(
+        std::max(static_cast<int>(plNode["minTrackLengthForSlam"]), 3));
+  } else {
+    plOptions->minTrackLengthForSlam = 11u;
+  }
+
+  LOG(INFO) << plOptions->toString("Point landmark options: ");
 }
 
 void parsePoseGraphOptions(cv::FileNode pgNode, PoseGraphOptions* pgOptions) {

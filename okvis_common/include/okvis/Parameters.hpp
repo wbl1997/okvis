@@ -283,6 +283,8 @@ struct Optimization{
   bool getCovariance;
 
   Optimization();
+
+  std::string toString(std::string lead) const;
 };
 
 struct FrontendOptions {
@@ -320,6 +322,7 @@ struct PointLandmarkOptions {
   PointLandmarkOptions(int lmkModelId, size_t minMsckfTrackLength,
                        bool anchorAtObsTime, size_t hibernationFrames,
                        size_t minSlamTrackLength);
+  std::string toString(std::string lead) const;
 };
 
 struct PoseGraphOptions {

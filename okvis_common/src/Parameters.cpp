@@ -121,6 +121,18 @@ Optimization::Optimization()
       cameraObservationModelId(0),
       getCovariance(false) {}
 
+std::string Optimization::toString(std::string lead) const {
+  std::stringstream ss(lead);
+  ss << "Algorithm " << EstimatorAlgorithmIdToName(algorithm)
+     << " numKeyframes " << numKeyframes << " numImuFrames " << numImuFrames
+     << "\nTranslation threshold for feature triangulation "
+     << triangulationTranslationThreshold << " Max depth in triangulation "
+     << triangulationMaxDepth << "\nUse epipolar constraint? "
+     << useEpipolarConstraint << " Camera observation model Id "
+     << cameraObservationModelId;
+  return ss.str();
+}
+
 FrontendOptions::FrontendOptions(bool initWithoutEnoughParallax,
                                  bool stereoWithEpipolarCheck,
                                  double epipolarDistanceThresh,
@@ -149,5 +161,14 @@ PointLandmarkOptions::PointLandmarkOptions(int lmkModelId,
       anchorAtObservationTime(anchorAtObsTime),
       maxHibernationFrames(hibernationFrames),
       minTrackLengthForSlam(minSlamTrackLength) {}
+
+std::string PointLandmarkOptions::toString(std::string lead) const {
+  std::stringstream ss(lead);
+  ss << " model id " << landmarkModelId << " anchor at observation epoch (state epoch) ? "
+     << anchorAtObservationTime << "\n#hibernation frames "
+     << maxHibernationFrames << " track length for MSCKF "
+     << minTrackLengthForMsckf << " for SLAM " << minTrackLengthForSlam;
+  return ss.str();
+}
 
 }  // namespace okvis

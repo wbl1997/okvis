@@ -205,7 +205,7 @@ struct MapPoint
       : id(0),
         quality(0.0),
         distance(0.0),
-        anchorStateId(0),
+        anchorStateId(0u),
         anchorCameraId(0u),
         initialized(false)
   {
@@ -223,7 +223,7 @@ struct MapPoint
         pointHomog(point),
         quality(quality),
         distance(distance),
-        anchorStateId(0),
+        anchorStateId(0u),
         anchorCameraId(0u),
         initialized(false)
   {
