@@ -95,7 +95,7 @@ const Time TIME_MIN(0, 1);
  */
 void okvis_walltime(uint32_t& sec, uint32_t& nsec)
 #ifndef WIN32    
-                        throw (NoHighPerformanceTimersException)
+                        noexcept(false)
 #endif
 {
 #ifndef WIN32
