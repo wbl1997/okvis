@@ -2,10 +2,12 @@
 #define INCLUDE_MSCKF_SIMPLE_IMU_ODOMETRY_HPP_
 
 #include <Eigen/Core>
+#include <msckf/Measurements.hpp>
+
 #include <okvis/kinematics/Transformation.hpp>
 #include <okvis/kinematics/operators.hpp>
 #include <okvis/FrameTypedefs.hpp>
-#include <okvis/Measurements.hpp>
+#include <okvis/ImuMeasurements.hpp>
 #include <okvis/Variables.hpp>
 #include <okvis/assert_macros.hpp>
 
@@ -112,6 +114,78 @@ int predictStates(const okvis::GenericImuMeasurementDeque<Scalar> & imuMeasureme
     T_WS.first = r_new;
     speedBgBa. template head<3>()=v_new;
     return i;
+}
+
+/**
+ * @brief predictStates accumulate the rotation vector given gyro measurements.
+ * i.e., \f$ \int_{t_1}^{t_2} \hat{\omega} - \mathbf{b}_g \f$
+ */
+template <typename Scalar>
+int predictStates(
+    const std::deque<
+        okvis::Measurement<Eigen::Vector3d>,
+        Eigen::aligned_allocator<okvis::Measurement<Eigen::Vector3d>>>
+        &gyroMeasurements,
+    Eigen::Vector3d *rotVector, const Eigen::Matrix<Scalar, 3, 1> &gyroBias,
+    const okvis::Time t_start, const okvis::Time t_end) {
+  rotVector->setZero();
+  assert(gyroMeasurements.front().timeStamp <= t_start &&
+         gyroMeasurements.back().timeStamp >= t_end);
+
+  okvis::Time time = t_start;
+  okvis::Time end = t_end;
+  Scalar Delta_t = Scalar(0);
+  bool hasStarted = false;
+  int i = 0;
+  okvis::Time nexttime;
+  for (typename std::deque<okvis::Measurement<Eigen::Vector3d>,
+                           Eigen::aligned_allocator<okvis::Measurement<
+                               Eigen::Vector3d>>>::const_iterator it =
+           gyroMeasurements.begin();
+       it != gyroMeasurements.end(); ++it) {
+    Eigen::Matrix<Scalar, 3, 1> omega_S_0 = it->measurement;
+    Eigen::Matrix<Scalar, 3, 1> omega_S_1 = (it + 1)->measurement;
+    // time delta
+    if ((it + 1) == gyroMeasurements.end()) {
+      nexttime = t_end;
+    } else
+      nexttime = (it + 1)->timeStamp;
+
+    Scalar dt = (Scalar)(nexttime - time).toSec();
+    if (end < nexttime) {
+      Scalar interval = (Scalar)(nexttime - it->timeStamp).toSec();
+      nexttime = t_end;
+      dt = (Scalar)(nexttime - time).toSec();
+      if (dt == 0.0)
+        break;
+      const Scalar r = dt / interval;
+      omega_S_1 = ((Scalar(1.0) - r) * omega_S_0 + r * omega_S_1).eval();
+    }
+
+    if (dt <= Scalar(0.0)) {
+      continue;
+    }
+    Delta_t += dt;
+
+    if (!hasStarted) {
+      hasStarted = true;
+      const Scalar r = dt / ((Scalar)(nexttime - it->timeStamp).toSec());
+      omega_S_0 = (r * omega_S_0 + (Scalar(1.0) - r) * omega_S_1).eval();
+    }
+
+    // actual propagation
+    Eigen::Matrix<Scalar, 3, 1> w_est =
+        Scalar(0.5) * (omega_S_0 + omega_S_1) - gyroBias;
+    (*rotVector) += w_est * dt;
+
+    time = nexttime;
+    ++i;
+
+    if (nexttime == t_end)
+      break;
+  }
+  assert(nexttime == t_end);
+  return i;
 }
 
 // time_pair[0] timestamp of the provided state values. time_pair[0] >= time_pair[1],
