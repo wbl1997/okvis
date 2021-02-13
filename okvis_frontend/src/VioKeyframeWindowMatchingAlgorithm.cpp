@@ -506,12 +506,13 @@ void VioKeyframeWindowMatchingAlgorithm<CAMERA_GEOMETRY_T>::setBestMatch(
       //return;
     }
 
-    frameB_->setLandmarkId(camIdB_, indexB, lmIdA);
-    lmIdB = lmIdA;
     auto landmark = estimator_->getLandmarkUnsafe(lmIdA);
+    if (landmark.hasObservationInImage(mfIdB_, camIdB_)) {  // ensure no double observations...
+      return;
+    } else {
+      frameB_->setLandmarkId(camIdB_, indexB, lmIdA);
+      lmIdB = lmIdA;
 
-    // initialize in graph
-    if (!landmark.hasObservationInImage(mfIdB_, camIdB_)) {  // ensure no double observations...
       OKVIS_ASSERT_TRUE(Exception, estimator_->isLandmarkAdded(lmIdB),
                         "not added");
       estimator_->addObservation<camera_geometry_t>(lmIdB, mfIdB_, camIdB_,
