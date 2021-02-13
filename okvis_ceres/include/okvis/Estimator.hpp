@@ -222,6 +222,8 @@ class Estimator : public VioBackendInterface
    */
   bool setOptimizationTimeLimit(double timeLimit, int minIterations) override;
 
+  /// @name Getters for landmarks.
+  ///\{
   /**
    * @brief Checks whether the landmark is added to the estimator.
    * @param landmarkId The ID.
@@ -240,9 +242,6 @@ class Estimator : public VioBackendInterface
    * @return True if initialised.
    */
   bool isLandmarkInitialized(uint64_t landmarkId) const override;
-
-  /// @name Getters
-  ///\{
 
   /**
    * @brief Get a specific landmark's first observation.
@@ -278,6 +277,94 @@ class Estimator : public VioBackendInterface
    */
   size_t getLandmarks(okvis::MapPointVector & landmarks) const override;
 
+  /// @brief Get the number of landmarks in the estimator
+  /// \return The number of landmarks.
+  size_t numLandmarks() const override {
+    return landmarksMap_.size();
+  }
+
+  // return number of observations for a landmark in the landmark map
+  size_t numObservations(uint64_t landmarkId) const;
+
+  const okvis::MapPoint &getLandmarkUnsafe(uint64_t landmarkId) const;
+  ///@}
+
+  /// @name Operations on landmarks.
+  ///\{
+  /// @brief Set the homogeneous coordinates for a landmark.
+  /// @param[in] landmarkId The landmark ID.
+  /// @param[in] landmark Homogeneous coordinates of landmark in W-frame.
+  /// @return True if successful.
+  bool setLandmark(uint64_t landmarkId, const Eigen::Vector4d & landmark) override;
+
+  /// @brief Set the landmark initialization state.
+  /// @param[in] landmarkId The landmark ID.
+  /// @param[in] initialized Whether or not initialised.
+  void setLandmarkInitialized(uint64_t landmarkId, bool initialized) override;
+
+  /**
+   * @brief for a landmark, remove its existing epipolar constraints, add all
+   * its observations as reprojection errors.
+   *   The head tail two view constraint scheme is assumed.
+   * So each observation except for the head obs records the matching
+   * residual block Id. The head obs has a residual block Id 0.
+   *   thread unsafe, call it when the estimator is protected by the estimator_mutex_.
+   * @param lmId ID of landmark.
+   */
+  template <class GEOMETRY_TYPE>
+  bool replaceEpipolarWithReprojectionErrors(uint64_t lmId);
+
+  /**
+   * @brief merge two landmarks: fuse the shorter feature track to the longer,
+   * replace residuals of the shorter feature track,
+   * also reset landmark ids for relevant keypoints in multiframes.
+   */
+  template<class GEOMETRY_TYPE>
+  uint64_t mergeTwoLandmarks(uint64_t lmIdA, uint64_t lmIdB);
+
+  /**
+   * @brief add the input keypoint as an observation to the landmark and add an
+   * epipolar constraint between the input keypoint and its first obs. Assume
+   * the same camIdx for the two keypoints. thread unsafe, call it when the
+   * estimator is protected by the estimator_mutex_.
+   * @param lmId ID of landmark.
+   * @param removeExisting remove existing epipolar constraints for this
+   * landmark.
+   */
+  template <class GEOMETRY_TYPE>
+  bool addEpipolarConstraint(uint64_t landmarkId, uint64_t poseId,
+                             size_t camIdx, size_t keypointIdx,
+                             bool removeExisting);
+
+  /**
+   * @brief addReprojectionFactors add reprojection factors for all observations
+   * of landmarks whose residuals are NULL.
+   *
+   * OKVIS original frontend finds feature matches and immediately adds
+   * reprojection factors to the ceres problem for all landmarks that can be
+   * triangulated with a small chi2 cost, even when they are at infinity.
+   * That is, every landmark in landmarksMap_ is accounted for in the optimizer.
+   *
+   * jhuai cuts the procedure into two steps, renewing the feature tracks with
+   * feature matches done in the frontend, and adding reprojection factors to
+   * the ceres problem done in Estimator::optimize(). This function carries out
+   * the latter step.
+   *
+   * @attention This function considers implications from mergeTwoLandmarks
+   * and replaceEpipolarWithReprojectionErrors, and addEpipolarConstraint.
+   *
+   * @warning But this function interferes with cases arising from
+   * addObservation in using epipolar constraints, i.e., all
+   * observations of a landmark are not asscoiated with any residual prior to
+   * forming an epipolar factor for the landmark.
+   *
+   * @return
+   */
+  bool addReprojectionFactors();
+  ///@}
+
+  /// @name Getters
+  ///\{
   /**
    * @brief Get a multiframe.
    * @param frameId ID of desired multiframe.
@@ -324,12 +411,6 @@ class Estimator : public VioBackendInterface
   /// \return The number of frames.
   size_t numFrames() const override {
     return statesMap_.size();
-  }
-
-  /// @brief Get the number of landmarks in the estimator
-  /// \return The number of landmarks.
-  size_t numLandmarks() const override {
-    return landmarksMap_.size();
   }
 
   /// @brief Get the ID of the current keyframe.
@@ -430,9 +511,6 @@ class Estimator : public VioBackendInterface
   virtual void printTrackLengthHistogram(std::ostream& /*stream*/) const {}
 
   bool getFrameId(uint64_t poseId, int & frameIdInSource, bool & isKF) const;
-
-  // return number of observations for a landmark in the landmark map
-  size_t numObservations(uint64_t landmarkId) const;
 
   size_t minTrackLength() const { return pointLandmarkOptions_.minTrackLengthForMsckf; }
 
@@ -542,16 +620,6 @@ class Estimator : public VioBackendInterface
   bool setCameraSensorStates(uint64_t poseId, size_t cameraIdx,
                               const okvis::kinematics::Transformation & T_SCi) override;
 
-  /// @brief Set the homogeneous coordinates for a landmark.
-  /// @param[in] landmarkId The landmark ID.
-  /// @param[in] landmark Homogeneous coordinates of landmark in W-frame.
-  /// @return True if successful.
-  bool setLandmark(uint64_t landmarkId, const Eigen::Vector4d & landmark) override;
-
-  /// @brief Set the landmark initialization state.
-  /// @param[in] landmarkId The landmark ID.
-  /// @param[in] initialized Whether or not initialised.
-  void setLandmarkInitialized(uint64_t landmarkId, bool initialized) override;
 
   /// @brief Set whether a frame is a keyframe or not.
   /// @param[in] frameId The frame ID.
@@ -594,73 +662,6 @@ class Estimator : public VioBackendInterface
     loopFrameAndMatchesList_ = loopFrameAndMatchesList;
   }
   ///@}
-
-  /**
-   * @brief for a landmark, remove its existing epipolar constraints, add all
-   * its observations as reprojection errors.
-   *   The head tail two view constraint scheme is assumed.
-   * So each observation except for the head obs records the matching
-   * residual block Id. The head obs has a residual block Id 0.
-   *   thread unsafe, call it when the estimator is protected by the estimator_mutex_.
-   * @param lmId ID of landmark.
-   */
-  template <class GEOMETRY_TYPE>
-  bool replaceEpipolarWithReprojectionErrors(uint64_t lmId);
-
-  /**
-   * @brief merge two landmarks: fuse the shorter feature track to the longer,
-   * replace residuals of the shorter feature track,
-   * also reset landmark ids for relevant keypoints in multiframes.
-   */
-  template<class GEOMETRY_TYPE>
-  uint64_t mergeTwoLandmarks(uint64_t lmIdA, uint64_t lmIdB);
-
-  /**
-   * @brief add the input keypoint as an observation to the landmark and add an
-   * epipolar constraint between the input keypoint and its first obs. Assume
-   * the same camIdx for the two keypoints. thread unsafe, call it when the
-   * estimator is protected by the estimator_mutex_.
-   * @param lmId ID of landmark.
-   * @param removeExisting remove existing epipolar constraints for this
-   * landmark.
-   */
-  template <class GEOMETRY_TYPE>
-  bool addEpipolarConstraint(uint64_t landmarkId, uint64_t poseId,
-                             size_t camIdx, size_t keypointIdx,
-                             bool removeExisting);
-
-  /**
-   * @brief Add an observation to a landmark without adding residual, ONLY used
-   * when adding the head observation for two view constraints
-   */
-  bool addLandmarkObservation(uint64_t landmarkId, uint64_t poseId,
-                              size_t camIdx, size_t keypointIdx);
-
-  /**
-   * @brief addReprojectionFactors add reprojection factors for all observations
-   * of landmarks whose residuals are NULL.
-   *
-   * OKVIS original frontend finds feature matches and immediately adds
-   * reprojection factors to the ceres problem for all landmarks that can be
-   * triangulated with a small chi2 cost, even when they are at infinity.
-   * That is, every landmark in landmarksMap_ is accounted for in the optimizer.
-   *
-   * jhuai cuts the procedure into two steps, renewing the feature tracks with
-   * feature matches done in the frontend, and adding reprojection factors to
-   * the ceres problem done in Estimator::optimize(). This function carries out
-   * the latter step.
-   *
-   * @attention This function considers implications from mergeTwoLandmarks
-   * and replaceEpipolarWithReprojectionErrors, and addEpipolarConstraint.
-   *
-   * @warning But this function interferes with cases arising from
-   * addLandmarkObservation in using epipolar constraints, i.e., all
-   * observations of a landmark are not asscoiated with any residual prior to
-   * forming an epipolar factor for the landmark.
-   *
-   * @return
-   */
-  bool addReprojectionFactors();
 
   template<class PARAMETER_BLOCK_T>
   bool getSensorStateEstimateAs(uint64_t poseId, int sensorIdx, int sensorType,

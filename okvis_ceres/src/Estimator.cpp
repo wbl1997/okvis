@@ -1398,22 +1398,8 @@ bool Estimator::getLandmarkHeadObs(uint64_t landmarkId,
   return true;
 }
 
-// Add an observation to a landmark without adding residual to the ceres solver
-bool Estimator::addLandmarkObservation(uint64_t landmarkId, uint64_t poseId,
-                                          size_t camIdx, size_t keypointIdx) {
-  OKVIS_ASSERT_TRUE_DBG(Exception, isLandmarkAdded(landmarkId),
-                        "landmark not added");
-  // avoid double observations
-  okvis::KeypointIdentifier kid(poseId, camIdx, keypointIdx);
-  if (landmarksMap_.at(landmarkId).observations.find(kid) !=
-      landmarksMap_.at(landmarkId).observations.end()) {
-    return false;
-  }
-
-  landmarksMap_.at(landmarkId)
-      .observations.emplace(
-          kid, 0u);
-  return true;
+const okvis::MapPoint &Estimator::getLandmarkUnsafe(uint64_t landmarkId) const {
+  return landmarksMap_.at(landmarkId);
 }
 
 bool Estimator::addReprojectionFactors() {

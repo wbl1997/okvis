@@ -274,6 +274,14 @@ struct MapPoint
     status.measurementFate = measurementFate;
   }
 
+  bool hasObservationInImage(uint64_t frameId, size_t cameraId) const {
+    auto iter = observations.lower_bound(okvis::KeypointIdentifier(frameId, cameraId, 0u));
+    if (iter != observations.end() && iter->first.frameId == frameId && iter->first.cameraIndex == cameraId) {
+      return true;
+    }
+    return false;
+  }
+
   uint64_t id;            ///< ID of the point. E.g. landmark ID.
   Eigen::Vector4d pointHomog;  ///< Homogeneous coordinate of the point in the World frame.
 

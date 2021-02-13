@@ -433,9 +433,8 @@ void VioKeyframeWindowMatchingAlgorithm<CAMERA_GEOMETRY_T>::setBestMatch(
                         lmId<<" not added, bug");
       estimator_->setLandmarkInitialized(lmId, canBeInitialized);
     } else {
-
       // update initialization status, set better estimate, if possible
-      // jhuai checks if the landmark has been initialized before initializing again
+      // jhuai: check if the landmark has been initialized before initializing again
       // so as to avoid reverting better estimates obtained in optimization.
       if (!estimator_->isLandmarkInitialized(lmId) && canBeInitialized) {
         estimator_->setLandmarkInitialized(lmId, true);
@@ -444,11 +443,9 @@ void VioKeyframeWindowMatchingAlgorithm<CAMERA_GEOMETRY_T>::setBestMatch(
     }
 
     // in image A
-    okvis::MapPoint landmark;
-    if (insertA
-        && landmark.observations.find(
-            okvis::KeypointIdentifier(mfIdA_, camIdA_, indexA))
-            == landmark.observations.end()) {  // ensure no double observations...
+    auto landmarkRef = estimator_->getLandmarkUnsafe(lmId);
+    bool observedEarlierA = landmarkRef.hasObservationInImage(mfIdA_, camIdA_);
+    if (insertA && !observedEarlierA) {  // ensure no double observations...
             // TODO hp_Sa NOT USED!
       Eigen::Vector4d hp_Sa(T_SaCa_ * hP_Ca);
       hp_Sa.normalize();
@@ -462,10 +459,8 @@ void VioKeyframeWindowMatchingAlgorithm<CAMERA_GEOMETRY_T>::setBestMatch(
     }
 
     // in image B
-    if (insertB
-        && landmark.observations.find(
-            okvis::KeypointIdentifier(mfIdB_, camIdB_, indexB))
-            == landmark.observations.end()) {  // ensure no double observations...
+    bool observedEarlierB = landmarkRef.hasObservationInImage(mfIdB_, camIdB_);
+    if (insertB && !observedEarlierB) {  // ensure no double observations...
       Eigen::Vector4d hp_Sb(T_SbCb_ * T_CbCa_ * hP_Ca);
       hp_Sb.normalize();
       frameB_->setLandmarkId(camIdB_, indexB, lmId);
@@ -513,13 +508,10 @@ void VioKeyframeWindowMatchingAlgorithm<CAMERA_GEOMETRY_T>::setBestMatch(
 
     frameB_->setLandmarkId(camIdB_, indexB, lmIdA);
     lmIdB = lmIdA;
-    okvis::MapPoint landmark;
-    estimator_->getLandmark(lmIdA, landmark);
+    auto landmark = estimator_->getLandmarkUnsafe(lmIdA);
 
     // initialize in graph
-    if (landmark.observations.find(
-        okvis::KeypointIdentifier(mfIdB_, camIdB_, indexB))
-        == landmark.observations.end()) {  // ensure no double observations...
+    if (!landmark.hasObservationInImage(mfIdB_, camIdB_)) {  // ensure no double observations...
       OKVIS_ASSERT_TRUE(Exception, estimator_->isLandmarkAdded(lmIdB),
                         "not added");
       estimator_->addObservation<camera_geometry_t>(lmIdB, mfIdB_, camIdB_,
