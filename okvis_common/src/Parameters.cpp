@@ -164,7 +164,7 @@ PointLandmarkOptions::PointLandmarkOptions(int lmkModelId,
 
 std::string PointLandmarkOptions::toString(std::string lead) const {
   std::stringstream ss(lead);
-  ss << " model id " << landmarkModelId << " anchor at observation epoch (state epoch) ? "
+  ss << "Landmark model id " << landmarkModelId << " anchor at observation epoch (state epoch) ? "
      << anchorAtObservationTime << "\n#hibernation frames "
      << maxHibernationFrames << " track length for MSCKF "
      << minTrackLengthForMsckf << " for SLAM " << minTrackLengthForSlam;

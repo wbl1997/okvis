@@ -311,7 +311,6 @@ class Estimator : public VioBackendInterface
    *   thread unsafe, call it when the estimator is protected by the estimator_mutex_.
    * @param lmId ID of landmark.
    */
-  template <class GEOMETRY_TYPE>
   bool replaceEpipolarWithReprojectionErrors(uint64_t lmId);
 
   /**
@@ -319,8 +318,7 @@ class Estimator : public VioBackendInterface
    * replace residuals of the shorter feature track,
    * also reset landmark ids for relevant keypoints in multiframes.
    */
-  template<class GEOMETRY_TYPE>
-  uint64_t mergeTwoLandmarks(uint64_t lmIdA, uint64_t lmIdB);
+  virtual uint64_t mergeTwoLandmarks(uint64_t lmIdA, uint64_t lmIdB);
 
   /**
    * @brief add the input keypoint as an observation to the landmark and add an

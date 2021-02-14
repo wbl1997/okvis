@@ -420,7 +420,7 @@ void StereoMatchingAlgorithm<CAMERA_GEOMETRY_T>::setBestMatch(
       if (lmIdA == lmIdB) {
         return;
       } else {
-        estimator_->mergeTwoLandmarks<camera_geometry_t>(lmIdA, lmIdB);
+        estimator_->mergeTwoLandmarks(lmIdA, lmIdB);
         return;
       }
     }
