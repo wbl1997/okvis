@@ -170,6 +170,7 @@ struct FeatureTrackStatus {
     kSuccessful,
     kComputingJacobiansFailed,
     kPotentialOutlier,
+    kWaitToState,
   };
 
   FeatureTrackStatus()

@@ -146,28 +146,27 @@ PoseGraphOptions::PoseGraphOptions()
     : maxOdometryConstraintForAKeyframe(3) {}
 
 PointLandmarkOptions::PointLandmarkOptions()
-    : landmarkModelId(0),
-      minTrackLengthForMsckf(3u),
-      anchorAtObservationTime(false),
-      maxHibernationFrames(3u), minTrackLengthForSlam(11u) {}
+    : landmarkModelId(0), minTrackLengthForMsckf(3u),
+      anchorAtObservationTime(false), maxHibernationFrames(3u),
+      minTrackLengthForSlam(11u), maxInStateLandmarks(50) {}
 
-PointLandmarkOptions::PointLandmarkOptions(int lmkModelId,
-                                           size_t minMsckfTrackLength,
-                                           bool anchorAtObsTime,
-                                           size_t hibernationFrames,
-                                           size_t minSlamTrackLength)
-    : landmarkModelId(lmkModelId),
-      minTrackLengthForMsckf(minMsckfTrackLength),
+PointLandmarkOptions::PointLandmarkOptions(
+    int lmkModelId, size_t minMsckfTrackLength, bool anchorAtObsTime,
+    size_t hibernationFrames, size_t minSlamTrackLength, int maxStateLandmarks)
+    : landmarkModelId(lmkModelId), minTrackLengthForMsckf(minMsckfTrackLength),
       anchorAtObservationTime(anchorAtObsTime),
       maxHibernationFrames(hibernationFrames),
-      minTrackLengthForSlam(minSlamTrackLength) {}
+      minTrackLengthForSlam(minSlamTrackLength),
+      maxInStateLandmarks(maxStateLandmarks) {}
 
 std::string PointLandmarkOptions::toString(std::string lead) const {
   std::stringstream ss(lead);
-  ss << "Landmark model id " << landmarkModelId << " anchor at observation epoch (state epoch) ? "
+  ss << "Landmark model id " << landmarkModelId
+     << " anchor at observation epoch (state epoch) ? "
      << anchorAtObservationTime << "\n#hibernation frames "
      << maxHibernationFrames << " track length for MSCKF "
-     << minTrackLengthForMsckf << " for SLAM " << minTrackLengthForSlam;
+     << minTrackLengthForMsckf << " for SLAM " << minTrackLengthForSlam
+     << ". Max landmarks in state " << maxInStateLandmarks;
   return ss.str();
 }
 

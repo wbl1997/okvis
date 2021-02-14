@@ -272,24 +272,24 @@ void parsePointLandmarkOptions(cv::FileNode plNode,
   if (plNode["minTrackLength"].isInt()) {
     plOptions->minTrackLengthForMsckf = static_cast<size_t>(
         std::max(static_cast<int>(plNode["minTrackLength"]), 3));
-  } else {
-    plOptions->minTrackLengthForMsckf = 3u;
   }
+
   parseBoolean(plNode["anchorAtObservationTime"],
                plOptions->anchorAtObservationTime);
 
   if (plNode["maxHibernationFrames"].isInt()) {
     plOptions->maxHibernationFrames = static_cast<size_t>(
         std::max(static_cast<int>(plNode["maxHibernationFrames"]), 1));
-  } else {
-    plOptions->maxHibernationFrames = 3u;
   }
 
   if (plNode["minTrackLengthForSlam"].isInt()) {
     plOptions->minTrackLengthForSlam = static_cast<size_t>(
         std::max(static_cast<int>(plNode["minTrackLengthForSlam"]), 3));
-  } else {
-    plOptions->minTrackLengthForSlam = 11u;
+  }
+
+  if (plNode["maxInStateLandmarks"].isInt()) {
+    plOptions->maxInStateLandmarks =
+        std::max(static_cast<int>(plNode["maxInStateLandmarks"]), 0);
   }
 
   LOG(INFO) << plOptions->toString("Point landmark options: ");
