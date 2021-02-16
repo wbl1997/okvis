@@ -292,6 +292,10 @@ void parsePointLandmarkOptions(cv::FileNode plNode,
         std::max(static_cast<int>(plNode["maxInStateLandmarks"]), 0);
   }
 
+  if (plNode["maxMarginalizedLandmarks"].isInt()) {
+    plOptions->maxMarginalizedLandmarks = static_cast<int>(plNode["maxMarginalizedLandmarks"]);
+  }
+
   LOG(INFO) << plOptions->toString("Point landmark options: ");
 }
 

@@ -148,16 +148,19 @@ PoseGraphOptions::PoseGraphOptions()
 PointLandmarkOptions::PointLandmarkOptions()
     : landmarkModelId(0), minTrackLengthForMsckf(3u),
       anchorAtObservationTime(false), maxHibernationFrames(3u),
-      minTrackLengthForSlam(11u), maxInStateLandmarks(50) {}
+      minTrackLengthForSlam(11u), maxInStateLandmarks(50),
+      maxMarginalizedLandmarks(50) {}
 
 PointLandmarkOptions::PointLandmarkOptions(
     int lmkModelId, size_t minMsckfTrackLength, bool anchorAtObsTime,
-    size_t hibernationFrames, size_t minSlamTrackLength, int maxStateLandmarks)
+    size_t hibernationFrames, size_t minSlamTrackLength, int maxStateLandmarks,
+    int maxMargedLandmarks)
     : landmarkModelId(lmkModelId), minTrackLengthForMsckf(minMsckfTrackLength),
       anchorAtObservationTime(anchorAtObsTime),
       maxHibernationFrames(hibernationFrames),
       minTrackLengthForSlam(minSlamTrackLength),
-      maxInStateLandmarks(maxStateLandmarks) {}
+      maxInStateLandmarks(maxStateLandmarks),
+      maxMarginalizedLandmarks(maxMargedLandmarks) {}
 
 std::string PointLandmarkOptions::toString(std::string lead) const {
   std::stringstream ss(lead);
@@ -166,7 +169,9 @@ std::string PointLandmarkOptions::toString(std::string lead) const {
      << anchorAtObservationTime << "\n#hibernation frames "
      << maxHibernationFrames << " track length for MSCKF "
      << minTrackLengthForMsckf << " for SLAM " << minTrackLengthForSlam
-     << ". Max landmarks in state " << maxInStateLandmarks;
+     << ". Max landmarks in state " << maxInStateLandmarks
+     << ", max landmarks marginalized in one update step "
+     << maxMarginalizedLandmarks << ".";
   return ss.str();
 }
 

@@ -318,11 +318,12 @@ struct PointLandmarkOptions {
   size_t maxHibernationFrames;   ///< max number of miss frames, each frame has potentially many images.
   size_t minTrackLengthForSlam;  ///< min track length of a landmark to be included in state.
   int maxInStateLandmarks;       ///< max number of landmarks in the state vector.
-
+  int maxMarginalizedLandmarks;  ///< max number of marginalized landmarks in one update step.
   PointLandmarkOptions();
   PointLandmarkOptions(int lmkModelId, size_t minMsckfTrackLength,
                        bool anchorAtObsTime, size_t hibernationFrames,
-                       size_t minSlamTrackLength, int maxInStateLandmarks);
+                       size_t minSlamTrackLength, int maxInStateLandmarks,
+                       int maxMarginalizedLandmarks);
   std::string toString(std::string lead) const;
 };
 
