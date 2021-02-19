@@ -402,8 +402,8 @@ size_t StereoMatchingAlgorithm<CAMERA_GEOMETRY_T>::numUncertainMatches() {
   return numUncertainMatches_;
 }
 
-// At the end of the matching step, this function is called once
-// for each pair of matches discovered.
+// This implementation is adapted from the Match2D2D branch of
+// VioKeyframeWindowMatchingAlgorithm::setBestMatch().
 template<class CAMERA_GEOMETRY_T>
 void StereoMatchingAlgorithm<CAMERA_GEOMETRY_T>::setBestMatch(
     size_t indexA, size_t indexB, double /*distance*/) {
@@ -412,165 +412,113 @@ void StereoMatchingAlgorithm<CAMERA_GEOMETRY_T>::setBestMatch(
   uint64_t lmIdA = frameA_->landmarkId(camIdA_, indexA);
   uint64_t lmIdB = frameB_->landmarkId(camIdB_, indexB);
 
-
-//  if (matchingType_ == Match2D2D) {
-
-    // check that not both are set
-    if (lmIdA != 0 && lmIdB != 0) {
-      if (lmIdA == lmIdB) {
-        return;
-      } else {
-        estimator_->mergeTwoLandmarks(lmIdA, lmIdB);
-        return;
-      }
-    }
-
-    // re-triangulate...
-    // potential 2d2d match - verify by triangulation
-    Eigen::Vector4d hP_Ca;
-    bool canBeInitialized;
-    bool valid = probabilisticStereoTriangulator_.stereoTriangulate(
-        indexA, indexB, hP_Ca, canBeInitialized,
-        std::max(raySigmasA_[indexA], raySigmasB_[indexB]));
-    if (!valid) {
+  // check that not both are set
+  if (lmIdA != 0 && lmIdB != 0) {
+    if (lmIdA == lmIdB) {
+      return;
+    } else {
+      estimator_->mergeTwoLandmarks(lmIdA, lmIdB);
       return;
     }
+  }
 
-    // get the uncertainty
-    if (canBeInitialized) {  // know more exactly
-      Eigen::Matrix3d pointUOplus_A;
-      probabilisticStereoTriangulator_.getUncertainty(indexA, indexB, hP_Ca,
-                                                      pointUOplus_A,
-                                                      canBeInitialized);
-    }
+  // re-triangulate...
+  // potential 2d2d match - verify by triangulation
+  Eigen::Vector4d hP_Ca;
+  bool canBeInitialized;
+  bool valid = probabilisticStereoTriangulator_.stereoTriangulate(
+      indexA, indexB, hP_Ca, canBeInitialized,
+      std::max(raySigmasA_[indexA], raySigmasB_[indexB]));
+  if (!valid) {
+    return;
+  }
 
-    // check and adapt landmark status
-    bool insertA = lmIdA == 0;
-    bool insertB = lmIdB == 0;
-    bool insertHomogeneousPointParameterBlock = false;
-    uint64_t lmId = 0;  // 0 just to avoid warning
-    if (insertA && insertB) {
-      // ok, we need to assign a new Id...
-      lmId = okvis::IdProvider::instance().newId();
-      frameA_->setLandmarkId(camIdA_, indexA, lmId);
-      frameB_->setLandmarkId(camIdB_, indexB, lmId);
-      lmIdA = lmId;
-      lmIdB = lmId;
-      // and add it to the graph
-      insertHomogeneousPointParameterBlock = true;
-    } else {
-      if (!insertA) {
-        lmId = lmIdA;
-        if (!estimator_->isLandmarkAdded(lmId)) {
-          // add landmark and observation to the graph
-          insertHomogeneousPointParameterBlock = true;
-          insertA = true;
-        }
-      }
-      if (!insertB) {
-        lmId = lmIdB;
-        if (!estimator_->isLandmarkAdded(lmId)) {
-          // add landmark and observation to the graph
-          insertHomogeneousPointParameterBlock = true;
-          insertB = true;
-        }
-      }
-    }
-    // add landmark to graph if necessary
-    if (insertHomogeneousPointParameterBlock) {
-      estimator_->addLandmark(lmId, T_WCa_ * hP_Ca);
-      OKVIS_ASSERT_TRUE(Exception, estimator_->isLandmarkAdded(lmId),
-                        lmId<<" not added, bug");
-      estimator_->setLandmarkInitialized(lmId, canBeInitialized);
-    } else {
-      // update initialization status, set better estimate, if possible
-      // jhuai: check if the landmark has been initialized before initializing again
-      // so as to avoid reverting better estimates obtained in optimization.
-      if (!estimator_->isLandmarkInitialized(lmId) && canBeInitialized) {
-        estimator_->setLandmarkInitialized(lmId, true);
-        estimator_->setLandmark(lmId, T_WCa_ * hP_Ca);
+  // get the uncertainty
+  if (canBeInitialized) {  // know more exactly
+    Eigen::Matrix3d pointUOplus_A;
+    probabilisticStereoTriangulator_.getUncertainty(indexA, indexB, hP_Ca,
+                                                    pointUOplus_A,
+                                                    canBeInitialized);
+  }
+
+  // check and adapt landmark status
+  bool insertA = lmIdA == 0;
+  bool insertB = lmIdB == 0;
+  bool insertHomogeneousPointParameterBlock = false;
+  uint64_t lmId = 0;  // 0 just to avoid warning
+  if (insertA && insertB) {
+    // ok, we need to assign a new Id...
+    lmId = okvis::IdProvider::instance().newId();
+    frameA_->setLandmarkId(camIdA_, indexA, lmId);
+    frameB_->setLandmarkId(camIdB_, indexB, lmId);
+    lmIdA = lmId;
+    lmIdB = lmId;
+    // and add it to the graph
+    insertHomogeneousPointParameterBlock = true;
+  } else {
+    if (!insertA) {
+      lmId = lmIdA;
+      if (!estimator_->isLandmarkAdded(lmId)) {
+        // add landmark and observation to the graph
+        insertHomogeneousPointParameterBlock = true;
+        insertA = true;
       }
     }
-
-    // in image A
-    const okvis::MapPoint &landmark = estimator_->getLandmarkUnsafe(lmId);
-    bool observedEarlierA = landmark.hasObservationInImage(mfIdA_, camIdA_);
-    if (insertA && !observedEarlierA) {  // ensure no double observations...
-            // TODO hp_Sa NOT USED!
-      Eigen::Vector4d hp_Sa(T_SaCa_ * hP_Ca);
-      hp_Sa.normalize();
-      frameA_->setLandmarkId(camIdA_, indexA, lmId);
-      lmIdA = lmId;
-      // initialize in graph
-      OKVIS_ASSERT_TRUE(Exception, estimator_->isLandmarkAdded(lmId),
-                        "landmark id=" << lmId<<" not added");
-      estimator_->addObservation<camera_geometry_t>(lmId, mfIdA_, camIdA_,
-                                                    indexA);
+    if (!insertB) {
+      lmId = lmIdB;
+      if (!estimator_->isLandmarkAdded(lmId)) {
+        // add landmark and observation to the graph
+        insertHomogeneousPointParameterBlock = true;
+        insertB = true;
+      }
     }
-
-    // in image B
-    bool observedEarlierB = landmark.hasObservationInImage(mfIdB_, camIdB_);
-    if (insertB && !observedEarlierB) {  // ensure no double observations...
-      Eigen::Vector4d hp_Sb(T_SbCb_ * T_CbCa_ * hP_Ca);
-      hp_Sb.normalize();
-      frameB_->setLandmarkId(camIdB_, indexB, lmId);
-      lmIdB = lmId;
-      // initialize in graph
-      OKVIS_ASSERT_TRUE(Exception, estimator_->isLandmarkAdded(lmId),
-                        "landmark " << lmId << " not added");
-      estimator_->addObservation<camera_geometry_t>(lmId, mfIdB_, camIdB_,
-                                                    indexB);
+  }
+  // add landmark to graph if necessary
+  if (insertHomogeneousPointParameterBlock) {
+    estimator_->addLandmark(lmId, T_WCa_ * hP_Ca);
+    OKVIS_ASSERT_TRUE(Exception, estimator_->isLandmarkAdded(lmId),
+                      lmId<<" not added, bug");
+    estimator_->setLandmarkInitialized(lmId, canBeInitialized);
+  } else {
+    // update initialization status, set better estimate, if possible
+    // jhuai: check if the landmark has been initialized before initializing again
+    // so as to avoid reverting better estimates obtained in optimization.
+    if (!estimator_->isLandmarkInitialized(lmId) && canBeInitialized) {
+      estimator_->setLandmarkInitialized(lmId, true);
+      estimator_->setLandmark(lmId, T_WCa_ * hP_Ca);
     }
+  }
 
-    // jhuai comments the below lines which revert previous estimates of the landmark.
-    // let's check for consistency with other observations:
-//    okvis::ceres::HomogeneousPointParameterBlock point(T_WCa_ * hP_Ca, 0);
-//    if(canBeInitialized)
-//      estimator_->setLandmark(lmId, point.estimate());
+  // in image A
+  const okvis::MapPoint &landmark = estimator_->getLandmarkUnsafe(lmId);
+  bool observedEarlierA = landmark.hasObservationInImage(mfIdA_, camIdA_);
+  if (insertA && !observedEarlierA) {  // ensure no double observations...
+          // TODO hp_Sa NOT USED!
+    Eigen::Vector4d hp_Sa(T_SaCa_ * hP_Ca);
+    hp_Sa.normalize();
+    frameA_->setLandmarkId(camIdA_, indexA, lmId);
+    lmIdA = lmId;
+    // initialize in graph
+    OKVIS_ASSERT_TRUE(Exception, estimator_->isLandmarkAdded(lmId),
+                      "landmark id=" << lmId<<" not added");
+    estimator_->addObservation<camera_geometry_t>(lmId, mfIdA_, camIdA_,
+                                                  indexA);
+  }
 
-//  } else {
-//    OKVIS_ASSERT_TRUE_DBG(Exception,lmIdB==0,"bug. Id in frame B already set.");
+  // in image B
+  bool observedEarlierB = landmark.hasObservationInImage(mfIdB_, camIdB_);
+  if (insertB && !observedEarlierB) {  // ensure no double observations...
+    Eigen::Vector4d hp_Sb(T_SbCb_ * T_CbCa_ * hP_Ca);
+    hp_Sb.normalize();
+    frameB_->setLandmarkId(camIdB_, indexB, lmId);
+    lmIdB = lmId;
+    // initialize in graph
+    OKVIS_ASSERT_TRUE(Exception, estimator_->isLandmarkAdded(lmId),
+                      "landmark " << lmId << " not added");
+    estimator_->addObservation<camera_geometry_t>(lmId, mfIdB_, camIdB_,
+                                                  indexB);
+  }
 
-//    // get projection into B
-//    Eigen::Vector2d kptB = projectionsIntoB_.row(indexA);
-//    Eigen::Vector2d keypointBMeasurement;
-//    frameB_->getKeypoint(camIdB_, indexB, keypointBMeasurement);
-
-//    Eigen::Vector2d err = kptB - keypointBMeasurement;
-//    double keypointBStdDev;
-//    frameB_->getKeypointSize(camIdB_, indexB, keypointBStdDev);
-//    keypointBStdDev = 0.8 * keypointBStdDev / 12.0;
-//    Eigen::Matrix2d U_tot = Eigen::Matrix2d::Identity() * keypointBStdDev
-//        * keypointBStdDev
-//        + projectionsIntoBUncertainties_.block<2, 2>(2 * indexA, 0);
-
-//    const double chi2 = err.transpose().eval() * U_tot.inverse() * err;
-
-//    if (chi2 > 4.0) {
-//      return;
-//    }
-
-//    // saturate allowed image uncertainty
-//    if (U_tot.norm() > 25.0 / (keypointBStdDev * keypointBStdDev * sqrt(2))) {
-//      numUncertainMatches_++;
-//      //return;
-//    }
-
-//    frameB_->setLandmarkId(camIdB_, indexB, lmIdA);
-//    lmIdB = lmIdA;
-//    okvis::MapPoint landmark;
-//    estimator_->getLandmark(lmIdA, landmark);
-
-//    // initialize in graph
-//    if (landmark.observations.find(
-//        okvis::KeypointIdentifier(mfIdB_, camIdB_, indexB))
-//        == landmark.observations.end()) {  // ensure no double observations...
-//      OKVIS_ASSERT_TRUE(Exception, estimator_->isLandmarkAdded(lmIdB),
-//                        "not added");
-//      estimator_->addObservation<camera_geometry_t>(lmIdB, mfIdB_, camIdB_,
-//                                                    indexB);
-//    }
-//  }
   numMatches_++;
 }
 
