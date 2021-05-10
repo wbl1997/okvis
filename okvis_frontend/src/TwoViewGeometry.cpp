@@ -1,4 +1,4 @@
-#include "msckf/TwoViewGeometry.hpp"
+#include "swift_vio/TwoViewGeometry.hpp"
 namespace okvis {
 float TwoViewGeometry::computeErrorEssentialMat(
     okvis::kinematics::Transformation T_ji, Eigen::Vector3d bearing_i,

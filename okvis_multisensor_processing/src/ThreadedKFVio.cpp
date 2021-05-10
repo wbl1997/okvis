@@ -47,7 +47,7 @@
 #include <okvis/ceres/ImuError.hpp>
 #include <okvis/KeyframeForLoopDetection.hpp>
 
-#include <msckf/checkSensorRig.hpp>
+#include <swift_vio/checkSensorRig.hpp>
 
 /// \brief okvis Main namespace of this package.
 namespace okvis {

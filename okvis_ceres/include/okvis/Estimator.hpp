@@ -64,9 +64,9 @@
 #include <okvis/ceres/ReprojectionError.hpp>
 #include <okvis/ceres/CeresIterationCallback.hpp>
 
-#include <msckf/imu/BoundedImuDeque.hpp>
-#include <msckf/CameraRig.hpp>
-#include <msckf/imu/ImuRig.hpp>
+#include <swift_vio/imu/BoundedImuDeque.hpp>
+#include <swift_vio/CameraRig.hpp>
+#include <swift_vio/imu/ImuRig.hpp>
 #include <okvis/InitialNavState.hpp>
 
 /// \brief okvis Main namespace of this package.
@@ -946,6 +946,6 @@ static const Eigen::IOFormat kSpaceInitFmt(Eigen::StreamPrecision,
 }  // namespace okvis
 
 #include "implementation/Estimator.hpp"
-#include "msckf/implementation/Estimator.hpp"
+#include "swift_vio/implementation/Estimator.hpp"
 
 #endif /* INCLUDE_OKVIS_ESTIMATOR_HPP_ */

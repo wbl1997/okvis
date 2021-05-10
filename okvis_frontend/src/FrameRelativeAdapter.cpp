@@ -39,7 +39,7 @@
  */
 
 #include <opengv/relative_pose/FrameRelativeAdapter.hpp>
-#include <msckf/FrameMatchingStats.hpp>
+#include <swift_vio/FrameMatchingStats.hpp>
 #include <okvis/FrameTypedefs.hpp>
 #include <okvis/MultiFrame.hpp>
 

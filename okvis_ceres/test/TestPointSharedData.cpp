@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <msckf/PointSharedData.hpp>
+#include <swift_vio/PointSharedData.hpp>
 
 class PointSharedDataTest : public ::testing::Test {
  protected:
@@ -39,7 +39,7 @@ class PointSharedDataTest : public ::testing::Test {
     }
   }
 
-  msckf::PointSharedData psd;
+  swift_vio::PointSharedData psd;
   std::vector<uint64_t> frameIds;
   std::vector<uint64_t> selectedFrameIds;
   std::vector<uint64_t> restFrameIds;

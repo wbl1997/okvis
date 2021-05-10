@@ -1,4 +1,4 @@
-#include "msckf/ceres/tiny_solver.h"
+#include "swift_vio/ceres/tiny_solver.h"
 #include "gtest/gtest.h"
 
 bool EvaluateResidualsAndJacobians(const double* parameters,
@@ -52,7 +52,7 @@ TEST(TinySolver, DynamicResiduals) {
   f(x.data(), residuals.data(), NULL);
   EXPECT_GT(residuals.squaredNorm() / 2.0, 1e-10);
 
-  msckf::ceres::TinySolver<ExampleResidualsDynamic> solver;
+  swift_vio::ceres::TinySolver<ExampleResidualsDynamic> solver;
   solver.Solve(f, &x);
   EXPECT_NEAR(0.0, solver.summary.final_cost, 1e-10);
 }

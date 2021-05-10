@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
 
-#include "msckf/SimulatedMotionForParallaxAngleTest.hpp"
+#include "swift_vio/SimulatedMotionForParallaxAngleTest.hpp"
 
 TEST(VectorNormalizationJacobian, Evaluate) {
   Eigen::Vector3d vec;
   vec.setRandom();
-  msckf::VectorNormalizationJacobian vnj(vec);
+  swift_vio::VectorNormalizationJacobian vnj(vec);
   Eigen::Matrix3d jac;
   vnj.dxi_dvec(&jac);
   Eigen::Vector3d vec_delta;

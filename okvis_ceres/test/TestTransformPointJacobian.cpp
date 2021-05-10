@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 
-#include <msckf/InverseTransformPointJacobian.hpp>
-#include <msckf/MultipleTransformPointJacobian.hpp>
-#include <msckf/TransformPointJacobian.hpp>
+#include <swift_vio/InverseTransformPointJacobian.hpp>
+#include <swift_vio/MultipleTransformPointJacobian.hpp>
+#include <swift_vio/TransformPointJacobian.hpp>
 #include <okvis/kinematics/Transformation.hpp>
 
 class TransformPointJacobianTest : public ::testing::Test {

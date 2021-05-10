@@ -242,8 +242,8 @@ enum class EstimatorAlgorithm {
   Consistent,  ///< Consistent keyframe-based estimator.
   SlidingWindowSmoother, ///< Gtsam::FixedLagSmoother.
   RiSlidingWindowSmoother, ///< Gtsam::FixedLagSmoother with right invariant errors.
-  HybridFilter, ///< MSCKF + EKF-SLAM with first estimate Jacobians.
-  MSCKF,  ///< MSCKF with first estimate Jacobians and keyframe-based marginalization.
+  HybridFilter, ///< MSCKF + EKF-SLAM with keyframe-based marginalization.
+  MSCKF,  ///< MSCKF with keyframe-based marginalization.
   TFVIO,  ///< Triangulate-free VIO with only epipolar constraints.
   InvariantEKF, ///< MSCKF with right invariant errors.
 };
@@ -269,7 +269,7 @@ struct Optimization{
   float keyframeInsertionOverlapThreshold;
   float keyframeInsertionMatchingRatioThreshold;
   EstimatorAlgorithm algorithm;
-  // parameters for determining keyframes in msckf.
+  // parameters for determining keyframes in swift_vio.
   double translationThreshold;
   double rotationThreshold;
   double trackingRateThreshold;

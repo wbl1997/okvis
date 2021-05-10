@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <msckf/TransformMultiplyJacobian.hpp>
+#include <swift_vio/TransformMultiplyJacobian.hpp>
 #include <okvis/kinematics/sophus_operators.hpp>
 
 class TransformMultiplyTest : public ::testing::Test {
@@ -24,7 +24,7 @@ class TransformMultiplyTest : public ::testing::Test {
       delta(i) = eps;
       okvis::kinematics::Transformation T_AB_bar = T_AB_;
       T_AB_bar.oplus(delta);
-      msckf::TransformMultiplyJacobian tmj_bar(T_AB_bar, T_BC_);
+      swift_vio::TransformMultiplyJacobian tmj_bar(T_AB_bar, T_BC_);
       okvis::kinematics::Transformation T_AC_bar = tmj_bar.multiplyT();
       Eigen::Matrix<double, 6, 1> ratio =
           okvis::kinematics::ominus(T_AC_bar, T_AC_) / eps;
@@ -37,7 +37,7 @@ class TransformMultiplyTest : public ::testing::Test {
       delta(i) = eps;
       okvis::kinematics::Transformation T_BC_bar = T_BC_;
       T_BC_bar.oplus(delta);
-      msckf::TransformMultiplyJacobian tmj_bar(T_AB_, T_BC_bar);
+      swift_vio::TransformMultiplyJacobian tmj_bar(T_AB_, T_BC_bar);
       okvis::kinematics::Transformation T_AC_bar = tmj_bar.multiplyT();
       Eigen::Matrix<double, 6, 1> ratio =
           okvis::kinematics::ominus(T_AC_bar, T_AC_) / eps;
@@ -49,7 +49,7 @@ class TransformMultiplyTest : public ::testing::Test {
   // void TearDown() override {}
   okvis::kinematics::Transformation T_AB_;
   okvis::kinematics::Transformation T_BC_;
-  msckf::TransformMultiplyJacobian tmj_;
+  swift_vio::TransformMultiplyJacobian tmj_;
   okvis::kinematics::Transformation T_AC_;
 
   Eigen::Matrix<double, 3, 6> dtheta_ddelta_AB_;
@@ -107,7 +107,7 @@ TEST(TransformMultiply, multiply) {
   T_AB.setRandom();
   T_BC.setRandom();
   T_AC = T_AB * T_BC;
-  msckf::TransformMultiplyJacobian tmj(T_AB, T_BC);
+  swift_vio::TransformMultiplyJacobian tmj(T_AB, T_BC);
   okvis::kinematics::Transformation T_AC_computed = tmj.multiplyT();
   std::pair<Eigen::Vector3d, Eigen::Quaterniond> pair_T_AC = tmj.multiply();
   EXPECT_LT((T_AC.T() - T_AC_computed.T()).lpNorm<Eigen::Infinity>(), 1e-8);

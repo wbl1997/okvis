@@ -40,9 +40,9 @@
 
 #include <glog/logging.h>
 #include <okvis/Estimator.hpp>
-#include <msckf/CameraTimeParamBlock.hpp>
-#include <msckf/EuclideanParamBlock.hpp>
-#include <msckf/EuclideanParamBlockSized.hpp>
+#include <swift_vio/CameraTimeParamBlock.hpp>
+#include <swift_vio/EuclideanParamBlock.hpp>
+#include <swift_vio/EuclideanParamBlockSized.hpp>
 #include <okvis/ceres/PoseParameterBlock.hpp>
 #include <okvis/ceres/ImuError.hpp>
 #include <okvis/ceres/PoseError.hpp>

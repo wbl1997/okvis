@@ -6,7 +6,7 @@
 
 #include <gtest/gtest.h>
 
-#include <msckf/VectorNormalizationJacobian.hpp>
+#include <swift_vio/VectorNormalizationJacobian.hpp>
 #include <okvis/kinematics/MatrixPseudoInverse.hpp>
 
 TEST(matrixTestSuite, pseudoInverseSymmSqrtFullRank) {
@@ -77,7 +77,7 @@ TEST(matrixTestSuite, pseudoInverseSymmSqrt) {
   dxy1_duv.setZero();
   dxy1_duv.topLeftCorner<2, 2>() = dxy_duv;
 
-  msckf::VectorNormalizationJacobian normalJac(xy1);
+  swift_vio::VectorNormalizationJacobian normalJac(xy1);
   Eigen::Matrix3d dunit_dxy1;
   normalJac.dxi_dvec(&dunit_dxy1);
   Eigen::Vector2d covuvDiagonal = Eigen::Vector2d::Random().cwiseAbs();

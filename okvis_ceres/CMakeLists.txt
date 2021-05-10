@@ -26,22 +26,22 @@ add_library(${PROJECT_NAME}
   include/okvis/Estimator.hpp
   include/okvis/ceres/CeresIterationCallback.hpp
 
-  msckf/ceres/corrector.cc
-  msckf/BearingResiduals.cpp
-  msckf/CameraRig.cpp
-  msckf/CameraTimeParamBlock.cpp
-  msckf/ExtrinsicModels.cpp
-  msckf/MultipleTransformPointJacobian.cpp
-  msckf/ParallaxAnglePoint.cpp
-  msckf/PointLandmarkModels.cpp
-  msckf/PointLandmarkSimulation.cpp
-  msckf/PointSharedData.cpp
-  msckf/SimulatedMotionForParallaxAngleTest.cpp
-  msckf/checkSensorRig.cpp
-  msckf/imu/BoundedImuDeque.cpp
-  msckf/imu/ImuOdometry.cpp
-  msckf/imu/ImuPreintegrator.cpp
-  msckf/imu/ImuRig.cpp
+  swift_vio/ceres/corrector.cc
+  swift_vio/BearingResiduals.cpp
+  swift_vio/CameraRig.cpp
+  swift_vio/CameraTimeParamBlock.cpp
+  swift_vio/ExtrinsicModels.cpp
+  swift_vio/MultipleTransformPointJacobian.cpp
+  swift_vio/ParallaxAnglePoint.cpp
+  swift_vio/PointLandmarkModels.cpp
+  swift_vio/PointLandmarkSimulation.cpp
+  swift_vio/PointSharedData.cpp
+  swift_vio/SimulatedMotionForParallaxAngleTest.cpp
+  swift_vio/checkSensorRig.cpp
+  swift_vio/imu/BoundedImuDeque.cpp
+  swift_vio/imu/ImuOdometry.cpp
+  swift_vio/imu/ImuPreintegrator.cpp
+  swift_vio/imu/ImuRig.cpp
 )
 
 # and link it

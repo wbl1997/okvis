@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include <msckf/ParallaxAnglePoint.hpp>
-#include "msckf/SimulatedMotionForParallaxAngleTest.hpp"
+#include <swift_vio/ParallaxAnglePoint.hpp>
+#include "swift_vio/SimulatedMotionForParallaxAngleTest.hpp"
 
 class ParallaxAnglePointTest : public ::testing::Test {
  public:

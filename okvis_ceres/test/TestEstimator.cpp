@@ -47,7 +47,7 @@
 #include <okvis/ceres/SpeedAndBiasError.hpp>
 #include <okvis/ceres/RelativePoseError.hpp>
 #include <okvis/assert_macros.hpp>
-#include <msckf/PointLandmarkSimulation.hpp>
+#include <swift_vio/PointLandmarkSimulation.hpp>
 
 
 TEST(okvisTestSuite, Estimator) {

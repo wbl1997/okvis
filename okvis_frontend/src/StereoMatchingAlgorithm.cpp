@@ -44,7 +44,7 @@
 #include <okvis/cameras/CameraBase.hpp>
 #include <okvis/MultiFrame.hpp>
 
-#include <msckf/TwoViewGeometry.hpp>
+#include <swift_vio/TwoViewGeometry.hpp>
 // cameras and distortions
 #include <okvis/cameras/PinholeCamera.hpp>
 #include <okvis/cameras/EquidistantDistortion.hpp>
