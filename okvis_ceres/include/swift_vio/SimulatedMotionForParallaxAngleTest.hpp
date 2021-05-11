@@ -3,7 +3,7 @@
 
 #include <Eigen/Core>
 #include <swift_vio/DirectionFromParallaxAngleJacobian.hpp>
-#include <swift_vio/RemoveFromVector.hpp>
+#include <swift_vio/VectorOperations.hpp>
 #include <swift_vio/VectorNormalizationJacobian.hpp>
 
 namespace simul {
@@ -73,7 +73,7 @@ class SimulatedMotionForParallaxAngleTest {
     return anchorObservationIndices_;
   }
 
-  const LWF::ParallaxAnglePoint& pap()
+  const swift_vio::ParallaxAnglePoint& pap()
       const {
     return pap_;
   }
@@ -101,7 +101,7 @@ class SimulatedMotionForParallaxAngleTest {
   okvis::kinematics::Transformation T_WCj_;
   Eigen::Vector3d pW_;
   double cosParallaxAngle_;
-  LWF::ParallaxAnglePoint pap_;
+  swift_vio::ParallaxAnglePoint pap_;
   Eigen::Vector3d Nij_;
   const MotionType motionType_;
 

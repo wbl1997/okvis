@@ -1,10 +1,10 @@
 #include <swift_vio/checkSensorRig.hpp>
 
-namespace okvis {
+namespace swift_vio {
 bool doesExtrinsicModelFitImuModel(const std::string& extrinsicModel,
                                    const std::string& imuModel) {
-  int extrinsicModelId = okvis::ExtrinsicModelNameToId(extrinsicModel, nullptr);
-  int imuModelId = okvis::ImuModelNameToId(imuModel);
+  int extrinsicModelId = ExtrinsicModelNameToId(extrinsicModel, nullptr);
+  int imuModelId = ImuModelNameToId(imuModel);
   switch (imuModelId) {
     case Imu_BG_BA_TG_TS_TA::kModelId:
       if (extrinsicModelId != Extrinsic_p_CB::kModelId) {
@@ -36,7 +36,7 @@ bool doesExtrinsicModelFitOkvisBackend(
     for (size_t index = 1u; index < numCameras; ++index) {
       std::string extrinsicModel = cameraSystem.extrinsicOptRep(index);
       int extrinsicModelId =
-          okvis::ExtrinsicModelNameToId(extrinsicModel, nullptr);
+          ExtrinsicModelNameToId(extrinsicModel, nullptr);
       if (extrinsicModelId == Extrinsic_p_C0C_q_C0C::kModelId) {
         LOG(WARNING) << "When the OKVIS backend is used, the second camera's "
                         "extrinsic model should NOT be P_C0C_Q_C0C which leads "
@@ -47,5 +47,4 @@ bool doesExtrinsicModelFitOkvisBackend(
   }
   return true;
 }
-
-}  // namespace okvis
+}  // namespace swift_vio

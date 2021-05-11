@@ -4,7 +4,7 @@
 #include <okvis/MultiFrame.hpp>
 #include <okvis/cameras/NCameraSystem.hpp>
 #include <okvis/kinematics/Transformation.hpp>
-
+namespace simul {
 class PointLandmarkSimulation
 {
  public:
@@ -32,5 +32,6 @@ class PointLandmarkSimulation
       std::vector<std::vector<int>>* keypointIndices,
       const double* imageNoiseMag);
 };
+}  // namespace simul
 
 #endif // INCLUDE_SWIFT_VIO_POINT_LANDMARK_SIMULATION_HPP

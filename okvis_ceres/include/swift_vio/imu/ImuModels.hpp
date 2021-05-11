@@ -22,7 +22,7 @@
 
 #include <swift_vio/ModelSwitch.hpp>
 
-namespace okvis {
+namespace swift_vio {
 static const int kBgBaDim = 6; // bg ba
 
 template <typename T>
@@ -582,6 +582,5 @@ inline Eigen::VectorXd ImuModelComputeAugmentedParamsError(
     #undef MODEL_CASES
   }
 }
-
-}  // namespace okvis
+}  // namespace swift_vio
 #endif  // INCLUDE_SWIFT_VIO_IMU_ERROR_MODELS_HPP_

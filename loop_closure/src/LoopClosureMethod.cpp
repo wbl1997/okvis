@@ -1,5 +1,5 @@
-#include <okvis/LoopClosureMethod.hpp>
-namespace okvis {
+#include <loop_closure/LoopClosureMethod.hpp>
+namespace swift_vio {
 LoopClosureMethod::LoopClosureMethod() {}
 
 LoopClosureMethod::~LoopClosureMethod() {}
@@ -28,5 +28,4 @@ LoopClosureMethod::initializeKeyframeInDatabase(
     size_t dbowId, const LoopQueryKeyframeMessage& queryKeyframe) const {
   return queryKeyframe.toKeyframeInDatebase(dbowId);
 }
-
-}  // namespace okvis
+}  // namespace swift_vio

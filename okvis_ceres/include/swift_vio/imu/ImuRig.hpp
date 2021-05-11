@@ -7,12 +7,11 @@
 #include <Eigen/StdVector>
 
 #include <swift_vio/imu/ImuModels.hpp>
-#include <swift_vio/EuclideanParamBlockSized.hpp>
+#include <swift_vio/ceres/EuclideanParamBlockSized.hpp>
 
 #include <okvis/Parameters.hpp>
 
-namespace okvis {
-
+namespace swift_vio {
 class ImuModel {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -113,5 +112,5 @@ void getImuAugmentedStatesEstimate(
      std::vector<std::shared_ptr<const okvis::ceres::ParameterBlock>> imuAugmentedParameterPtrs,
     Eigen::Matrix<double, Eigen::Dynamic, 1>* extraParams, int imuModelId);
 
-}  // namespace okvis
+}  // namespace swift_vio
 #endif  // INCLUDE_SWIFT_VIO_IMU_RIG_HPP_

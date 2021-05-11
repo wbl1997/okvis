@@ -17,10 +17,10 @@ class ParallaxAnglePointTest : public ::testing::Test {
     quatAndCS_[5] /= norm;
     vecAndTheta_.setRandom();
     vecAndTheta_[3] = std::fabs(vecAndTheta_[3]);
-    pap_ = LWF::ParallaxAnglePoint(vecAndTheta_.head<3>(), std::cos(vecAndTheta_[3]));
+    pap_ = swift_vio::ParallaxAnglePoint(vecAndTheta_.head<3>(), std::cos(vecAndTheta_[3]));
   }
 
-  LWF::ParallaxAnglePoint pap_;
+  swift_vio::ParallaxAnglePoint pap_;
   Eigen::Matrix<double, 4, 1> vecAndTheta_;
   Eigen::Matrix<double, 6, 1> quatAndCS_;
   unsigned int s_;
@@ -54,19 +54,19 @@ class AngleElementTest : public ::testing::Test {
     theta_ = Eigen::Matrix<double, 2, 1>::Random();
     theta_ = theta_.cwiseAbs();
     ct_ << std::cos(theta_[0]), std::cos(theta_[1]);
-    angle0_ = LWF::AngleElement(ct_[0]);
-    angle1_ = LWF::AngleElement(ct_[1]);
+    angle0_ = swift_vio::AngleElement(ct_[0]);
+    angle1_ = swift_vio::AngleElement(ct_[1]);
   }
 
   Eigen::Matrix<double, 2, 1> theta_;
   Eigen::Matrix<double, 2, 1> ct_;
-  LWF::AngleElement angle0_;
-  LWF::AngleElement angle1_;
+  swift_vio::AngleElement angle0_;
+  swift_vio::AngleElement angle1_;
 };
 
 TEST_F(AngleElementTest, assignOperator) {
-  LWF::AngleElement angle2(ct_[1]);
-  LWF::AngleElement angle3 = angle2;
+  swift_vio::AngleElement angle2(ct_[1]);
+  swift_vio::AngleElement angle3 = angle2;
   EXPECT_NEAR(angle2.getAngle(), theta_[1], 1e-7);
   EXPECT_NEAR(angle1_.getAngle(), theta_[1], 1e-7);
   EXPECT_NEAR(angle3.getAngle(), theta_[1], 1e-7);
@@ -81,7 +81,7 @@ TEST_F(AngleElementTest, boxMinus) {
 TEST_F(AngleElementTest, boxMinus2) {
   Eigen::Matrix<double, 1, 1> delta;
   angle1_.boxMinus(angle0_, delta);
-  LWF::AngleElement angle2 = angle0_;
+  swift_vio::AngleElement angle2 = angle0_;
   angle2.boxPlus(delta, angle2);
   EXPECT_NEAR(angle2.getAngle(), angle1_.getAngle(), 1e-7);
 }
@@ -92,7 +92,7 @@ TEST_F(AngleElementTest, boxMinusJac) {
   Eigen::MatrixXd jac;
   angle1_.boxMinusJac(angle0_, jac);
   double h = 0.00001;
-  LWF::AngleElement angle2(std::cos(theta_[1] + h));
+  swift_vio::AngleElement angle2(std::cos(theta_[1] + h));
   Eigen::Matrix<double, 1, 1> deltah;
   angle2.boxMinus(angle0_, deltah);
 
@@ -102,10 +102,10 @@ TEST_F(AngleElementTest, boxMinusJac) {
 void testParallaxAnglePointOptimization(bool addOutlier) {
   simul::SimulatedMotionForParallaxAngleTest smpat(simul::MotionType::Sideways,
                                                    addOutlier);
-  LWF::ParallaxAnglePoint refPap = smpat.pap();
+  swift_vio::ParallaxAnglePoint refPap = smpat.pap();
   EXPECT_EQ(smpat.observationListStatus_,
             simul::SimulatedMotionForParallaxAngleTest::Healthy);
-  LWF::ParallaxAnglePoint pap;
+  swift_vio::ParallaxAnglePoint pap;
   pap.initializePosition(smpat.observations(), smpat.T_WC_list(),
                          smpat.anchorIndices());
   EXPECT_LT((pap.getVec() - refPap.getVec()).lpNorm<Eigen::Infinity>(), 1e-3);

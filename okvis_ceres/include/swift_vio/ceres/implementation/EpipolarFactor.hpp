@@ -13,7 +13,7 @@
 #include <swift_vio/Measurements.hpp>
 #include <swift_vio/RelativeMotionJacobian.hpp>
 #include <swift_vio/imu/SimpleImuOdometry.hpp>
-#include <swift_vio/JacobianHelpers.hpp>
+#include <swift_vio/ceres/JacobianHelpers.hpp>
 
 #include <okvis/ceres/PoseLocalParameterization.hpp>
 
@@ -90,15 +90,15 @@ void EpipolarFactor<GEOMETRY_TYPE, EXTRINSIC_MODEL, PROJ_INTRINSIC_MODEL>::
   okvis::Time t_end = stateEpoch_[index] + okvis::Duration(relativeFeatureTime);
   const double wedge = 5e-8;
   if (relativeFeatureTime >= wedge) {
-    okvis::ceres::predictStates(*imuMeasCanopy_[index], gravityMag_, *pair_T_WB,
+    swift_vio::ode::predictStates(*imuMeasCanopy_[index], gravityMag_, *pair_T_WB,
                                 speedBgBa, t_start, t_end);
   } else if (relativeFeatureTime <= -wedge) {
-    okvis::ceres::predictStatesBackward(*imuMeasCanopy_[index], gravityMag_,
+    swift_vio::ode::predictStatesBackward(*imuMeasCanopy_[index], gravityMag_,
                                         *pair_T_WB, speedBgBa, t_start, t_end);
   }
   velAndOmega->head<3>() = speedBgBa.head<3>();
   okvis::ImuMeasurement queryValue;
-  okvis::ceres::interpolateInertialData(*imuMeasCanopy_[index], t_end, queryValue);
+  swift_vio::ode::interpolateInertialData(*imuMeasCanopy_[index], t_end, queryValue);
   queryValue.measurement.gyroscopes -= speedBgBa.segment<3>(3);
   velAndOmega->tail<3>() = queryValue.measurement.gyroscopes;
 }
@@ -174,7 +174,7 @@ bool EpipolarFactor<GEOMETRY_TYPE, EXTRINSIC_MODEL, PROJ_INTRINSIC_MODEL>::
   bool directionJacOk = true;
   for (int j = 0; j < 2; ++j) {
     bool projectOk =
-        obsDirectionJacobian(xy1[j], cameraGeometryBase_, projOptModelId,
+        swift_vio::obsDirectionJacobian(xy1[j], cameraGeometryBase_, projOptModelId,
                              covariance_[j], &dfj_dXcam[j], &cov_fj[j]);
     if (!projectOk) {
       directionJacOk = false;
@@ -188,9 +188,9 @@ bool EpipolarFactor<GEOMETRY_TYPE, EXTRINSIC_MODEL, PROJ_INTRINSIC_MODEL>::
   std::pair<Eigen::Matrix3d, Eigen::Vector3d> dual_T_WB[2] = {
       std::make_pair<Eigen::Matrix3d, Eigen::Vector3d>(q_WB1.toRotationMatrix(), t_WB1_W),
       std::make_pair<Eigen::Matrix3d, Eigen::Vector3d>(q_WB2.toRotationMatrix(), t_WB2_W)};
-  RelativeMotionJacobian rmj(dual_T_BC, dual_T_WB[0], dual_T_WB[1]);
+  swift_vio::RelativeMotionJacobian rmj(dual_T_BC, dual_T_WB[0], dual_T_WB[1]);
   std::pair<Eigen::Matrix3d, Eigen::Vector3d> dual_T_C1C2 = rmj.relativeMotion();
-  EpipolarJacobian epj(dual_T_C1C2.first, dual_T_C1C2.second, xy1[0], xy1[1]);
+  swift_vio::EpipolarJacobian epj(dual_T_C1C2.first, dual_T_C1C2.second, xy1[0], xy1[1]);
   Eigen::Matrix<double, 1, 3> de_dfj[2];
   epj.de_dfj(&de_dfj[0]);
   epj.de_dfk(&de_dfj[1]);
@@ -225,11 +225,11 @@ bool EpipolarFactor<GEOMETRY_TYPE, EXTRINSIC_MODEL, PROJ_INTRINSIC_MODEL>::
     Eigen::Matrix<double, 1, Eigen::Dynamic> de_dExtrinsic;
     switch (EXTRINSIC_MODEL::kModelId) {
 
-      case Extrinsic_p_CB::kModelId:
+      case swift_vio::Extrinsic_p_CB::kModelId:
         rmj.dp_dt_CB(&dp_dt_CB);
         de_dExtrinsic = de_dt_Ctij_Ctik * dp_dt_CB;
         break;
-      case Extrinsic_p_BC_q_BC::kModelId:
+      case swift_vio::Extrinsic_p_BC_q_BC::kModelId:
       default:
         rmj.dtheta_dtheta_BC(&dtheta_dtheta_BC);
         rmj.dp_dtheta_BC(&dp_dtheta_BC);

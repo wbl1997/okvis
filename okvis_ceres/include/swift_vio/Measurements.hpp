@@ -15,8 +15,7 @@
 #include <okvis/Time.hpp>
 #include <okvis/kinematics/Transformation.hpp>
 
-/// \brief okvis Main namespace of this package.
-namespace okvis {
+namespace swift_vio {
 template <typename Scalar>
 struct GenericImuMeasurement {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -60,7 +59,6 @@ struct GenericImuMeasurement {
 template <typename Scalar>
 using GenericImuMeasurementDeque = std::deque<GenericImuMeasurement<Scalar>, Eigen::aligned_allocator<GenericImuMeasurement<Scalar> > >;
 
-
-}  // namespace okvis
+}  // namespace swift_vio
 
 #endif // INCLUDE_SWIFT_VIO_MEASUREMENTS_HPP_

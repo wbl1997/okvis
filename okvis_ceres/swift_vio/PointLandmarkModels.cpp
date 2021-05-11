@@ -6,7 +6,7 @@ bool ParallaxAngleParameterization::plus(const double* x,
                                                 const double* delta,
                                                 double* x_plus_delta) {
   Eigen::Map<const Eigen::Vector3d> _delta(delta);
-  LWF::ParallaxAnglePoint pap(x[3], x[0], x[1], x[2], x[4], x[5]);
+  swift_vio::ParallaxAnglePoint pap(x[3], x[0], x[1], x[2], x[4], x[5]);
   pap.boxPlus(_delta, pap);
 
   const double* bearingData = pap.n_.data();

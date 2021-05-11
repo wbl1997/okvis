@@ -24,7 +24,6 @@
 
 namespace okvis {
 namespace ceres {
-
 /// \brief The chordal distance (N_{i,j} - R_{C(t_{i,j})} * f_{i,j}) accounting
 /// for rolling shutter skew and time offset and camera intrinsics.
 /// \warning A potential problem with this error term happens when
@@ -47,9 +46,9 @@ namespace ceres {
 ///     constant values from a provided extrinsic entity, e.g., T_BC.
 ///     Its kNumParams should not be zero.
 template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-          class EXTRINSIC_MODEL = Extrinsic_p_BC_q_BC,
+          class EXTRINSIC_MODEL = swift_vio::Extrinsic_p_BC_q_BC,
           class LANDMARK_MODEL = swift_vio::ParallaxAngleParameterization,
-          class IMU_MODEL = Imu_BG_BA>
+          class IMU_MODEL = swift_vio::Imu_BG_BA>
 class ChordalDistance
     : public ::ceres::SizedCostFunction<
           3 /* residuals */, 7 /* observing frame pose */, 7 /* main anchor */,

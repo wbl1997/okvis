@@ -1,12 +1,12 @@
-#ifndef INITIAL_PV_AND_STD_HPP
-#define INITIAL_PV_AND_STD_HPP
+#ifndef INITIAL_NAV_STATE_HPP
+#define INITIAL_NAV_STATE_HPP
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <okvis/Time.hpp>
 #include <okvis/kinematics/Transformation.hpp>
 
-namespace okvis {
+namespace swift_vio {
 struct InitialNavState {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   // S represents the nominal IMU sensor frame realized with the camera frame
@@ -25,7 +25,7 @@ struct InitialNavState {
 
   InitialNavState();
 
-  InitialNavState(const okvis::InitialNavState& rhs);
+  InitialNavState(const InitialNavState& rhs);
 
   void updatePose(const okvis::kinematics::Transformation& T_WS,
                   const okvis::Time state_time);
@@ -36,5 +36,5 @@ struct InitialNavState {
 
   InitialNavState& operator=(const InitialNavState& other);
 };
-}  // namespace okvis
-#endif  // INITIAL_PV_AND_STD_HPP
+}  // namespace swift_vio
+#endif  // INITIAL_NAV_STATE_HPP

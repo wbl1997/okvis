@@ -1,6 +1,5 @@
 #include "swift_vio/BearingResiduals.hpp"
 namespace swift_vio {
-
 void orderedIndicesMAJ(const std::vector<size_t>& anchorIndices,
                        int totalObservations, std::vector<int>* maj) {
   maj->clear();
@@ -30,7 +29,7 @@ bool BearingResiduals::operator()(const double* parameters, double* residuals,
       jacobian, numResiduals_, 3);
 
   // main anchor
-  LWF::ParallaxAnglePoint pap;
+  swift_vio::ParallaxAnglePoint pap;
   pap.set(parameters);
   Eigen::Matrix<double, 3, 3, Eigen::RowMajor> jMain;
   jMain.leftCols(2) = pap.n_.getM();

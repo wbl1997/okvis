@@ -1,6 +1,6 @@
 #include <swift_vio/imu/ImuRig.hpp>
 
-namespace okvis {
+namespace swift_vio {
 int ImuRig::addImu(const okvis::ImuParameters& imuParams) {
   int modelId = ImuModelNameToId(imuParams.model_type);
   Eigen::Matrix<double, Eigen::Dynamic, 1> euclideanParams;
@@ -44,20 +44,20 @@ void getImuAugmentedStatesEstimate(
       break;
     case Imu_BG_BA_TG_TS_TA::kModelId: {
       extraParams->resize(27, 1);
-      std::shared_ptr<const ceres::ShapeMatrixParamBlock> tgParamBlockPtr =
-          std::static_pointer_cast<const ceres::ShapeMatrixParamBlock>(
+      std::shared_ptr<const okvis::ceres::ShapeMatrixParamBlock> tgParamBlockPtr =
+          std::static_pointer_cast<const okvis::ceres::ShapeMatrixParamBlock>(
               imuAugmentedParameterPtrs[0]);
       Eigen::Matrix<double, 9, 1> sm = tgParamBlockPtr->estimate();
       extraParams->head<9>() = sm;
 
-      std::shared_ptr<const ceres::ShapeMatrixParamBlock> tsParamBlockPtr =
-          std::static_pointer_cast<const ceres::ShapeMatrixParamBlock>(
+      std::shared_ptr<const okvis::ceres::ShapeMatrixParamBlock> tsParamBlockPtr =
+          std::static_pointer_cast<const okvis::ceres::ShapeMatrixParamBlock>(
               imuAugmentedParameterPtrs[1]);
       sm = tsParamBlockPtr->estimate();
       extraParams->segment<9>(9) = sm;
 
-      std::shared_ptr<const ceres::ShapeMatrixParamBlock> taParamBlockPtr =
-          std::static_pointer_cast<const ceres::ShapeMatrixParamBlock>(
+      std::shared_ptr<const okvis::ceres::ShapeMatrixParamBlock> taParamBlockPtr =
+          std::static_pointer_cast<const okvis::ceres::ShapeMatrixParamBlock>(
               imuAugmentedParameterPtrs[2]);
       sm = taParamBlockPtr->estimate();
       extraParams->segment<9>(18) = sm;
@@ -68,4 +68,4 @@ void getImuAugmentedStatesEstimate(
       break;
   }
 }
-}  // namespace okvis
+}  // namespace swift_vio

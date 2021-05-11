@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <okvis/InverseTransformMultiplyJacobian.hpp>
+#include <loop_closure/InverseTransformMultiplyJacobian.hpp>
 #include <okvis/kinematics/sophus_operators.hpp>
 
 class InverseTransformMultiplyTest : public ::testing::Test {
@@ -24,7 +24,7 @@ class InverseTransformMultiplyTest : public ::testing::Test {
       delta(i) = eps;
       okvis::kinematics::Transformation T_WA_bar = T_WA_;
       T_WA_bar.oplus(delta);
-      okvis::InverseTransformMultiplyJacobian tmj_bar(T_WA_bar, T_WB_);
+      swift_vio::InverseTransformMultiplyJacobian tmj_bar(T_WA_bar, T_WB_);
       okvis::kinematics::Transformation T_AB_bar = tmj_bar.multiplyT();
       Eigen::Matrix<double, 6, 1> ratio =
           okvis::kinematics::ominus(T_AB_bar, T_AB_) / eps;
@@ -37,7 +37,7 @@ class InverseTransformMultiplyTest : public ::testing::Test {
       delta(i) = eps;
       okvis::kinematics::Transformation T_WB_bar = T_WB_;
       T_WB_bar.oplus(delta);
-      okvis::InverseTransformMultiplyJacobian tmj_bar(T_WA_, T_WB_bar);
+      swift_vio::InverseTransformMultiplyJacobian tmj_bar(T_WA_, T_WB_bar);
       okvis::kinematics::Transformation T_AB_bar = tmj_bar.multiplyT();
       Eigen::Matrix<double, 6, 1> ratio =
           okvis::kinematics::ominus(T_AB_bar, T_AB_) / eps;
@@ -49,7 +49,7 @@ class InverseTransformMultiplyTest : public ::testing::Test {
   // void TearDown() override {}
   okvis::kinematics::Transformation T_WA_;
   okvis::kinematics::Transformation T_WB_;
-  okvis::InverseTransformMultiplyJacobian tmj_;
+  swift_vio::InverseTransformMultiplyJacobian tmj_;
   okvis::kinematics::Transformation T_AB_;
 
   Eigen::Matrix<double, 3, 6> dtheta_ddelta_WA_;

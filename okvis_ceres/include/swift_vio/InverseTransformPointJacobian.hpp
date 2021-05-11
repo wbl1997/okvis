@@ -11,8 +11,7 @@
 #define INCLUDE_SWIFT_VIO_INVERSE_TRANSFORM_POINT_JACOBIAN_HPP
 
 #include <okvis/kinematics/Transformation.hpp>
-
-namespace okvis {
+namespace swift_vio {
 class InverseTransformPointJacobian {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -71,5 +70,5 @@ Eigen::Vector4d InverseTransformPointJacobian::evaluate() const {
   return T_AB_.inverse() * hpA_;
 }
 
-}  // namespace okvis
+}  // namespace swift_vio
 #endif  // INCLUDE_SWIFT_VIO_INVERSE_TRANSFORM_POINT_JACOBIAN_HPP

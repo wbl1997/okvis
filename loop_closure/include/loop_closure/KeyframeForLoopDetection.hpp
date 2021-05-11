@@ -9,9 +9,9 @@
 #include <okvis/assert_macros.hpp>
 #include <okvis/class_macros.hpp>
 
-#include <okvis/InverseTransformMultiplyJacobian.hpp>
+#include <loop_closure/InverseTransformMultiplyJacobian.hpp>
 
-namespace okvis {
+namespace swift_vio {
 enum class PoseConstraintType {
   Odometry = 0,
   LoopClosure = 1,
@@ -109,8 +109,8 @@ public:
           odometryConstraintList) {
     constraintList_.reserve(odometryConstraintList.size());
     for (auto constraint : odometryConstraintList) {
-      std::shared_ptr<okvis::NeighborConstraintInDatabase> dbConstraint(
-          new okvis::NeighborConstraintInDatabase(constraint->core_));
+      std::shared_ptr<NeighborConstraintInDatabase> dbConstraint(
+          new NeighborConstraintInDatabase(constraint->core_));
 //      dbConstraint->squareRootInfo_ will be set later on.
       constraintList_.push_back(dbConstraint);
     }
@@ -141,7 +141,7 @@ public:
   }
 
   const cv::Mat frontendDescriptorsWithLandmarks() const {
-    return selectDescriptors(frontendDescriptors_,
+    return okvis::selectDescriptors(frontendDescriptors_,
                              keypointIndexForLandmarkList_);
   }
 
@@ -290,7 +290,7 @@ class LoopQueryKeyframeMessage {
     return nframe_->image(kQueryCameraIndex);
   }
 
-  std::shared_ptr<const cameras::CameraBase> cameraGeometry() const {
+  std::shared_ptr<const okvis::cameras::CameraBase> cameraGeometry() const {
     return nframe_->geometry(kQueryCameraIndex);
   }
 
@@ -309,7 +309,7 @@ class LoopQueryKeyframeMessage {
     return nframe_->getDescriptors(kQueryCameraIndex);
   }
 
-  std::vector<KeypointReduced, Eigen::aligned_allocator<KeypointReduced>>
+  std::vector<okvis::KeypointReduced, Eigen::aligned_allocator<okvis::KeypointReduced>>
   getFrontendKeypoints() const {
     return nframe_->copyKeypoints(kQueryCameraIndex);
   }
@@ -372,6 +372,5 @@ struct PgoResult {
   okvis::Time stamp_;
   okvis::kinematics::Transformation T_WB_;
 };
-
-}  // namespace okvis
+}  // namespace swift_vio
 #endif  // INCLUDE_OKVIS_KEYFRAME_FOR_LOOP_DETECTION_HPP_

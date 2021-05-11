@@ -40,9 +40,6 @@
 
 #include <glog/logging.h>
 #include <okvis/Estimator.hpp>
-#include <swift_vio/CameraTimeParamBlock.hpp>
-#include <swift_vio/EuclideanParamBlock.hpp>
-#include <swift_vio/EuclideanParamBlockSized.hpp>
 #include <okvis/ceres/PoseParameterBlock.hpp>
 #include <okvis/ceres/ImuError.hpp>
 #include <okvis/ceres/PoseError.hpp>
@@ -51,6 +48,11 @@
 #include <okvis/IdProvider.hpp>
 #include <okvis/MultiFrame.hpp>
 #include <okvis/assert_macros.hpp>
+
+#include <swift_vio/ceres/CameraTimeParamBlock.hpp>
+#include <swift_vio/ceres/EuclideanParamBlock.hpp>
+#include <swift_vio/ceres/EuclideanParamBlockSized.hpp>
+#include <swift_vio/VectorOperations.hpp>
 
 /// \brief okvis Main namespace of this package.
 namespace okvis {
@@ -94,10 +96,10 @@ void Estimator::addCameraSystem(const okvis::cameras::NCameraSystem& cameras) {
     camera_rig_.addCamera(cameras.T_SC(i), cameras.cameraGeometry(i),
                           cameras.projOptRep(i), cameras.extrinsicOptRep(i));
     bool fixProjectionIntrinsics = false;
-    ProjectionOptNameToId(cameras.projOptRep(i), &fixProjectionIntrinsics);
+    swift_vio::ProjectionOptNameToId(cameras.projOptRep(i), &fixProjectionIntrinsics);
     fixCameraIntrinsicParams_.push_back(fixProjectionIntrinsics);
     bool fixExtrinsics = false;
-    ExtrinsicModelNameToId(cameras.extrinsicOptRep(i), &fixExtrinsics);
+    swift_vio::ExtrinsicModelNameToId(cameras.extrinsicOptRep(i), &fixExtrinsics);
     fixCameraExtrinsicParams_.push_back(fixExtrinsics);
   }
 }
@@ -136,18 +138,18 @@ bool Estimator::addStates(
   okvis::SpeedAndBias speedAndBias;
   if (statesMap_.empty()) {
     // in case this is the first frame ever, let's initialize the pose:
-    if (pvstd_.initWithExternalSource)
-      T_WS = okvis::kinematics::Transformation(pvstd_.p_WS, pvstd_.q_WS);
+    if (initialNavState_.initWithExternalSource)
+      T_WS = okvis::kinematics::Transformation(initialNavState_.p_WS, initialNavState_.q_WS);
     else {
       bool success0 = initPoseFromImu(imuMeasurements, T_WS);
       OKVIS_ASSERT_TRUE_DBG(
           Exception, success0,
           "pose could not be initialized from imu measurements.");
       if (!success0) return false;
-      pvstd_.updatePose(T_WS, multiFrame->timestamp());
+      initialNavState_.updatePose(T_WS, multiFrame->timestamp());
     }
     speedAndBias.setZero();
-    speedAndBias.head<3>() = pvstd_.v_WS;
+    speedAndBias.head<3>() = initialNavState_.v_WS;
     speedAndBias.segment<3>(3) = imuParametersVec_.at(0).g0;
     speedAndBias.tail<3>() = imuParametersVec_.at(0).a0;
   } else {
@@ -263,7 +265,7 @@ bool Estimator::addStates(
   if (statesMap_.size() == 1) {
     // let's add a prior
     Eigen::Matrix<double, 6, 6> information;
-    pvstd_.toInformation(&information);
+    initialNavState_.toInformation(&information);
     std::shared_ptr<ceres::PoseError > poseError(new ceres::PoseError(T_WS, information));
     /*auto id2= */ mapPtr_->addResidualBlock(poseError,NULL,poseParameterBlock);
     //mapPtr_->isJacobianCorrect(id2,1.0e-6);
@@ -298,7 +300,7 @@ bool Estimator::addStates(
       const double sigma_ba = imuParametersVec_.at(0).sigma_ba;
       std::shared_ptr<ceres::SpeedAndBiasError > speedAndBiasError(
             new ceres::SpeedAndBiasError(
-                speedAndBias, pvstd_.std_v_WS[0]*pvstd_.std_v_WS[0],
+                speedAndBias, initialNavState_.std_v_WS[0]*initialNavState_.std_v_WS[0],
                 sigma_bg*sigma_bg, sigma_ba*sigma_ba));
       // add to map
       mapPtr_->addResidualBlock(
@@ -656,17 +658,17 @@ bool Estimator::applyMarginalizationStrategy(
             uint64_t poseId = mapPtr_->parameters(residuals[r].residualBlockId).at(0).first;
             // since we have implemented the linearisation to account for robustification,
             // we don't kick out bad measurements here any more like
-            // if(vectorContains(allLinearizedFrames,poseId)){ ...
+            // if(swift_vio::vectorContains(allLinearizedFrames,poseId)){ ...
             //   if (error.transpose() * error > 6.0) { ... removeObservation ... }
             // }
-            if(vectorContains(removeFrames,poseId)){
+            if(swift_vio::vectorContains(removeFrames,poseId)){
               skipLandmark = false;
             }
             if(poseId>=currentKfId){
               marginalize = false;
               hasNewObservations = true;
             }
-            if(vectorContains(allLinearizedFrames, poseId)){
+            if(swift_vio::vectorContains(allLinearizedFrames, poseId)){
               visibleInFrame.insert(std::pair<uint64_t,bool>(poseId,true));
               obsCount++;
             }
@@ -692,13 +694,13 @@ bool Estimator::applyMarginalizationStrategy(
                   residuals[r].errorInterfacePtr);
           if (reprojectionError) {
             uint64_t poseId = mapPtr_->parameters(residuals[r].residualBlockId).at(0).first;
-            if((vectorContains(removeFrames,poseId) && hasNewObservations) ||
-                (!vectorContains(allLinearizedFrames,poseId) && marginalize)){
+            if((swift_vio::vectorContains(removeFrames,poseId) && hasNewObservations) ||
+                (!swift_vio::vectorContains(allLinearizedFrames,poseId) && marginalize)){
               // ok, let's ignore the observation.
               removeObservation(residuals[r].residualBlockId);
               residuals.erase(residuals.begin() + r);
               r--;
-            } else if(marginalize && vectorContains(allLinearizedFrames,poseId)) {
+            } else if(marginalize && swift_vio::vectorContains(allLinearizedFrames,poseId)) {
               // TODO: consider only the sensible ones for marginalization
               if(obsCount<2){ //visibleInFrame.size()
                 removeObservation(residuals[r].residualBlockId);
@@ -777,7 +779,7 @@ bool Estimator::applyMarginalizationStrategy(
 		okvis::kinematics::Transformation T_WS_0;
 		get_T_WS(statesMap_.begin()->first, T_WS_0);
 		Eigen::Matrix<double, 6, 6> information;
-		pvstd_.toInformation(&information);
+		initialNavState_.toInformation(&information);
 	  std::shared_ptr<ceres::PoseError > poseError(new ceres::PoseError(T_WS_0, information));
 	  mapPtr_->addResidualBlock(poseError,NULL,mapPtr_->parameterBlockPtr(statesMap_.begin()->first));
 	}
@@ -1444,7 +1446,7 @@ uint64_t Estimator::mergeTwoLandmarks(uint64_t lmIdA, uint64_t lmIdB) {
     const KeypointIdentifier& kpi = obsIter->first;
     okvis::MultiFramePtr multiFramePtr = multiFramePtrMap_.at(kpi.frameId);
     auto iterA = std::find_if(obsMapA.begin(), obsMapA.end(),
-                              okvis::IsObservedInFrame(kpi.frameId, kpi.cameraIndex));
+                              IsObservedInFrame(kpi.frameId, kpi.cameraIndex));
     if (iterA != obsMapA.end()) {
       multiFramePtr->setLandmarkId(kpi.cameraIndex, kpi.keypointIndex, 0u);
       continue;
@@ -1687,7 +1689,7 @@ bool Estimator::getCameraSensorExtrinsics(
     uint64_t poseId, size_t cameraIdx,
     okvis::kinematics::Transformation& T_BCi) const {
   if (camera_rig_.getExtrinsicOptMode(cameraIdx) ==
-      Extrinsic_p_C0C_q_C0C::kModelId) {
+      swift_vio::Extrinsic_p_C0C_q_C0C::kModelId) {
     OKVIS_ASSERT_NE_DBG(
         Exception, kMainCameraIndex, cameraIdx,
         "Extrinsic_p_C0C_q_C0C should not happen with the main camera.");

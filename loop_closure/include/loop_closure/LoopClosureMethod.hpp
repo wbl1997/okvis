@@ -4,11 +4,11 @@
 #include <memory>
 #include <unordered_map>
 
-#include <okvis/KeyframeForLoopDetection.hpp>
-#include <okvis/LoopClosureParameters.hpp>
-#include <okvis/LoopFrameAndMatches.hpp>
+#include <loop_closure/KeyframeForLoopDetection.hpp>
+#include <loop_closure/LoopClosureParameters.hpp>
+#include <loop_closure/LoopFrameAndMatches.hpp>
 
-namespace okvis {
+namespace swift_vio {
 /**
  * @brief The LoopClosureMethod class implements loop closure detection and pose
  * graph optimization. It suits to be subclassed.
@@ -17,7 +17,7 @@ class LoopClosureMethod {
  public:
   LoopClosureMethod();
 
-  explicit LoopClosureMethod(std::shared_ptr<const okvis::LoopClosureParameters> parameters);
+  explicit LoopClosureMethod(std::shared_ptr<const LoopClosureParameters> parameters);
 
   virtual ~LoopClosureMethod();
 
@@ -62,7 +62,7 @@ class LoopClosureMethod {
       size_t dbowId,
       const LoopQueryKeyframeMessage& queryKeyframe) const;
 
-  inline std::vector<std::shared_ptr<okvis::KeyframeInDatabase>>
+  inline std::vector<std::shared_ptr<KeyframeInDatabase>>
   getFrameDatabasePtr() const {
     return db_frames_;
   }
@@ -70,9 +70,9 @@ class LoopClosureMethod {
   virtual void saveFinalPgoResults() {}
 
  protected:
-  std::vector<std::shared_ptr<okvis::KeyframeInDatabase>> db_frames_;
+  std::vector<std::shared_ptr<KeyframeInDatabase>> db_frames_;
   std::unordered_map<uint64_t, size_t> vioIdToDbowId_;
 };
-}  // namespace okvis
+}  // namespace swift_vio
 
 #endif  // INCLUDE_OKVIS_LOOP_CLOSURE_METHOD_HPP_

@@ -6,8 +6,7 @@
 #include <okvis/cameras/CameraBase.hpp>
 #include <okvis/kinematics/operators.hpp>
 
-namespace okvis {
-
+namespace swift_vio {
 /**
  * @brief obsDirectionJacobian compute the Jacobian of the obsDirection
  *     relative to the camera parameters and its covariance.
@@ -92,5 +91,5 @@ inline void EpipolarJacobian::de_dt_CjCk(
 inline void EpipolarJacobian::de_dfk(Eigen::Matrix<double, 1, 3>* jac) const {
   *jac = (t_CjCk_.cross(fj_)).transpose() * R_CjCk_;
 }
-}  // namespace okvis
+}  // namespace swift_vio
 #endif  // INCLUDE_SWIFT_VIO_EPIPOLAR_JACOBIAN_HPP_

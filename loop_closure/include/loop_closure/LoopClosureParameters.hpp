@@ -12,8 +12,7 @@
 #include <okvis/class_macros.hpp>
 #include <glog/logging.h>
 
-namespace okvis {
-
+namespace swift_vio {
 class LoopClosureParameters : public PipelineParams {
  public:
   LoopClosureParameters();
@@ -23,6 +22,6 @@ class LoopClosureParameters : public PipelineParams {
   void print() const override;
   bool equals(const PipelineParams& obj) const override;
 };
-}  // namespace okvis
+}  // namespace swift_vio
 
 #endif  // INCLUDE_OKVIS_LOOP_CLOSURE_PARAMETERS_HPP_

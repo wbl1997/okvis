@@ -68,7 +68,7 @@ class Frontend : public VioFrontendInterface {
    * @brief Constructor.
    * @param numCameras Number of cameras in the sensor configuration.
    */
-  Frontend(size_t numCameras, const FrontendOptions& frontendOptions);
+  Frontend(size_t numCameras, const swift_vio::FrontendOptions& frontendOptions);
   virtual ~Frontend() {
   }
 
@@ -326,7 +326,7 @@ class Frontend : public VioFrontendInterface {
    */
   float keyframeInsertionMatchingRatioThreshold_;  //0.2
 
-  FrontendOptions frontendOptions_;
+  swift_vio::FrontendOptions frontendOptions_;
 
   /**
    * @brief Decision whether a new frame should be keyframe or not.

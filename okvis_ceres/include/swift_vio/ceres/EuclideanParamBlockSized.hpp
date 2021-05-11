@@ -12,7 +12,6 @@
 #include <okvis/Time.hpp>
 #include <okvis/ceres/ParameterBlockSized.hpp>
 
-/// \brief okvis Main namespace of this package.
 namespace okvis {
 /// \brief ceres Namespace for ceres-related functionality implemented in okvis.
 namespace ceres {
@@ -20,18 +19,18 @@ namespace ceres {
 /// \brief Wraps the parameter block for camera intrinsics estimate
 template <int Dim>
 class EuclideanParamBlockSized
-    : public ParameterBlockSized<Dim, Dim, Eigen::Matrix<double, Dim, 1>> {
+    : public okvis::ceres::ParameterBlockSized<Dim, Dim, Eigen::Matrix<double, Dim, 1>> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   /// \brief The base class type.
-  typedef ParameterBlockSized<Dim, Dim, Eigen::Matrix<double, Dim, 1>> base_t;
+  typedef okvis::ceres::ParameterBlockSized<Dim, Dim, Eigen::Matrix<double, Dim, 1>> base_t;
 
   /// \brief The estimate type (9D vector).
   typedef Eigen::Matrix<double, Dim, 1> estimate_t;
 
   /// \brief Default constructor (assumes not fixed).
   EuclideanParamBlockSized() : base_t::ParameterBlockSized() {
-    ParameterBlock::setFixed(false);
+    okvis::ceres::ParameterBlock::setFixed(false);
   }
 
   /// \brief Constructor with estimate and time.
@@ -41,9 +40,9 @@ class EuclideanParamBlockSized
   EuclideanParamBlockSized(const Eigen::Matrix<double, Dim, 1>& intrinsicParams,
                            uint64_t id, const okvis::Time& timestamp) {
     setEstimate(intrinsicParams);
-    ParameterBlock::setId(id);
+    okvis::ceres::ParameterBlock::setId(id);
     setTimestamp(timestamp);
-    ParameterBlock::setFixed(false);
+    okvis::ceres::ParameterBlock::setFixed(false);
   }
 
   /// \brief Trivial destructor.

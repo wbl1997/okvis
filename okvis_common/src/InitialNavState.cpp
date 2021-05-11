@@ -1,7 +1,6 @@
-#include "okvis/InitialNavState.hpp"
+#include "swift_vio/InitialNavState.hpp"
 
-namespace okvis {
-
+namespace swift_vio {
 InitialNavState::InitialNavState()
     : initWithExternalSource(false),
       stateTime(),
@@ -14,7 +13,7 @@ InitialNavState::InitialNavState()
 
 // v_WS, and std_v_WS are to be recalculated later according to updated p_WS and
 // q_ws
-InitialNavState::InitialNavState(const okvis::InitialNavState& rhs)
+InitialNavState::InitialNavState(const InitialNavState& rhs)
     : initWithExternalSource(rhs.initWithExternalSource),
       stateTime(rhs.stateTime),
       p_WS(rhs.p_WS),
@@ -59,5 +58,4 @@ InitialNavState& InitialNavState::operator=(const InitialNavState& other) {
   std_v_WS = other.std_v_WS;
   return *this;
 }
-
-}  // namespace okvis
+}  // namespace swift_vio

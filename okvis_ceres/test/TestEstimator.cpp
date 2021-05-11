@@ -185,7 +185,7 @@ TEST(okvisTestSuite, Estimator) {
       std::vector<std::vector<size_t>> lmkIndices; // for every keypoint
       std::vector<std::vector<int>> keypointIndices; // for every landmark
       double imageNoiseStd = 0.7;
-      PointLandmarkSimulation::projectLandmarksToNFrame(
+      simul::PointLandmarkSimulation::projectLandmarksToNFrame(
           homogeneousPoints, T_WS, cameraSystem, mf, &lmkIndices,
           &keypointIndices, &imageNoiseStd);
 
@@ -202,7 +202,7 @@ TEST(okvisTestSuite, Estimator) {
       // run the optimization
       estimator.optimize(10, 4, false);
 
-      std::shared_ptr<okvis::LoopQueryKeyframeMessage> queryKeyframe;
+      std::shared_ptr<swift_vio::LoopQueryKeyframeMessage> queryKeyframe;
       estimator.getLoopQueryKeyframeMessage(mf, &queryKeyframe);
       bool isKf = (k % 3 == 0);
       // check number of landmarks, landmark positions are in camera frame,
@@ -222,7 +222,7 @@ TEST(okvisTestSuite, Estimator) {
           okvis::kinematics::Transformation T_WS_prevkf;
           estimator.get_T_WS(prevkeymf->id(), T_WS_prevkf);
           EXPECT_GE(queryKeyframe->odometryConstraintList().size(), 1u);
-          std::shared_ptr<const okvis::NeighborConstraintMessage>
+          std::shared_ptr<const swift_vio::NeighborConstraintMessage>
               constraintMessage =
                   queryKeyframe->odometryConstraintList().at(0u);
           EXPECT_EQ(constraintMessage->core_.id_, prevkeymf->id());
@@ -232,7 +232,7 @@ TEST(okvisTestSuite, Estimator) {
                         .lpNorm<Eigen::Infinity>(),
                     1e-7);
           EXPECT_EQ(constraintMessage->core_.type_,
-                    okvis::PoseConstraintType::Odometry);
+                    swift_vio::PoseConstraintType::Odometry);
           EXPECT_LT((constraintMessage->core_.squareRootInfo_ -
                      Eigen::Matrix<double, 6, 6>::Identity())
                         .lpNorm<Eigen::Infinity>(),

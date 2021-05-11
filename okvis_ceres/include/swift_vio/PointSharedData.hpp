@@ -5,9 +5,9 @@
 #include <unordered_map>
 #include <Eigen/StdVector>
 
-#include <swift_vio/RemoveFromVector.hpp>
-
+#include <swift_vio/VectorOperations.hpp>
 #include <okvis/FrameTypedefs.hpp>
+
 #include <okvis/Measurements.hpp>
 #include <okvis/Parameters.hpp>
 #include <okvis/ceres/PoseParameterBlock.hpp>
@@ -141,11 +141,11 @@ class PointSharedData {
 
   /// @name Functions for anchors.
   /// @{
-  void setAnchors(const std::vector<okvis::AnchorFrameIdentifier>& anchorIds) {
+  void setAnchors(const std::vector<AnchorFrameIdentifier>& anchorIds) {
     anchorIds_ = anchorIds;    
   }
 
-  const std::vector<okvis::AnchorFrameIdentifier>& anchorIds() const {
+  const std::vector<AnchorFrameIdentifier>& anchorIds() const {
     return anchorIds_;
   }
 
@@ -364,7 +364,7 @@ class PointSharedData {
               Eigen::aligned_allocator<StateInfoForOneKeypoint>>
       stateInfoForObservations_;
 
-  std::vector<okvis::AnchorFrameIdentifier> anchorIds_;
+  std::vector<AnchorFrameIdentifier> anchorIds_;
 
   std::vector<std::shared_ptr<const okvis::ceres::ParameterBlock>>
       tdParamBlockPtrs_;

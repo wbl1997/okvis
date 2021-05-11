@@ -121,7 +121,7 @@ static void parseExpandedCameraParamSigmas(
 }
 
 void parseInitialState(cv::FileNode initialStateNode,
-                       InitialNavState* initialState) {
+                       swift_vio::InitialNavState* initialState) {
   bool initWithExternalSource = true;
   cv::FileNode timeNode = initialStateNode["state_time"];
   if (timeNode.isReal()) {
@@ -197,9 +197,9 @@ void parseOptimizationOptions(cv::FileNode optNode, Optimization *optParams) {
   }
   if (optNode["algorithm"].isString()) {
     std::string description = (std::string)optNode["algorithm"];
-    optParams->algorithm = okvis::EstimatorAlgorithmNameToId(description);
+    optParams->algorithm = swift_vio::EstimatorAlgorithmNameToId(description);
   } else {
-    optParams->algorithm = okvis::EstimatorAlgorithm::OKVIS;
+    optParams->algorithm = swift_vio::EstimatorAlgorithm::OKVIS;
   }
   if (optNode["keyframeTranslationThreshold"].isReal()) {
     optNode["keyframeTranslationThreshold"] >> optParams->translationThreshold;
@@ -240,7 +240,7 @@ void parseOptimizationOptions(cv::FileNode optNode, Optimization *optParams) {
 }
 
 void parseFrontendOptions(cv::FileNode frontendNode,
-                          FrontendOptions* frontendOptions) {
+                          swift_vio::FrontendOptions* frontendOptions) {
   parseBoolean(frontendNode["initializeWithoutEnoughParallax"],
                frontendOptions->initializeWithoutEnoughParallax);
   LOG(INFO) << "Initialize without enough parallax? "
@@ -264,7 +264,7 @@ void parseFrontendOptions(cv::FileNode frontendNode,
 }
 
 void parsePointLandmarkOptions(cv::FileNode plNode,
-                               PointLandmarkOptions* plOptions) {
+                               swift_vio::PointLandmarkOptions* plOptions) {
   if (plNode["landmarkModelId"].isInt()) {
     plOptions->landmarkModelId = static_cast<int>(plNode["landmarkModelId"]);
   }
@@ -299,7 +299,7 @@ void parsePointLandmarkOptions(cv::FileNode plNode,
   LOG(INFO) << plOptions->toString("Point landmark options: ");
 }
 
-void parsePoseGraphOptions(cv::FileNode pgNode, PoseGraphOptions* pgOptions) {
+void parsePoseGraphOptions(cv::FileNode pgNode, swift_vio::PoseGraphOptions* pgOptions) {
   if (pgNode["maxOdometryConstraintForAKeyframe"].isInt()) {
     pgNode["maxOdometryConstraintForAKeyframe"] >>
         pgOptions->maxOdometryConstraintForAKeyframe;

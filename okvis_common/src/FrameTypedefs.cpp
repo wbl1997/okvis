@@ -40,12 +40,12 @@ bool MapPoint::goodForMarginalization(size_t minCulledFrames) const {
   if (observations.size() < minCulledFrames)
     return false;
   switch (status.measurementType) {
-  case FeatureTrackStatus::kPremature:
+  case swift_vio::FeatureTrackStatus::kPremature:
     return true;
 
-  case FeatureTrackStatus::kMsckfTrack:
-  case FeatureTrackStatus::kSlamInitialization:
-    return status.measurementFate != FeatureTrackStatus::kSuccessful;
+  case swift_vio::FeatureTrackStatus::kMsckfTrack:
+  case swift_vio::FeatureTrackStatus::kSlamInitialization:
+    return status.measurementFate != swift_vio::FeatureTrackStatus::kSuccessful;
   default:
     return false;
   }
@@ -56,23 +56,23 @@ void MapPoint::updateStatus(uint64_t currentFrameId,
                             size_t minTrackLengthForSlam) {
   bool newlyObserved = trackedInCurrentFrame(currentFrameId);
   status.updateTrackStat(newlyObserved);
-  FeatureTrackStatus::MeasurementType measurementType(
-      FeatureTrackStatus::kPremature);
+  swift_vio::FeatureTrackStatus::MeasurementType measurementType(
+      swift_vio::FeatureTrackStatus::kPremature);
   if (newlyObserved) {
     if (status.inState) {
-      measurementType = FeatureTrackStatus::kSlamObservation;
+      measurementType = swift_vio::FeatureTrackStatus::kSlamObservation;
     } else {
       if (observations.size() >= minTrackLengthForSlam) {
-        measurementType = FeatureTrackStatus::kSlamInitialization;
+        measurementType = swift_vio::FeatureTrackStatus::kSlamInitialization;
       }
     }
   } else {
     if (observations.size() >= minTrackLengthForMsckf) {
-      measurementType = FeatureTrackStatus::kMsckfTrack;
+      measurementType = swift_vio::FeatureTrackStatus::kMsckfTrack;
     }
   }
   status.measurementType = measurementType;
-  status.measurementFate = FeatureTrackStatus::kUndetermined;
+  status.measurementFate = swift_vio::FeatureTrackStatus::kUndetermined;
 }
 
 } // namespace okvis

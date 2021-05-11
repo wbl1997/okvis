@@ -1,9 +1,9 @@
 #include "swift_vio/imu/BoundedImuDeque.hpp"
 #include <glog/logging.h>
 
-namespace okvis {
+namespace swift_vio {
 
-bool cmp(ImuMeasurement lhs, ImuMeasurement rhs) {
+bool cmp(okvis::ImuMeasurement lhs, okvis::ImuMeasurement rhs) {
   return lhs.timeStamp < rhs.timeStamp;
 }
 
@@ -82,14 +82,14 @@ okvis::ImuMeasurementDeque getImuMeasurements(
 
   auto first_imu_package = std::lower_bound(
       imuMeasurements_.begin(), imuMeasurements_.end(),
-      ImuMeasurement(imuDataBeginTime, ImuSensorReadings()), cmp);
+      okvis::ImuMeasurement(imuDataBeginTime, okvis::ImuSensorReadings()), cmp);
   if (first_imu_package != imuMeasurements_.begin() &&
       first_imu_package->timeStamp > imuDataBeginTime) {
     --first_imu_package;
   }
   auto last_imu_package = std::lower_bound(
       imuMeasurements_.begin(), imuMeasurements_.end(),
-      ImuMeasurement(imuDataEndTime, ImuSensorReadings()), cmp);
+      okvis::ImuMeasurement(imuDataEndTime, okvis::ImuSensorReadings()), cmp);
   if (last_imu_package != imuMeasurements_.end()) {
     ++last_imu_package;
   }
@@ -136,7 +136,7 @@ int deleteImuMeasurements(const okvis::Time& eraseUntil,
 
   auto eraseEnd =
       std::lower_bound(imuMeasurements_.begin(), imuMeasurements_.end(),
-                       ImuMeasurement(eraseUntil, ImuSensorReadings()), cmp);
+                       okvis::ImuMeasurement(eraseUntil, okvis::ImuSensorReadings()), cmp);
   int removed = eraseEnd - imuMeasurements_.begin();
 
   //  okvis::ImuMeasurementDeque::iterator eraseEnd;
@@ -152,4 +152,4 @@ int deleteImuMeasurements(const okvis::Time& eraseUntil,
 
   return removed;
 }
-}  // namespace okvis
+}  // namespace swift_vio

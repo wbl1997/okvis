@@ -9,11 +9,9 @@
 #define INCLUDE_OKVIS_CERES_CAMERATIMEPARAMBLOCK_HPP_
 
 #include <okvis/ceres/ParameterBlockSized.hpp>
-//#include <okvis/kinematics/Transformation.hpp>
 #include <Eigen/Core>
 #include <okvis/Time.hpp>
 
-/// \brief okvis Main namespace of this package.
 namespace okvis {
 /// \brief ceres Namespace for ceres-related functionality implemented in okvis.
 namespace ceres {

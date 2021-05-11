@@ -16,7 +16,7 @@
 #include <swift_vio/InverseTransformPointJacobian.hpp>
 #include <swift_vio/TransformPointJacobian.hpp>
 
-namespace okvis {
+namespace swift_vio {
 struct TransformPointJacobianNode {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   TransformPointJacobianNode() {}
@@ -132,5 +132,5 @@ class MultipleTransformPointJacobian {
   // T1^{a_1} * T2^{a_2} *... * Tk^{a_k}
   Eigen::AlignedVector<TransformPointJacobianNode> transformJacobianList_;
 };
-} // okvis
+}  // namespace swift_vio
 #endif // INCLUDE_SWIFT_VIO_MULTIPLE_TRANSFORM_POINT_JACOBIAN_HPP

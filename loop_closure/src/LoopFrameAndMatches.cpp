@@ -1,5 +1,5 @@
-#include <okvis/LoopFrameAndMatches.hpp>
-namespace okvis {
+#include <loop_closure/LoopFrameAndMatches.hpp>
+namespace swift_vio {
 LoopFrameAndMatches::LoopFrameAndMatches() {}
 
 LoopFrameAndMatches::LoopFrameAndMatches(
@@ -15,4 +15,4 @@ LoopFrameAndMatches::LoopFrameAndMatches(
       T_BlBq_(T_BlBq) {}
 
 LoopFrameAndMatches::~LoopFrameAndMatches() {}
-}  // namespace okvis
+}  // namespace swift_vio

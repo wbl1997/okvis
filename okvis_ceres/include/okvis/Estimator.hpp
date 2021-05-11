@@ -49,8 +49,8 @@
 #include <okvis/kinematics/Transformation.hpp>
 
 #include <okvis/assert_macros.hpp>
-#include <okvis/KeyframeForLoopDetection.hpp>
-#include <okvis/LoopFrameAndMatches.hpp>
+#include <loop_closure/KeyframeForLoopDetection.hpp>
+#include <loop_closure/LoopFrameAndMatches.hpp>
 #include <okvis/VioBackendInterface.hpp>
 #include <okvis/MultiFrame.hpp>
 #include <okvis/FrameTypedefs.hpp>
@@ -67,7 +67,7 @@
 #include <swift_vio/imu/BoundedImuDeque.hpp>
 #include <swift_vio/CameraRig.hpp>
 #include <swift_vio/imu/ImuRig.hpp>
-#include <okvis/InitialNavState.hpp>
+#include <swift_vio/InitialNavState.hpp>
 
 /// \brief okvis Main namespace of this package.
 namespace okvis {
@@ -583,7 +583,7 @@ class Estimator : public VioBackendInterface
    */
   bool getLoopQueryKeyframeMessage(
       okvis::MultiFramePtr multiFrame,
-      std::shared_ptr<okvis::LoopQueryKeyframeMessage>* queryKeyframe) const;
+      std::shared_ptr<swift_vio::LoopQueryKeyframeMessage>* queryKeyframe) const;
   ///@}
 
   /// @name Setters
@@ -632,19 +632,19 @@ class Estimator : public VioBackendInterface
     mapPtr_ = mapPtr;
   }
 
-  void setInitialNavState(const InitialNavState& rhs) {
-     pvstd_ = rhs;
+  void setInitialNavState(const swift_vio::InitialNavState& rhs) {
+     initialNavState_ = rhs;
   }
 
   void setOptimizationOptions(const Optimization& optimizationOptions) {
     optimizationOptions_ = optimizationOptions;
   }
 
-  void setPointLandmarkOptions(const PointLandmarkOptions& plOptions) {
+  void setPointLandmarkOptions(const swift_vio::PointLandmarkOptions& plOptions) {
     pointLandmarkOptions_ = plOptions;
   }
 
-  void setPoseGraphOptions(const PoseGraphOptions& pgp) {
+  void setPoseGraphOptions(const swift_vio::PoseGraphOptions& pgp) {
     poseGraphOptions_ = pgp;
   }
 
@@ -655,7 +655,7 @@ class Estimator : public VioBackendInterface
    * @param loopFrameAndMatchesList
    */
   void setLoopFrameAndMatchesList(
-      const std::vector<std::shared_ptr<okvis::LoopFrameAndMatches>>&
+      const std::vector<std::shared_ptr<swift_vio::LoopFrameAndMatches>>&
           loopFrameAndMatchesList) {
     loopFrameAndMatchesList_ = loopFrameAndMatchesList;
   }
@@ -733,7 +733,7 @@ class Estimator : public VioBackendInterface
    * @return
    */
   virtual bool getOdometryConstraintsForKeyframe(
-      std::shared_ptr<okvis::LoopQueryKeyframeMessage> queryKeyframe) const;
+      std::shared_ptr<swift_vio::LoopQueryKeyframeMessage> queryKeyframe) const;
 
   /// \brief StateInfo This configures the state vector ordering
   struct StateInfo
@@ -891,19 +891,19 @@ class Estimator : public VioBackendInterface
 
   // An evolving camera rig to store the optimized camera
   // parameters and interface with the camera models.
-  okvis::cameras::CameraRig camera_rig_; 
+  swift_vio::cameras::CameraRig camera_rig_;
 
   // An evolving imu rig to store the optimized imu parameters and
   // interface with the IMU models.
-  okvis::ImuRig imu_rig_;
+  swift_vio::ImuRig imu_rig_;
 
   // sequential imu measurements covering states in the estimator
-  okvis::BoundedImuDeque inertialMeasForStates_;
+  swift_vio::BoundedImuDeque inertialMeasForStates_;
 
   // initial nav state, (position, orientation, and velocity), and their stds.
-  InitialNavState pvstd_;
+  swift_vio::InitialNavState initialNavState_;
 
-  std::vector<std::shared_ptr<okvis::LoopFrameAndMatches>> loopFrameAndMatchesList_;
+  std::vector<std::shared_ptr<swift_vio::LoopFrameAndMatches>> loopFrameAndMatchesList_;
 
   // whether camera intrinsic parameters will be estimated? If true,
   // the camera intrinsic parameter blocks (including distortion) will not be created.
@@ -916,28 +916,11 @@ class Estimator : public VioBackendInterface
 
   Optimization optimizationOptions_;
 
-  PointLandmarkOptions pointLandmarkOptions_; // see PointLandmarkModels.hpp
+  swift_vio::PointLandmarkOptions pointLandmarkOptions_; // see PointLandmarkModels.hpp
 
-  PoseGraphOptions poseGraphOptions_;
+  swift_vio::PoseGraphOptions poseGraphOptions_;
 
 };
-
-/**
- * @brief Does a vector contain a certain element.
- * @tparam Class of a vector element.
- * @param vector Vector to search element in.
- * @param query Element to search for.
- * @return True if query is an element of vector.
- */
-template<class T>
-bool vectorContains(const std::vector<T> & vector, const T & query){
-  for(size_t i=0; i<vector.size(); ++i){
-    if(vector[i] == query){
-      return true;
-    }
-  }
-  return false;
-}
 
 // Space separated output format for Eigen matrices.
 static const Eigen::IOFormat kSpaceInitFmt(Eigen::StreamPrecision,

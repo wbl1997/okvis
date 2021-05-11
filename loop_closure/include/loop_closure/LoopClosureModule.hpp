@@ -4,14 +4,14 @@
 #include <memory>
 #include <thread>
 
-#include <okvis/KeyframeForLoopDetection.hpp>
-#include <okvis/LoopClosureMethod.hpp>
+#include <loop_closure/KeyframeForLoopDetection.hpp>
+#include <loop_closure/LoopClosureMethod.hpp>
 #include <okvis/VioInterface.hpp> // only for StateCallback.
 #include <okvis/threadsafe/ThreadsafeQueue.hpp>
 #include <okvis/timing/Timer.hpp>
 
-namespace okvis {
-typedef std::function<void(std::shared_ptr<okvis::LoopFrameAndMatches>)>
+namespace swift_vio {
+typedef std::function<void(std::shared_ptr<LoopFrameAndMatches>)>
     OutputLoopFrameCallback;
 class LoopClosureModule {
  public:
@@ -25,7 +25,7 @@ class LoopClosureModule {
   LoopClosureModule();
 
   explicit LoopClosureModule(
-      std::shared_ptr<okvis::LoopClosureMethod> loopClosureMethod);
+      std::shared_ptr<LoopClosureMethod> loopClosureMethod);
 
   ~LoopClosureModule();
 
@@ -42,7 +42,7 @@ class LoopClosureModule {
   ///        where stamp is the timestamp
   ///        and T_w_vk is the transformation (and uncertainty) that
   ///        transforms points from the vehicle frame to the world frame
-  void appendStateCallback(const VioInterface::StateCallback & stateCallback);
+  void appendStateCallback(const okvis::VioInterface::StateCallback & stateCallback);
 
   void startThreads();
 
@@ -58,7 +58,7 @@ class LoopClosureModule {
                    ///< should wait until proccessing is complete.
 
   okvis::threadsafe::ThreadSafeQueue<
-      std::shared_ptr<okvis::LoopQueryKeyframeMessage>>
+      std::shared_ptr<LoopQueryKeyframeMessage>>
       queryKeyframeList_;
 
   /// The queue containing the results of the PGO ready for publishing.
@@ -72,8 +72,8 @@ class LoopClosureModule {
 
   std::thread loopClosureThread_;   ///< Thread running loopClosureLoop().
   std::thread publisherThread_;     ///< Thread running publisherLoop().
-  std::vector<VioInterface::StateCallback> stateCallbackList_; ///< State callback functions.
+  std::vector<okvis::VioInterface::StateCallback> stateCallbackList_; ///< State callback functions.
   const size_t maxQueryKeyframeQueueSize_ = 5;
 };
-}  // namespace okvis
+}  // namespace swift_vio
 #endif  // INCLUDE_OKVIS_LOOP_CLOSURE_MODULE_HPP_

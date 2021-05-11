@@ -49,8 +49,6 @@
 
 /// \brief okvis Main namespace of this package.
 namespace okvis {
-/// \brief ceres Namespace for ceres-related functionality implemented in okvis.
-namespace ceres {
 /// \brief ode Namespace for functionality related to ODE integration implemented in okvis.
 namespace ode {
 
@@ -298,8 +296,6 @@ __inline__ void integrateOneStep_RungeKutta(
 }*/
 
 }
-
-}  // namespace ceres
 }  // namespace okvis
 
 #endif /* INCLUDE_OKVIS_CERES_ODE_ODE_HPP_ */

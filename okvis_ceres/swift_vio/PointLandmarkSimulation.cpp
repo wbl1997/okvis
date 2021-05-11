@@ -3,6 +3,7 @@
 #include <random>
 #include <Eigen/Core>
 
+namespace simul {
 void PointLandmarkSimulation::projectLandmarksToNFrame(
     const std::vector<Eigen::Vector4d,
                       Eigen::aligned_allocator<Eigen::Vector4d>>&
@@ -47,3 +48,4 @@ void PointLandmarkSimulation::projectLandmarksToNFrame(
     keypointIndices->emplace_back(frameKeypointIndices);
   }
 }
+}  // namespace simul

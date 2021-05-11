@@ -11,26 +11,10 @@
 #include <okvis/Variables.hpp>
 #include <okvis/assert_macros.hpp>
 
-namespace okvis {
-namespace ceres {
-template<class Derived>
-Eigen::Quaternion<typename Derived::Scalar> rvec2quat(const Eigen::MatrixBase<Derived> & rvec)
-{
-    typedef typename Derived::Scalar Scalar;
-    EIGEN_STATIC_ASSERT_FIXED_SIZE(Derived);
-    EIGEN_STATIC_ASSERT_VECTOR_SPECIFIC_SIZE(Derived, 3);
-    //normalize
-    Scalar rot_ang=rvec.norm();    //assume always positive
-    if (rot_ang<Scalar(1e-18))
-        return Eigen::Quaternion<Scalar>(Scalar(1), Scalar(0),Scalar(0),Scalar(0));
-    else{
-        Scalar f= sin(rot_ang*Scalar(0.5))/rot_ang;
-        return Eigen::Quaternion<Scalar>(cos(rot_ang*Scalar(0.5)), rvec[0] * f, rvec[1] * f, rvec[2] * f);
-    }
-}
-
+namespace swift_vio {
+namespace ode {
 template<typename Scalar>
-int predictStates(const okvis::GenericImuMeasurementDeque<Scalar> & imuMeasurements,
+int predictStates(const GenericImuMeasurementDeque<Scalar> & imuMeasurements,
             const Scalar gravityMag,
             std::pair<Eigen::Matrix<Scalar, 3, 1>, Eigen::Quaternion<Scalar>> &T_WS,
             Eigen::Matrix<Scalar, 9,1>& speedBgBa,
@@ -46,7 +30,7 @@ int predictStates(const okvis::GenericImuMeasurementDeque<Scalar> & imuMeasureme
     bool hasStarted = false;
     int i = 0;
     Scalar nexttime;
-    for(typename okvis::GenericImuMeasurementDeque<Scalar>::const_iterator it = imuMeasurements.begin();
+    for(typename GenericImuMeasurementDeque<Scalar>::const_iterator it = imuMeasurements.begin();
           it != imuMeasurements.end(); ++it) {
 
       Eigen::Matrix<Scalar,3,1> omega_S_0 = it->template gyroscopes;
@@ -89,7 +73,7 @@ int predictStates(const okvis::GenericImuMeasurementDeque<Scalar> & imuMeasureme
       Eigen::Matrix<Scalar,3,1> w_est = Scalar(0.5)*(omega_S_0+omega_S_1) - speedBgBa.template segment<3>(3);
       Eigen::Matrix<Scalar,3,1> gW(Scalar(0), Scalar(0), -gravityMag);
 
-      Eigen::Quaternion<Scalar> qb=rvec2quat(-w_est*dt);
+      Eigen::Quaternion<Scalar> qb = okvis::kinematics::rvec2quat(-w_est*dt);
       q_new=qb*q_old;
 
       Eigen::Matrix<Scalar,3,1> vel_inc1=(q_old.conjugate()._transformVector(a_est*dt)+q_new.conjugate()._transformVector(a_est*dt))*Scalar(0.5);
@@ -190,7 +174,7 @@ int predictStates(
 
 // time_pair[0] timestamp of the provided state values. time_pair[0] >= time_pair[1],
 template<typename Scalar>
-int predictStatesBackward(const okvis::GenericImuMeasurementDeque<Scalar> & imuMeasurements,
+int predictStatesBackward(const GenericImuMeasurementDeque<Scalar> & imuMeasurements,
                     const Scalar gravityMag,
                     std::pair<Eigen::Matrix<Scalar, 3, 1>, Eigen::Quaternion<Scalar>> &T_WS,
                     Eigen::Matrix<Scalar, 9,1>& speedBgBa,
@@ -206,7 +190,7 @@ int predictStatesBackward(const okvis::GenericImuMeasurementDeque<Scalar> & imuM
     bool hasStarted = false;
     int i = 0;
     Scalar nexttime;
-    for(typename okvis::GenericImuMeasurementDeque<Scalar>::const_reverse_iterator it = imuMeasurements.rbegin();
+    for(typename GenericImuMeasurementDeque<Scalar>::const_reverse_iterator it = imuMeasurements.rbegin();
           it != imuMeasurements.rend(); ++it) {
 
       Eigen::Matrix<Scalar,3,1> omega_S_0 = it->template gyroscopes;
@@ -250,7 +234,7 @@ int predictStatesBackward(const okvis::GenericImuMeasurementDeque<Scalar> & imuM
       Eigen::Matrix<Scalar,3,1> w_est = Scalar(0.5)*(omega_S_0+omega_S_1) - speedBgBa.template segment<3>(3);
       Eigen::Matrix<Scalar,3,1> gW(Scalar(0), Scalar(0), -gravityMag);
 
-      Eigen::Quaternion<Scalar> qb=rvec2quat(-w_est*dt);
+      Eigen::Quaternion<Scalar> qb = okvis::kinematics::rvec2quat(-w_est*dt);
       q_new=qb*q_old;
 
       Eigen::Matrix<Scalar,3,1> vel_inc1=(q_old.conjugate()._transformVector(a_est*dt)+q_new.conjugate()._transformVector(a_est*dt))*Scalar(0.5);
@@ -338,7 +322,7 @@ int predictStates(const okvis::ImuMeasurementDeque & imuMeasurements,
       Eigen::Matrix<Scalar,3,1> w_est = Scalar(0.5)*(omega_S_0+omega_S_1) - speedBgBa.template segment<3>(3);
       Eigen::Matrix<Scalar,3,1> gW(Scalar(0), Scalar(0), -gravityMag);
 
-      Eigen::Quaternion<Scalar> qb=rvec2quat(-w_est*dt);
+      Eigen::Quaternion<Scalar> qb = okvis::kinematics::rvec2quat(-w_est*dt);
       q_new=qb*q_old;
 
       Eigen::Matrix<Scalar,3,1> vel_inc1=(q_old.conjugate()._transformVector(a_est*dt)+q_new.conjugate()._transformVector(a_est*dt))*Scalar(0.5);
@@ -429,7 +413,7 @@ int predictStatesBackward(const okvis::ImuMeasurementDeque & imuMeasurements,
       Eigen::Matrix<Scalar,3,1> w_est = Scalar(0.5)*(omega_S_0+omega_S_1) - speedBgBa.template segment<3>(3);
       Eigen::Matrix<Scalar,3,1> gW(Scalar(0), Scalar(0), -gravityMag);
 
-      Eigen::Quaternion<Scalar> qb=rvec2quat(-w_est*dt);
+      Eigen::Quaternion<Scalar> qb = okvis::kinematics::rvec2quat(-w_est*dt);
       q_new=qb*q_old;
 
       Eigen::Matrix<Scalar,3,1> vel_inc1=(q_old.conjugate()._transformVector(a_est*dt)+q_new.conjugate()._transformVector(a_est*dt))*Scalar(0.5);
@@ -457,40 +441,39 @@ int predictStatesBackward(const okvis::ImuMeasurementDeque & imuMeasurements,
 }
 
 // linear interpolation
-inline void interpolateInertialData(const okvis::ImuMeasurementDeque & imuMeas,
-                                          const okvis::Time & queryTime, okvis::ImuMeasurement& queryValue)
-{
-    auto iterLeft = imuMeas.begin(), iterRight = imuMeas.end();
-    if(iterLeft->timeStamp > queryTime)
-        throw std::runtime_error("iterLeft->timeStamp > queryTime: Imu measurements has wrong timestamps");
-    for(auto iter = imuMeas.begin(); iter!= imuMeas.end(); ++iter)
-    {
-        if(iter->timeStamp < queryTime)
-        {
-            iterLeft = iter;
-        }
-        else if(iter->timeStamp == queryTime)
-        {
-            queryValue = *iter;
-            return;
-        }
-        else
-        {
-            iterRight = iter;
-            break;
-        }
+inline void interpolateInertialData(const okvis::ImuMeasurementDeque &imuMeas,
+                                    const okvis::Time &queryTime,
+                                    okvis::ImuMeasurement &queryValue) {
+  auto iterLeft = imuMeas.begin(), iterRight = imuMeas.end();
+  if (iterLeft->timeStamp > queryTime)
+    throw std::runtime_error("iterLeft->timeStamp > queryTime: Imu "
+                             "measurements has wrong timestamps");
+  for (auto iter = imuMeas.begin(); iter != imuMeas.end(); ++iter) {
+    if (iter->timeStamp < queryTime) {
+      iterLeft = iter;
+    } else if (iter->timeStamp == queryTime) {
+      queryValue = *iter;
+      return;
+    } else {
+      iterRight = iter;
+      break;
     }
-    double ratio = (queryTime-  iterLeft->timeStamp).toSec()/(iterRight->timeStamp - iterLeft->timeStamp).toSec();
-    queryValue.timeStamp = queryTime;
-    Eigen::Vector3d omega_S0= (iterRight->measurement.gyroscopes - iterLeft->measurement.gyroscopes)*
-            ratio + iterLeft->measurement.gyroscopes;
-    Eigen::Vector3d acc_S0 = (iterRight->measurement.accelerometers - iterLeft->measurement.accelerometers)*
-            ratio + iterLeft->measurement.accelerometers;
-    queryValue.measurement.gyroscopes= omega_S0;
-    queryValue.measurement.accelerometers = acc_S0;
+  }
+  double ratio = (queryTime - iterLeft->timeStamp).toSec() /
+                 (iterRight->timeStamp - iterLeft->timeStamp).toSec();
+  queryValue.timeStamp = queryTime;
+  Eigen::Vector3d omega_S0 =
+      (iterRight->measurement.gyroscopes - iterLeft->measurement.gyroscopes) *
+          ratio +
+      iterLeft->measurement.gyroscopes;
+  Eigen::Vector3d acc_S0 = (iterRight->measurement.accelerometers -
+                            iterLeft->measurement.accelerometers) *
+                               ratio +
+                           iterLeft->measurement.accelerometers;
+  queryValue.measurement.gyroscopes = omega_S0;
+  queryValue.measurement.accelerometers = acc_S0;
 }
-} // namespace ceres
-} // namespace okvis
-
+}  // namespace ode
+}  // namespace swift_vio
 #endif
 

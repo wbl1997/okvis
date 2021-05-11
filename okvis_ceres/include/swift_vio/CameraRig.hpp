@@ -19,11 +19,10 @@
 #include <okvis/kinematics/Transformation.hpp>
 #include <glog/logging.h>
 
-namespace okvis {
+namespace swift_vio {
 namespace cameras {
-
-std::shared_ptr<cameras::CameraBase> cloneCameraGeometry(
-    std::shared_ptr<const cameras::CameraBase> cameraGeometry);
+std::shared_ptr<okvis::cameras::CameraBase> cloneCameraGeometry(
+    std::shared_ptr<const okvis::cameras::CameraBase> cameraGeometry);
 
 static inline void DistortionNameToParamsInfo(const std::string& distortionName,
                                               const std::string delimiter,
@@ -85,7 +84,7 @@ class CameraRig {
   ///< Mounting transformations from IMU
   std::vector<std::shared_ptr<okvis::kinematics::Transformation>> T_SC_;
   ///< Camera geometries
-  std::vector<std::shared_ptr<cameras::CameraBase>> camera_geometries_;
+  std::vector<std::shared_ptr<okvis::cameras::CameraBase>> camera_geometries_;
 
   std::vector<okvis::cameras::NCameraSystem::DistortionType> distortionTypes_;
 
@@ -128,7 +127,7 @@ class CameraRig {
       int camera_id) const {
     return T_SC_[camera_id];
   }
-  inline std::shared_ptr<const cameras::CameraBase> getCameraGeometry(
+  inline std::shared_ptr<const okvis::cameras::CameraBase> getCameraGeometry(
       int camera_id) const {
     return camera_geometries_[camera_id];
   }
@@ -144,7 +143,7 @@ class CameraRig {
     return std::static_pointer_cast<const GEOMETRY_T>(camera_geometries_[camera_id]);
   }
 
-  inline std::shared_ptr<cameras::CameraBase> getMutableCameraGeometry(
+  inline std::shared_ptr<okvis::cameras::CameraBase> getMutableCameraGeometry(
       int camera_id) const {
     return camera_geometries_[camera_id];
   }
@@ -216,7 +215,7 @@ class CameraRig {
   }
   inline int addCamera(
       std::shared_ptr<const okvis::kinematics::Transformation> T_SC,
-      std::shared_ptr<const cameras::CameraBase> cameraGeometry,
+      std::shared_ptr<const okvis::cameras::CameraBase> cameraGeometry,
       std::string pinhole_opt_rep, std::string extrinsic_opt_rep) {
     T_SC_.emplace_back(
         std::make_shared<okvis::kinematics::Transformation>(*T_SC));
@@ -291,16 +290,16 @@ const int kTangentDistanceId = 4;
 
 #ifndef RESIDUAL_MODEL_SWITCH_CASES
 #define RESIDUAL_MODEL_SWITCH_CASES          \
-  case okvis::cameras::kReprojectionErrorId: \
+  case swift_vio::cameras::kReprojectionErrorId: \
     RESIDUAL_MODEL_CASE(RsReprojectionError) \
     break;                                   \
-  case okvis::cameras::kEpipolarFactorId:    \
+  case swift_vio::cameras::kEpipolarFactorId:    \
     RESIDUAL_MODEL_CASE(EpipolarFactor)      \
     break;                                   \
-  case okvis::cameras::kChordalDistanceId:   \
+  case swift_vio::cameras::kChordalDistanceId:   \
     RESIDUAL_MODEL_CASE(ChordalDistance)     \
     break;                                   \
-  case okvis::cameras::kTangentDistanceId:   \
+  case swift_vio::cameras::kTangentDistanceId:   \
     RESIDUAL_MODEL_CASE(TangentDistance)     \
     break;                                   \
   default:                                   \
@@ -321,7 +320,6 @@ inline int CameraObservationModelResidualDim(int modelId) {
       return 2;
   }
 }
-
 }  // namespace cameras
-}  // namespace okvis
+}  // namespace swift_vio
 #endif  // INCLUDE_SWIFT_VIO_CAMERA_RIG_HPP_

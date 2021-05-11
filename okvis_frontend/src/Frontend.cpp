@@ -68,7 +68,7 @@
 namespace okvis {
 
 // Constructor.
-Frontend::Frontend(size_t numCameras, const FrontendOptions& frontendOptions)
+Frontend::Frontend(size_t numCameras, const swift_vio::FrontendOptions& frontendOptions)
     : isInitialized_(false),
       numCameras_(numCameras),
       briskDetectionOctaves_(0),

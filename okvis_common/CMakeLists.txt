@@ -17,6 +17,7 @@ add_library(${PROJECT_NAME} STATIC
   src/FullStateWithExtrinsicsAsCallback.cpp
   src/InitialNavState.cpp
   src/Parameters.cpp
+  src/SwiftParameters.cpp
   src/PipelineParams.cpp
   src/VioInterface.cpp
   src/VioParametersReader.cpp
@@ -28,7 +29,8 @@ add_library(${PROJECT_NAME} STATIC
   include/okvis/VioFrontendInterface.hpp
   include/okvis/VioInterface.hpp
   include/okvis/VioParametersReader.hpp
-  include/okvis/threadsafe/ThreadsafeQueue.hpp)
+  include/okvis/threadsafe/ThreadsafeQueue.hpp
+  include/swift_vio/FrameTypedefs.hpp)
 
 # and link it                     
 target_link_libraries(${PROJECT_NAME}

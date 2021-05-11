@@ -6,7 +6,7 @@
 #include <Eigen/Geometry>
 #include <okvis/kinematics/Transformation.hpp> // for optimizing a PAP point.
 
-namespace LWF {
+namespace swift_vio {
 typedef Eigen::Quaterniond QPD;
 typedef Eigen::MatrixXd MXD;
 
@@ -342,6 +342,5 @@ class ParallaxAnglePoint {
   NormalVectorElement n_;
   AngleElement theta_;
 };
-
-}  // namespace LWF
+}  // namespace swift_vio
 #endif  // INCLUDE_SWIFT_VIO_PARALLAX_ANGLE_POINT_HPP_

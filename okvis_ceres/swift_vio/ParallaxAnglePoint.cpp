@@ -4,7 +4,7 @@
 #include <swift_vio/PointLandmarkModels.hpp>
 
 
-namespace LWF {
+namespace swift_vio {
 bool ParallaxAnglePoint::initializePosition(
     const std::vector<Eigen::Vector3d,
                       Eigen::aligned_allocator<Eigen::Vector3d> >
@@ -52,4 +52,4 @@ bool ParallaxAnglePoint::optimizePosition(
          swift_vio::ceres::TinySolver<
              swift_vio::BearingResiduals>::Status::HIT_MAX_ITERATIONS;
 }
-} // namespace LWF
+} // namespace swift_vio

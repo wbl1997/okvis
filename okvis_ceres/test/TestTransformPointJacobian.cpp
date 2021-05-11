@@ -25,7 +25,7 @@ public:
         delta(i) = eps;
         okvis::kinematics::Transformation T_AB_bar = T_AB_;
         T_AB_bar.oplus(delta);
-        okvis::TransformPointJacobian tpj_bar(T_AB_bar, hpB_);
+        swift_vio::TransformPointJacobian tpj_bar(T_AB_bar, hpB_);
         Eigen::Vector4d hpA_bar = tpj_bar.evaluate();
         Eigen::Matrix<double, 4, 1> ratio =
            (hpA_bar - hpA_) / eps;
@@ -38,7 +38,7 @@ public:
         delta(i) = eps;
         Eigen::Vector4d hpB_bar = hpB_ + delta;
 
-        okvis::TransformPointJacobian tpj_bar(T_AB_, hpB_bar);
+        swift_vio::TransformPointJacobian tpj_bar(T_AB_, hpB_bar);
         Eigen::Vector4d hpA_bar = tpj_bar.evaluate();
         Eigen::Matrix<double, 4, 1> ratio =
             (hpA_bar - hpA_) / eps;
@@ -62,7 +62,7 @@ public:
     }
 
     void checkAgainstMultipleTransformJacobian() const {
-      okvis::MultipleTransformPointJacobian mtpj({T_AB_}, {1}, hpB_);
+      swift_vio::MultipleTransformPointJacobian mtpj({T_AB_}, {1}, hpB_);
       Eigen::Matrix<double, 4, 4> dhpA_dhpB = mtpj.dp_dpoint();
       EXPECT_LT((dhpA_dhpB_numeric_ - dhpA_dhpB).lpNorm<Eigen::Infinity>(),
                 tol);
@@ -78,7 +78,7 @@ public:
     okvis::kinematics::Transformation T_AB_;
     Eigen::Vector4d hpA_;
     Eigen::Vector4d hpB_;
-    okvis::TransformPointJacobian tpj_;
+    swift_vio::TransformPointJacobian tpj_;
 
     Eigen::Matrix<double, 4, 4> dhpA_dhpB_numeric_;
     Eigen::Matrix<double, 4, 6> dhpA_dT_AB_numeric_;
@@ -114,7 +114,7 @@ public:
         delta(i) = eps;
         okvis::kinematics::Transformation T_AB_bar = T_AB_;
         T_AB_bar.oplus(delta);
-        okvis::InverseTransformPointJacobian itpj_bar(T_AB_bar, hpA_);
+        swift_vio::InverseTransformPointJacobian itpj_bar(T_AB_bar, hpA_);
         Eigen::Vector4d hpB_bar = itpj_bar.evaluate();
         Eigen::Matrix<double, 4, 1> ratio =
            (hpB_bar - hpB_) / eps;
@@ -126,7 +126,7 @@ public:
         delta.setZero();
         delta(i) = eps;
         Eigen::Vector4d hpA_bar = hpA_ + delta;
-        okvis::InverseTransformPointJacobian itpj_bar(T_AB_, hpA_bar);
+        swift_vio::InverseTransformPointJacobian itpj_bar(T_AB_, hpA_bar);
         Eigen::Vector4d hpB_bar = itpj_bar.evaluate();
         Eigen::Matrix<double, 4, 1> ratio =
             (hpB_bar - hpB_) / eps;
@@ -152,7 +152,7 @@ public:
     }
 
     void checkAgainstMultipleTransformJacobian() const {
-      okvis::MultipleTransformPointJacobian mtpj({T_AB_}, {-1}, hpA_);
+      swift_vio::MultipleTransformPointJacobian mtpj({T_AB_}, {-1}, hpA_);
       Eigen::Matrix<double, 4, 4> dhpB_dhpA = mtpj.dp_dpoint();
       EXPECT_LT((dhpB_dhpA_numeric_ - dhpB_dhpA).lpNorm<Eigen::Infinity>(), tol)
           << "dhpB_dhpA_numeric_\n"
@@ -170,7 +170,7 @@ public:
     okvis::kinematics::Transformation T_AB_;
     Eigen::Vector4d hpA_;
     Eigen::Vector4d hpB_;
-    okvis::InverseTransformPointJacobian itpj_;
+    swift_vio::InverseTransformPointJacobian itpj_;
 
     Eigen::Matrix<double, 4, 4> dhpB_dhpA_numeric_;
     Eigen::Matrix<double, 4, 6> dhpB_dT_AB_numeric_;
@@ -183,7 +183,7 @@ TEST_F(InverseTransformPointJacobianTest, dhp_dhp) {
 }
 
 TEST_F(InverseTransformPointJacobianTest, closeLoop) {
-  okvis::TransformPointJacobian tpj(T_AB_, itpj_.evaluate());
+  swift_vio::TransformPointJacobian tpj(T_AB_, itpj_.evaluate());
   EXPECT_LT((tpj.evaluate() - hpA_).lpNorm<Eigen::Infinity>(), tol);
 }
 
@@ -212,7 +212,7 @@ public:
         delta(i) = eps;
         okvis::kinematics::Transformation T_AB_bar = T_AB_;
         T_AB_bar.oplus(delta);
-        okvis::MultipleTransformPointJacobian mtpj_bar({T_AB_bar, T_CB_}, {1, -1}, hpC_);
+        swift_vio::MultipleTransformPointJacobian mtpj_bar({T_AB_bar, T_CB_}, {1, -1}, hpC_);
         Eigen::Vector4d hpA_bar = mtpj_bar.evaluate();
         Eigen::Matrix<double, 4, 1> ratio =
            (hpA_bar - hpA_) / eps;
@@ -225,7 +225,7 @@ public:
         delta(i) = eps;
         okvis::kinematics::Transformation T_CB_bar = T_CB_;
         T_CB_bar.oplus(delta);
-        okvis::MultipleTransformPointJacobian mtpj_bar({T_AB_, T_CB_bar}, {1, -1}, hpC_);
+        swift_vio::MultipleTransformPointJacobian mtpj_bar({T_AB_, T_CB_bar}, {1, -1}, hpC_);
         Eigen::Vector4d hpA_bar = mtpj_bar.evaluate();
         Eigen::Matrix<double, 4, 1> ratio =
            (hpA_bar - hpA_) / eps;
@@ -237,7 +237,7 @@ public:
         delta.setZero();
         delta(i) = eps;
         Eigen::Vector4d hpC_bar = hpC_ + delta;
-        okvis::MultipleTransformPointJacobian mtpj_bar({T_AB_, T_CB_}, {1, -1}, hpC_bar);
+        swift_vio::MultipleTransformPointJacobian mtpj_bar({T_AB_, T_CB_}, {1, -1}, hpC_bar);
         Eigen::Vector4d hpA_bar = mtpj_bar.evaluate();
         Eigen::Matrix<double, 4, 1> ratio =
             (hpA_bar - hpA_) / eps;
@@ -271,7 +271,7 @@ public:
     okvis::kinematics::Transformation T_CB_;
     Eigen::Vector4d hpC_;
     Eigen::Vector4d hpA_;
-    okvis::MultipleTransformPointJacobian mtpj_;
+    swift_vio::MultipleTransformPointJacobian mtpj_;
 
     Eigen::Matrix<double, 4, 4> dhpA_dhpC_numeric_;
     Eigen::Matrix<double, 4, 6> dhpA_dT_AB_numeric_;
@@ -306,7 +306,7 @@ public:
         delta(i) = eps;
         okvis::kinematics::Transformation T_BA_bar = T_BA_;
         T_BA_bar.oplus(delta);
-        okvis::MultipleTransformPointJacobian mtpj_bar({T_BA_bar, T_BC_}, {-1, 1}, hpC_);
+        swift_vio::MultipleTransformPointJacobian mtpj_bar({T_BA_bar, T_BC_}, {-1, 1}, hpC_);
         Eigen::Vector4d hpA_bar = mtpj_bar.evaluate();
         Eigen::Matrix<double, 4, 1> ratio =
            (hpA_bar - hpA_) / eps;
@@ -319,7 +319,7 @@ public:
         delta(i) = eps;
         okvis::kinematics::Transformation T_BC_bar = T_BC_;
         T_BC_bar.oplus(delta);
-        okvis::MultipleTransformPointJacobian mtpj_bar({T_BA_, T_BC_bar}, {-1, 1}, hpC_);
+        swift_vio::MultipleTransformPointJacobian mtpj_bar({T_BA_, T_BC_bar}, {-1, 1}, hpC_);
         Eigen::Vector4d hpA_bar = mtpj_bar.evaluate();
         Eigen::Matrix<double, 4, 1> ratio =
            (hpA_bar - hpA_) / eps;
@@ -331,7 +331,7 @@ public:
         delta.setZero();
         delta(i) = eps;
         Eigen::Vector4d hpC_bar = hpC_ + delta;
-        okvis::MultipleTransformPointJacobian mtpj_bar({T_BA_, T_BC_}, {-1, 1}, hpC_bar);
+        swift_vio::MultipleTransformPointJacobian mtpj_bar({T_BA_, T_BC_}, {-1, 1}, hpC_bar);
         Eigen::Vector4d hpA_bar = mtpj_bar.evaluate();
         Eigen::Matrix<double, 4, 1> ratio =
             (hpA_bar - hpA_) / eps;
@@ -365,7 +365,7 @@ public:
     okvis::kinematics::Transformation T_BC_;
     Eigen::Vector4d hpC_;
     Eigen::Vector4d hpA_;
-    okvis::MultipleTransformPointJacobian mtpj_;
+    swift_vio::MultipleTransformPointJacobian mtpj_;
 
     Eigen::Matrix<double, 4, 4> dhpA_dhpC_numeric_;
     Eigen::Matrix<double, 4, 6> dhpA_dT_BA_numeric_;

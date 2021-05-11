@@ -12,7 +12,7 @@
 
 #include <okvis/kinematics/Transformation.hpp>
 
-namespace okvis {
+namespace swift_vio {
 class TransformPointJacobian {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -69,5 +69,5 @@ Eigen::Vector4d TransformPointJacobian::evaluate() const {
   return T_AB_ * hpB_;
 }
 
-}  // namespace okvis
+}  // namespace swift_vio
 #endif  // INCLUDE_SWIFT_VIO_TRANSFORM_POINT_JACOBIAN_HPP

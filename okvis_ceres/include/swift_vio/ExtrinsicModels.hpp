@@ -5,14 +5,14 @@
 
 #include <ceres/local_parameterization.h>
 
-#include <swift_vio/JacobianHelpers.hpp>
+#include <swift_vio/ceres/JacobianHelpers.hpp>
 #include <swift_vio/ModelSwitch.hpp>
 
 #include <okvis/ceres/PoseLocalParameterization.hpp>
 #include <okvis/kinematics/Transformation.hpp>
 #include <okvis/kinematics/sophus_operators.hpp>
 
-namespace okvis {
+namespace swift_vio {
 //class ExtrinsicFixed {
 // public:
 //  static const int kModelId = 0;
@@ -377,8 +377,8 @@ public:
     dpC_dT->block<3, 3>(0, 0) =
         ((*R_CfCa) - Eigen::Matrix3d::Identity()) * R_CB * (*ab1rho)[3];
     dpC_dT->block<3, 3>(0, 3) =
-        (kinematics::crossMx(pC) -
-         (*R_CfCa) * kinematics::crossMx(ab1rho->head<3>())) *
+        (okvis::kinematics::crossMx(pC) -
+         (*R_CfCa) * okvis::kinematics::crossMx(ab1rho->head<3>())) *
         R_CB;
   }
 
@@ -396,7 +396,7 @@ public:
                                  Eigen::MatrixXd* dpC_dT) {
     dpC_dT->resize(3, 6);
     dpC_dT->block<3, 3>(0, 0) = -R_CB * hpC[3];
-    dpC_dT->block<3, 3>(0, 3) = kinematics::crossMx(hpC.head<3>()) * R_CB;
+    dpC_dT->block<3, 3>(0, 3) = okvis::kinematics::crossMx(hpC.head<3>()) * R_CB;
   }
 
   // see dpC_dExtrinsic_HPP
@@ -404,7 +404,7 @@ public:
                  const Eigen::Matrix<double, 3, 3>& R_CB,
                  Eigen::Matrix<double, 4, kNumParams>* dhC_deltaTBC) {
     dhC_deltaTBC->block<3, 3>(0, 0) = -R_CB * hpC[3];
-    dhC_deltaTBC->block<3, 3>(0, 3) = kinematics::crossMx(hpC.head<3>()) * R_CB;
+    dhC_deltaTBC->block<3, 3>(0, 3) = okvis::kinematics::crossMx(hpC.head<3>()) * R_CB;
     dhC_deltaTBC->row(3).setZero();
   }
 };
@@ -641,6 +641,5 @@ inline void ExtrinsicModelToParamValues(
 #undef MODEL_CASES
   }
 }
-
-}  // namespace okvis
+}  // namespace swift_vio
 #endif  // INCLUDE_SWIFT_VIO_EXTRINSIC_MODELS_HPP_

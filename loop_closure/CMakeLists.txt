@@ -18,11 +18,11 @@ add_library(${PROJECT_NAME} STATIC
   src/LoopClosureParameters.cpp
   src/LoopFrameAndMatches.cpp
 
-  include/okvis/KeyframeForLoopDetection.hpp
-  include/okvis/LoopClosureModule.hpp
-  include/okvis/LoopClosureMethod.hpp
-  include/okvis/LoopClosureParameters.hpp
-  include/okvis/LoopFrameAndMatches.hpp)
+  include/loop_closure/KeyframeForLoopDetection.hpp
+  include/loop_closure/LoopClosureModule.hpp
+  include/loop_closure/LoopClosureMethod.hpp
+  include/loop_closure/LoopClosureParameters.hpp
+  include/loop_closure/LoopFrameAndMatches.hpp)
 
 # and link it
 target_link_libraries(${PROJECT_NAME}

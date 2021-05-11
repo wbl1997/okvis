@@ -9,15 +9,13 @@
 #include <okvis/kinematics/Transformation.hpp>
 #include <okvis/kinematics/operators.hpp>
 
-#include <swift_vio/JacobianHelpers.hpp>
+#include <swift_vio/ceres/JacobianHelpers.hpp>
 #include <swift_vio/Measurements.hpp>
 #include <swift_vio/imu/SimpleImuOdometry.hpp>
 
-/// \brief okvis Main namespace of this package.
 namespace okvis {
 /// \brief ceres Namespace for ceres-related functionality implemented in okvis.
 namespace ceres {
-
 template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
           class EXTRINSIC_MODEL, class LANDMARK_MODEL, class IMU_MODEL>
 RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL,
@@ -111,10 +109,10 @@ bool RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, L
   const okvis::Time t_end = stateEpoch_ + okvis::Duration(relativeFeatureTime);
   const double wedge = 5e-8;
   if (relativeFeatureTime >= wedge) {
-    okvis::ceres::predictStates(*imuMeasCanopy_, gravityMag_, pairT_WB,
+    swift_vio::ode::predictStates(*imuMeasCanopy_, gravityMag_, pairT_WB,
                                 speedBgBa, t_start, t_end);
   } else if (relativeFeatureTime <= -wedge) {
-    okvis::ceres::predictStatesBackward(*imuMeasCanopy_, gravityMag_, pairT_WB,
+    swift_vio::ode::predictStatesBackward(*imuMeasCanopy_, gravityMag_, pairT_WB,
                                         speedBgBa, t_start, t_end);
   }
 
@@ -184,10 +182,10 @@ bool RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, L
       lP_sb = Eigen::Map<const Eigen::Matrix<double, 9, 1>>(parameters[7]);
       lP_sb.head<3>() = posVelAtLinearization_->tail<3>();
       if (relativeFeatureTime >= wedge) {
-        okvis::ceres::predictStates(*imuMeasCanopy_, gravityMag_, lP_T_WB,
+        swift_vio::ode::predictStates(*imuMeasCanopy_, gravityMag_, lP_T_WB,
                                     lP_sb, t_start, t_end);
       } else if (relativeFeatureTime <= -wedge) {
-        okvis::ceres::predictStatesBackward(*imuMeasCanopy_, gravityMag_, lP_T_WB,
+        swift_vio::ode::predictStatesBackward(*imuMeasCanopy_, gravityMag_, lP_T_WB,
                                             lP_sb, t_start, t_end);
       }
       C_BW = lP_T_WB.second.toRotationMatrix().transpose();
@@ -216,7 +214,7 @@ bool RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, L
     EXTRINSIC_MODEL::dhC_dExtrinsic_HPP(hp_C, C_CB, &dhC_dExtrinsic);
 
     okvis::ImuMeasurement queryValue;
-    okvis::ceres::interpolateInertialData(*imuMeasCanopy_, t_end, queryValue);
+    swift_vio::ode::interpolateInertialData(*imuMeasCanopy_, t_end, queryValue);
     queryValue.measurement.gyroscopes -= lP_sb.segment<3>(3);
     Eigen::Vector3d p =
         okvis::kinematics::crossMx(queryValue.measurement.gyroscopes) *
@@ -283,7 +281,7 @@ bool RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, L
                             dhC_deltaTWS.data(),
                             dhC_dExtrinsic.data()};
   LocalBearingVector<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL,
-                     swift_vio::HomogeneousPointParameterization, Imu_BG_BA>
+                     swift_vio::HomogeneousPointParameterization, swift_vio::Imu_BG_BA>
       rsre(*this);
   bool diffState =
           ::ceres::internal::AutoDifferentiate<
@@ -567,9 +565,9 @@ operator()(const Scalar* const T_WB, const Scalar* const php_W,
 
   Scalar t_start = (Scalar)rsre_.stateEpoch_.toSec();
   Scalar t_end = t_start + relativeFeatureTime;
-  okvis::GenericImuMeasurementDeque<Scalar> imuMeasurements;
+  swift_vio::GenericImuMeasurementDeque<Scalar> imuMeasurements;
   for (size_t jack = 0; jack < rsre_.imuMeasCanopy_->size(); ++jack) {
-    okvis::GenericImuMeasurement<Scalar> imuMeas(
+    swift_vio::GenericImuMeasurement<Scalar> imuMeas(
         (Scalar)(rsre_.imuMeasCanopy_->at(jack).timeStamp.toSec()),
         rsre_.imuMeasCanopy_->at(jack).measurement.gyroscopes.template cast<Scalar>(),
         rsre_.imuMeasCanopy_->at(jack).measurement.accelerometers.template cast<Scalar>());
@@ -577,10 +575,10 @@ operator()(const Scalar* const T_WB, const Scalar* const php_W,
   }
 
   if (relativeFeatureTime >= Scalar(5e-8)) {
-    okvis::ceres::predictStates(imuMeasurements, (Scalar)rsre_.gravityMag_, pairT_WB,
+    swift_vio::ode::predictStates(imuMeasurements, (Scalar)rsre_.gravityMag_, pairT_WB,
                                 speedBgBa, t_start, t_end);
   } else if (relativeFeatureTime <= Scalar(-5e-8)) {
-    okvis::ceres::predictStatesBackward(imuMeasurements, (Scalar)rsre_.gravityMag_,
+    swift_vio::ode::predictStatesBackward(imuMeasurements, (Scalar)rsre_.gravityMag_,
                                         pairT_WB, speedBgBa, t_start, t_end);
   }
 
@@ -608,6 +606,5 @@ operator()(const Scalar* const T_WB, const Scalar* const php_W,
 
   return true;
 }
-
 }  // namespace ceres
 }  // namespace okvis

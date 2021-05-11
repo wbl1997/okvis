@@ -1,8 +1,7 @@
 #include <swift_vio/ExtrinsicModels.hpp>
 #include <swift_vio/TransformMultiplyJacobian.hpp>
 
-namespace okvis {
-
+namespace swift_vio {
 void Extrinsic_p_C0C_q_C0C::dT_BC_dExtrinsic(
     const okvis::kinematics::Transformation& T_BCi,
     const okvis::kinematics::Transformation& T_BC0,
@@ -19,4 +18,4 @@ void Extrinsic_p_C0C_q_C0C::dT_BC_dExtrinsic(
   j_C0Ci->bottomLeftCorner<3, 3>() = tmj.dtheta_dp_BC();
   j_C0Ci->bottomRightCorner<3, 3>() = tmj.dtheta_dtheta_BC();
 }
-}  // namespace okvis
+}  // namespace swift_vio

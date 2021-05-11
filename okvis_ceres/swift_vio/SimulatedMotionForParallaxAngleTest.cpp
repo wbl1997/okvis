@@ -122,7 +122,7 @@ SimulatedMotionForParallaxAngleTest::SimulatedMotionForParallaxAngleTest(
       break;
   }
   cosParallaxAngle_ = computeCosParallaxAngle();
-  pap_ = LWF::ParallaxAnglePoint(pW_, cosParallaxAngle_);
+  pap_ = swift_vio::ParallaxAnglePoint(pW_, cosParallaxAngle_);
   dfpaj_.initialize(T_WCm_, T_WCa_.r(), T_WCj_.r(), pap_);
   Nij_ = dfpaj_.evaluate();
 }
@@ -198,7 +198,7 @@ void SimulatedMotionForParallaxAngleTest::dN_dni(
   for (int i = 0; i < 2; ++i) {
     delta.setZero();
     delta[i] = h;
-    LWF::ParallaxAnglePoint papDelta = pap_;
+    swift_vio::ParallaxAnglePoint papDelta = pap_;
     papDelta.n_.boxPlus(delta, papDelta.n_);
     swift_vio::DirectionFromParallaxAngleJacobian dfpaj_delta(T_WCm_, T_WCa_.r(),
                                                           T_WCj_.r(), papDelta);
@@ -209,7 +209,7 @@ void SimulatedMotionForParallaxAngleTest::dN_dni(
 
 void SimulatedMotionForParallaxAngleTest::dN_dthetai(Eigen::Vector3d* j) const {
   double h = 1e-6;
-  LWF::ParallaxAnglePoint papDelta = pap_;
+  swift_vio::ParallaxAnglePoint papDelta = pap_;
   Eigen::Matrix<double, 1, 1> delta;
   delta[0] = h;
   papDelta.theta_.boxPlus(delta, papDelta.theta_);

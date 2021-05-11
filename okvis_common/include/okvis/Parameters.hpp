@@ -49,11 +49,14 @@
 #include <opencv2/opencv.hpp>
 #pragma GCC diagnostic pop
 #include <Eigen/Dense>
-#include <okvis/InitialNavState.hpp>
+
 #include <okvis/Time.hpp>
 #include <okvis/MultiFrame.hpp>
 #include <okvis/cameras/NCameraSystem.hpp>
 #include <okvis/kinematics/Transformation.hpp>
+
+#include <swift_vio/SwiftParameters.hpp>
+#include <swift_vio/InitialNavState.hpp>
 
 /// \brief okvis Main namespace of this package.
 namespace okvis {
@@ -236,22 +239,6 @@ struct WindParameters{
   double updateFrequency; ///< Related state estimates are inserted at this frequency. [Hz]
 };
 
-enum class EstimatorAlgorithm {
-  OKVIS = 0,  ///< Okvis original keyframe-based estimator.
-  General,  ///< Adapted keyframe-based estimator using only epipolar constraints.
-  Consistent,  ///< Consistent keyframe-based estimator.
-  SlidingWindowSmoother, ///< Gtsam::FixedLagSmoother.
-  RiSlidingWindowSmoother, ///< Gtsam::FixedLagSmoother with right invariant errors.
-  HybridFilter, ///< MSCKF + EKF-SLAM with keyframe-based marginalization.
-  MSCKF,  ///< MSCKF with keyframe-based marginalization.
-  TFVIO,  ///< Triangulate-free VIO with only epipolar constraints.
-  InvariantEKF, ///< MSCKF with right invariant errors.
-};
-
-EstimatorAlgorithm EstimatorAlgorithmNameToId(std::string description);
-
-std::string EstimatorAlgorithmIdToName(EstimatorAlgorithm id);
-
 /**
  * @brief Parameters for optimization and related things (detection).
  */
@@ -268,7 +255,7 @@ struct Optimization{
   int numImuFrames; ///< Number of IMU frames.
   float keyframeInsertionOverlapThreshold;
   float keyframeInsertionMatchingRatioThreshold;
-  EstimatorAlgorithm algorithm;
+  swift_vio::EstimatorAlgorithm algorithm;
   // parameters for determining keyframes in swift_vio.
   double translationThreshold;
   double rotationThreshold;
@@ -285,51 +272,6 @@ struct Optimization{
   Optimization();
 
   std::string toString(std::string lead) const;
-};
-
-struct FrontendOptions {
-  ///< Initialize the frontend under insufficient parallax, e.g., during pure
-  ///< rotation?
-  bool initializeWithoutEnoughParallax;
-
-  ///< stereo matching with epipolar check and landmark fusion or
-  /// the okvis stereo matching 2d-2d + 3d-2d + 3d-2d?
-  bool stereoMatchWithEpipolarCheck;
-
-  double epipolarDistanceThreshold;
-
-  ///< 0 default okvis brisk keyframe and back-to-back frame matching
-  ///< 1 KLT back-to-back frame matching,
-  ///< 2 brisk back-to-back frame matching
-  int featureTrackingMethod;
-
-  FrontendOptions(bool initWithoutEnoughParallax = true,
-                  bool stereoWithEpipolarCheck = true,
-                  double epipolarDistanceThreshold = 2.5,
-                  int featureTrackingMethod = 0);
-};
-
-struct PointLandmarkOptions {
-  int landmarkModelId;
-  size_t minTrackLengthForMsckf;
-  bool anchorAtObservationTime;  ///< body frame for anchor image is at
-                                 ///< observation epoch or state epoch? It only
-                                 ///< affects AIDP.
-  size_t maxHibernationFrames;   ///< max number of miss frames, each frame has potentially many images.
-  size_t minTrackLengthForSlam;  ///< min track length of a landmark to be included in state.
-  int maxInStateLandmarks;       ///< max number of landmarks in the state vector.
-  int maxMarginalizedLandmarks;  ///< max number of marginalized landmarks in one update step.
-  PointLandmarkOptions();
-  PointLandmarkOptions(int lmkModelId, size_t minMsckfTrackLength,
-                       bool anchorAtObsTime, size_t hibernationFrames,
-                       size_t minSlamTrackLength, int maxInStateLandmarks,
-                       int maxMarginalizedLandmarks);
-  std::string toString(std::string lead) const;
-};
-
-struct PoseGraphOptions {
-  int maxOdometryConstraintForAKeyframe;
-  PoseGraphOptions();
 };
 
 /**
@@ -363,15 +305,6 @@ struct PublishingParameters {
   FrameName velocitiesFrame = FrameName::B; ///< B or S,  the frames in which the velocities of the selected trackedBodyFrame will be expressed in
 };
 
-struct InputData {
-  std::string imageFolder;
-  std::string timeFile;
-  std::string videoFile;
-  std::string imuFile;
-  int startIndex;
-  int finishIndex;
-};
-
 /// @brief Struct to combine all parameters and settings.
 struct VioParameters {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -390,11 +323,11 @@ struct VioParameters {
   DifferentialPressureSensorParameters differential; ///< Differential pressure sensor parameters.
   WindParameters wind;  ///< Wind parameters.
   PublishingParameters publishing; ///< Publishing parameters.
-  InputData input;
-  InitialNavState initialState;
-  FrontendOptions frontendOptions;
-  PointLandmarkOptions pointLandmarkOptions;
-  PoseGraphOptions poseGraphOptions;
+  swift_vio::InputData input;
+  swift_vio::InitialNavState initialState;
+  swift_vio::FrontendOptions frontendOptions;
+  swift_vio::PointLandmarkOptions pointLandmarkOptions;
+  swift_vio::PoseGraphOptions poseGraphOptions;
 };
 
 } // namespace okvis

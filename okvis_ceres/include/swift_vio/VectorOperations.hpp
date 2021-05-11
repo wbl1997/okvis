@@ -107,5 +107,22 @@ std::vector<T> selectElements(const std::vector<T>& inArray,
   return result;
 }
 
+/**
+ * @brief Does a vector contain a certain element.
+ * @tparam Class of a vector element.
+ * @param vector Vector to search element in.
+ * @param query Element to search for.
+ * @return True if query is an element of vector.
+ */
+template<class T>
+bool vectorContains(const std::vector<T> & vector, const T & query){
+  for(size_t i=0; i<vector.size(); ++i){
+    if(vector[i] == query){
+      return true;
+    }
+  }
+  return false;
+}
+
 } // namespace swift_vio
 #endif  // INCLUDE_SWIFT_VIO_REMOVE_FROM_VECTOR_HPP_

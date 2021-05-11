@@ -111,6 +111,21 @@ inline Eigen::Matrix4d oplus(const Eigen::Quaterniond & q_BC) {
   return Q;
 }
 
+template<class Derived>
+Eigen::Quaternion<typename Derived::Scalar> rvec2quat(const Eigen::MatrixBase<Derived> & rvec)
+{
+    typedef typename Derived::Scalar Scalar;
+    EIGEN_STATIC_ASSERT_FIXED_SIZE(Derived);
+    EIGEN_STATIC_ASSERT_VECTOR_SPECIFIC_SIZE(Derived, 3);
+    //normalize
+    Scalar rot_ang=rvec.norm();    //assume always positive
+    if (rot_ang<Scalar(1e-18))
+        return Eigen::Quaternion<Scalar>(Scalar(1), Scalar(0),Scalar(0),Scalar(0));
+    else{
+        Scalar f= sin(rot_ang*Scalar(0.5))/rot_ang;
+        return Eigen::Quaternion<Scalar>(cos(rot_ang*Scalar(0.5)), rvec[0] * f, rvec[1] * f, rvec[2] * f);
+    }
+}
 } // namespace kinematics
 } // namespace okvis
 

@@ -1,13 +1,13 @@
 #include <glog/logging.h>
 
-#include <okvis/LoopClosureModule.hpp>
+#include <loop_closure/LoopClosureModule.hpp>
 
-namespace okvis {
+namespace swift_vio {
 LoopClosureModule::LoopClosureModule()
     : blocking_(false), loopClosureMethod_(new LoopClosureMethod()) {}
 
 LoopClosureModule::LoopClosureModule(
-    std::shared_ptr<okvis::LoopClosureMethod> loopClosureMethod)
+    std::shared_ptr<LoopClosureMethod> loopClosureMethod)
     : blocking_(false), loopClosureMethod_(loopClosureMethod) {}
 
 LoopClosureModule::~LoopClosureModule() {}
@@ -35,7 +35,7 @@ void LoopClosureModule::setOutputLoopFrameCallback(
 }
 
 void LoopClosureModule::appendStateCallback(
-    const VioInterface::StateCallback& stateCallback) {
+    const okvis::VioInterface::StateCallback& stateCallback) {
   stateCallbackList_.push_back(stateCallback);
 }
 
@@ -99,5 +99,4 @@ void LoopClosureModule::shutdown() {
   loopClosureThread_.join();
   publisherThread_.join();
 }
-
-}  // namespace okvis
+}  // namespace swift_vio

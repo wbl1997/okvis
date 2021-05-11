@@ -4,7 +4,7 @@
 #include <mutex>
 #include <okvis/Measurements.hpp>
 
-namespace okvis {
+namespace swift_vio {
 // keep measurements streamed from one IMU
 class BoundedImuDeque {
  public:
@@ -46,5 +46,5 @@ okvis::ImuMeasurementDeque getImuMeasurements(
 int deleteImuMeasurements(const okvis::Time& eraseUntil,
                           okvis::ImuMeasurementDeque& imuMeasurements_,
                           std::mutex* imuMeasurements_mutex_ = nullptr);
-}  // namespace okvis
+}  // namespace swift_vio
 #endif  // INCLUDE_SWIFT_VIO_BOUNDED_IMU_DEQUE_HPP_

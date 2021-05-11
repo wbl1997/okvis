@@ -15,8 +15,7 @@
 
 #include "okvis/class_macros.hpp"
 
-namespace okvis {
-
+namespace swift_vio {
 /**
  * @brief The PipelineParams base class
  * Sets a common base class for parameters of the pipeline
@@ -154,5 +153,4 @@ static void parsePipelineParams(const std::string& params_path,
     pipeline_params->parseYAML(params_path);
   }
 }
-
-}  // namespace okvis
+}  // namespace swift_vio

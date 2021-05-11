@@ -47,9 +47,9 @@ namespace ceres {
 ///     constant values from a provided extrinsic entity, e.g., T_BC.
 ///     Its kNumParams should not be zero.
 template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-          class EXTRINSIC_MODEL = Extrinsic_p_BC_q_BC,
+          class EXTRINSIC_MODEL = swift_vio::Extrinsic_p_BC_q_BC,
           class LANDMARK_MODEL = swift_vio::ParallaxAngleParameterization,
-          class IMU_MODEL = Imu_BG_BA>
+          class IMU_MODEL = swift_vio::Imu_BG_BA>
 class ReprojectionErrorWithPap
     : public ::ceres::SizedCostFunction<
           2 /* residuals */, 7 /* observing frame pose */, 7 /* main anchor */,

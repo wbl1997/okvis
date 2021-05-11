@@ -45,7 +45,7 @@
 #include <okvis/ThreadedKFVio.hpp>
 #include <okvis/assert_macros.hpp>
 #include <okvis/ceres/ImuError.hpp>
-#include <okvis/KeyframeForLoopDetection.hpp>
+#include <loop_closure/KeyframeForLoopDetection.hpp>
 
 #include <swift_vio/checkSensorRig.hpp>
 
@@ -107,7 +107,7 @@ ThreadedKFVio::ThreadedKFVio(okvis::VioParameters& parameters)
 ThreadedKFVio::ThreadedKFVio(okvis::VioParameters& parameters,
                              std::shared_ptr<Estimator> estimator,
                              std::shared_ptr<okvis::Frontend> frontend, 
-                             std::shared_ptr<okvis::LoopClosureMethod> loopClosureMethod)
+                             std::shared_ptr<swift_vio::LoopClosureMethod> loopClosureMethod)
     : speedAndBiases_propagated_(okvis::SpeedAndBias::Zero()),
       imu_params_(parameters.imu),
       repropagationNeeded_(false),
@@ -440,7 +440,7 @@ void ThreadedKFVio::frameConsumerLoop(size_t cameraIndex) {
                           imuDataEndTime < imuMeasurements_.back().timeStamp,
                           "Waiting for up to date imu data seems to have failed!");
 
-    okvis::ImuMeasurementDeque imuData = getImuMeasurements(
+    okvis::ImuMeasurementDeque imuData = swift_vio::getImuMeasurements(
         imuDataBeginTime, imuDataEndTime, imuMeasurements_, &imuMeasurements_mutex_);
 
     // if imu_data is empty, either end_time > begin_time or
@@ -578,7 +578,7 @@ void ThreadedKFVio::matchingLoop() {
         imuDataEndTime < imuMeasurements_.back().timeStamp,
         "Waiting for up to date imu data seems to have failed!");
 
-    okvis::ImuMeasurementDeque imuData = getImuMeasurements(
+    okvis::ImuMeasurementDeque imuData = swift_vio::getImuMeasurements(
         imuDataBeginTime, imuDataEndTime, imuMeasurements_, &imuMeasurements_mutex_);
 
     prepareToAddStateTimer.stop();
@@ -769,12 +769,12 @@ void ThreadedKFVio::optimizationLoop() {
     std::shared_ptr<okvis::MultiFrame> frame_pairs;
     VioVisualizer::VisualizationData::Ptr visualizationDataPtr;
     okvis::Time deleteImuMeasurementsUntil(0, 0);
-    std::vector<std::shared_ptr<LoopFrameAndMatches>> loopFrameAndMatchesList;
+    std::vector<std::shared_ptr<swift_vio::LoopFrameAndMatches>> loopFrameAndMatchesList;
     bool foundLoop = popLoopFrameAndMatchesList(&loopFrameAndMatchesList);
     if (matchedFrames_.PopBlocking(&frame_pairs) == false)
       return;
     OptimizationResults result;
-    std::shared_ptr<LoopQueryKeyframeMessage> queryKeyframe;
+    std::shared_ptr<swift_vio::LoopQueryKeyframeMessage> queryKeyframe;
     {
       std::lock_guard<std::mutex> l(estimator_mutex_);
       optimizationTimer.start();
@@ -823,7 +823,7 @@ void ThreadedKFVio::optimizationLoop() {
       afterOptimizationTimer.start();
 
       // now actually remove measurements
-      deleteImuMeasurements(deleteImuMeasurementsUntil,
+      swift_vio::deleteImuMeasurements(deleteImuMeasurementsUntil,
                             imuMeasurements_, &imuMeasurements_mutex_);
 
       // saving optimized state and saving it in OptimizationResults struct
@@ -930,7 +930,7 @@ void ThreadedKFVio::dumpCalibrationParameters(uint64_t latestNFrameId, Optimizat
 
     int extrinsic_opt_type = estimator_->getCameraExtrinsicOptType(i);
     Eigen::VectorXd optimized_coeffs;
-    ExtrinsicModelToParamValues(extrinsic_opt_type, T_XC, &optimized_coeffs);
+    swift_vio::ExtrinsicModelToParamValues(extrinsic_opt_type, T_XC, &optimized_coeffs);
     result->opt_T_SCi_coeffs.emplace_back(optimized_coeffs);
   }
 
@@ -983,9 +983,9 @@ void ThreadedKFVio::saveStatistics(const std::string &filename) const {
 }
 
 void ThreadedKFVio::configureBackendAndFrontendPartly(okvis::VioParameters& parameters) {
-  doesExtrinsicModelFitImuModel(parameters.nCameraSystem.extrinsicOptRep(0u),
+  swift_vio::doesExtrinsicModelFitImuModel(parameters.nCameraSystem.extrinsicOptRep(0u),
                                 parameters.imu.model_type);
-  doesExtrinsicModelFitOkvisBackend(parameters.nCameraSystem,
+  swift_vio::doesExtrinsicModelFitOkvisBackend(parameters.nCameraSystem,
                                     parameters.optimization.algorithm);
 
   frontend_->setLandmarkTriangulationParameters(
@@ -1002,9 +1002,9 @@ void ThreadedKFVio::configureBackendAndFrontendPartly(okvis::VioParameters& para
 }
 
 bool ThreadedKFVio::popLoopFrameAndMatchesList(
-    std::vector<std::shared_ptr<LoopFrameAndMatches>>*
+    std::vector<std::shared_ptr<swift_vio::LoopFrameAndMatches>>*
         loopFrameAndMatchesList) {
-  std::shared_ptr<LoopFrameAndMatches> loopFrameAndMatches;
+  std::shared_ptr<swift_vio::LoopFrameAndMatches> loopFrameAndMatches;
   bool foundLoop = loopFrames_.PopNonBlocking(&loopFrameAndMatches);
   while (foundLoop) {
     loopFrameAndMatchesList->push_back(loopFrameAndMatches);
@@ -1013,7 +1013,7 @@ bool ThreadedKFVio::popLoopFrameAndMatchesList(
   return loopFrameAndMatchesList->size() > 0u;
 }
 
-bool ThreadedKFVio::addLoopFrameAndMatches(std::shared_ptr<LoopFrameAndMatches> loopFrame) {
+bool ThreadedKFVio::addLoopFrameAndMatches(std::shared_ptr<swift_vio::LoopFrameAndMatches> loopFrame) {
   if (blocking_) {
     loopFrames_.PushBlockingIfFull(loopFrame, 2); // 2 because loop closure is not critical.
     return true;

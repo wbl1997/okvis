@@ -51,10 +51,7 @@
 #include <okvis/kinematics/Transformation.hpp>
 #include <okvis/kinematics/operators.hpp>
 
-/// \brief okvis Main namespace of this package.
-namespace okvis {
-/// \brief ceres Namespace for ceres-related functionality implemented in okvis.
-namespace ceres {
+namespace swift_vio {
 /// \brief ode Namespace for functionality related to ODE integration
 /// implemented in okvis.
 namespace ode {
@@ -179,7 +176,7 @@ __inline__ void integrateOneStep_RungeKutta(
   p_WS_W1 += k1_p_WS_W_dot * 0.5 * dt;
   Eigen::Quaterniond dq;
   double theta_half = k1_q_WS_dot.head<3>().norm() * 0.5 * dt;
-  double sinc_theta_half = sinc(theta_half);
+  double sinc_theta_half = okvis::ode::sinc(theta_half);
   double cos_theta_half = cos(theta_half);
   dq.vec() = sinc_theta_half * k1_q_WS_dot.head<3>() * 0.5 * dt;
   dq.w() = cos_theta_half;
@@ -199,7 +196,7 @@ __inline__ void integrateOneStep_RungeKutta(
   // state propagation:
   p_WS_W2 += k2_p_WS_W_dot * 0.5 * dt;
   theta_half = k2_q_WS_dot.head<3>().norm() * 0.5 * dt;
-  sinc_theta_half = sinc(theta_half);
+  sinc_theta_half = okvis::ode::sinc(theta_half);
   cos_theta_half = cos(theta_half);
   dq.vec() = sinc_theta_half * k2_q_WS_dot.head<3>() * 0.5 * dt;
   dq.w() = cos_theta_half;
@@ -220,7 +217,7 @@ __inline__ void integrateOneStep_RungeKutta(
   // state propagation:
   p_WS_W3 += k3_p_WS_W_dot * dt;
   theta_half = k3_q_WS_dot.head<3>().norm() * dt;
-  sinc_theta_half = sinc(theta_half);
+  sinc_theta_half = okvis::ode::sinc(theta_half);
   cos_theta_half = cos(theta_half);
   dq.vec() = sinc_theta_half * k3_q_WS_dot.head<3>() * dt;
   dq.w() = cos_theta_half;
@@ -244,7 +241,7 @@ __inline__ void integrateOneStep_RungeKutta(
        k4_q_WS_dot.head<3>()) *
       dt / 6.0;
   theta_half = theta_half_vec.norm();
-  sinc_theta_half = sinc(theta_half);
+  sinc_theta_half = okvis::ode::sinc(theta_half);
   cos_theta_half = cos(theta_half);
   dq.vec() = sinc_theta_half * theta_half_vec;
   dq.w() = cos_theta_half;
@@ -360,7 +357,7 @@ __inline__ void integrateOneStepBackward_RungeKutta(
   p_WS_W1 -= k1_p_WS_W_dot * 0.5 * dt;
   Eigen::Quaterniond dq;
   double theta_half = -k1_q_WS_dot.head<3>().norm() * 0.5 * dt;
-  double sinc_theta_half = sinc(theta_half);
+  double sinc_theta_half = okvis::ode::sinc(theta_half);
   double cos_theta_half = cos(theta_half);
   dq.vec() = -sinc_theta_half * k1_q_WS_dot.head<3>() * 0.5 * dt;
   dq.w() = cos_theta_half;
@@ -380,7 +377,7 @@ __inline__ void integrateOneStepBackward_RungeKutta(
   // state propagation:
   p_WS_W2 -= k2_p_WS_W_dot * 0.5 * dt;
   theta_half = -k2_q_WS_dot.head<3>().norm() * 0.5 * dt;
-  sinc_theta_half = sinc(theta_half);
+  sinc_theta_half = okvis::ode::sinc(theta_half);
   cos_theta_half = cos(theta_half);
   dq.vec() = -sinc_theta_half * k2_q_WS_dot.head<3>() * 0.5 * dt;
   dq.w() = cos_theta_half;
@@ -401,7 +398,7 @@ __inline__ void integrateOneStepBackward_RungeKutta(
   // state propagation:
   p_WS_W3 -= k3_p_WS_W_dot * dt;
   theta_half = -k3_q_WS_dot.head<3>().norm() * dt;
-  sinc_theta_half = sinc(theta_half);
+  sinc_theta_half = okvis::ode::sinc(theta_half);
   cos_theta_half = cos(theta_half);
   dq.vec() = -sinc_theta_half * k3_q_WS_dot.head<3>() * dt;
   dq.w() = cos_theta_half;
@@ -425,7 +422,7 @@ __inline__ void integrateOneStepBackward_RungeKutta(
         k4_q_WS_dot.head<3>()) *
       dt / 6.0;
   theta_half = theta_half_vec.norm();
-  sinc_theta_half = sinc(theta_half);
+  sinc_theta_half = okvis::ode::sinc(theta_half);
   cos_theta_half = cos(theta_half);
   dq.vec() = sinc_theta_half * theta_half_vec;
   dq.w() = cos_theta_half;
@@ -478,8 +475,6 @@ __inline__ void integrateOneStepBackward_RungeKutta(
   }
 }
 }  // namespace ode
-
-}  // namespace ceres
-}  // namespace okvis
+}  // namespace swift_vio
 
 #endif // INCLUDE_SWIFT_VIO_ODE_HYBRID_HPP_

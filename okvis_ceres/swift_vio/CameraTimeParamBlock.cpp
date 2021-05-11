@@ -4,9 +4,8 @@
  * @author Jianzhu Huai
  */
 
-#include <swift_vio/CameraTimeParamBlock.hpp>
+#include <swift_vio/ceres/CameraTimeParamBlock.hpp>
 
-/// \brief okvis Main namespace of this package.
 namespace okvis {
 /// \brief ceres Namespace for ceres-related functionality implemented in okvis.
 namespace ceres {

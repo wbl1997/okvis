@@ -8,7 +8,7 @@
 #include <okvis/kinematics/Transformation.hpp>
 #include <okvis/Time.hpp>
 
-namespace okvis {
+namespace swift_vio {
 struct MatchedKeypoint {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -91,5 +91,5 @@ class LoopFrameAndMatches {
   std::vector<MatchedKeypoint, Eigen::aligned_allocator<MatchedKeypoint>>
       matchedKeypoints_; ///< keypoints in the loop frame matched to query frame.
 };
-}  // namespace okvis
+}  // namespace swift_vio
 #endif  // INCLUDE_OKVIS_LOOP_FRAME_AND_MATCHES_HPP_

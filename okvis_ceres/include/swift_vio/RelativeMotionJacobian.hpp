@@ -4,7 +4,7 @@
 #include <okvis/kinematics/operators.hpp>
 #include <okvis/kinematics/Transformation.hpp>
 
-namespace okvis {
+namespace swift_vio {
 /**
  * @brief class to compute Jacobians of
  * \f$ T_{C_{j}C_{k}} = (T_{GB{j}} T_{BC})^{-1} T_{GB{k}} T_{BC} \f$
@@ -137,5 +137,5 @@ void RelativeMotionJacobian::dp_dt_GBk(Eigen::Matrix3d* jac) const {
 void RelativeMotionJacobian::dp_dt_CB(Eigen::Matrix3d* jac) const {
   *jac = Eigen::Matrix3d::Identity() - T_CjCk_.first;
 }
-}  // namespace okvis
+}  // namespace swift_vio
 #endif  // INCLUDE_SWIFT_VIO_RELATIVE_MOTION_JACOBIAN_HPP_

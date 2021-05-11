@@ -2,7 +2,7 @@
 #define INCLUDE_SWIFT_VIO_DIRECTION_FROM_PARALLAX_ANGLE_JACOBIAN_HPP_
 
 #include <ostream>
-#include <swift_vio/JacobianHelpers.hpp>
+#include <swift_vio/ceres/JacobianHelpers.hpp>
 #include <swift_vio/ParallaxAnglePoint.hpp>
 #include <okvis/kinematics/Transformation.hpp>
 
@@ -14,7 +14,7 @@ class DirectionFromParallaxAngleJacobian {
 
   void initialize(const std::pair<Eigen::Vector3d, Eigen::Quaterniond>& T_WCmi,
                   const Eigen::Vector3d& p_WCai, const Eigen::Vector3d& p_WCtij,
-                  const LWF::ParallaxAnglePoint& pap) {
+                  const swift_vio::ParallaxAnglePoint& pap) {
     T_WCmi_ = T_WCmi;
     p_WCai_ = p_WCai;
     p_WCtij_ = p_WCtij;
@@ -24,7 +24,7 @@ class DirectionFromParallaxAngleJacobian {
 
   void initialize(const okvis::kinematics::Transformation& T_WCmi,
                   const Eigen::Vector3d& p_WCai, const Eigen::Vector3d& p_WCtij,
-                  const LWF::ParallaxAnglePoint& pap) {
+                  const swift_vio::ParallaxAnglePoint& pap) {
     T_WCmi_.first = T_WCmi.r();
     T_WCmi_.second = T_WCmi.q();
     p_WCai_ = p_WCai;
@@ -39,7 +39,7 @@ class DirectionFromParallaxAngleJacobian {
   DirectionFromParallaxAngleJacobian(
       const std::pair<Eigen::Vector3d, Eigen::Quaterniond>& T_WCmi,
       const Eigen::Vector3d& p_WCai, const Eigen::Vector3d& p_WCtij,
-      const LWF::ParallaxAnglePoint& pap)
+      const swift_vio::ParallaxAnglePoint& pap)
       : T_WCmi_(T_WCmi), p_WCai_(p_WCai),
         p_WCtij_(p_WCtij), pap_(pap) {
     computeIntermediates();
@@ -48,7 +48,7 @@ class DirectionFromParallaxAngleJacobian {
   DirectionFromParallaxAngleJacobian(
       const okvis::kinematics::Transformation& T_WCmi,
       const Eigen::Vector3d& p_WCai, const Eigen::Vector3d& p_WCtij,
-      const LWF::ParallaxAnglePoint& pap)
+      const swift_vio::ParallaxAnglePoint& pap)
       : T_WCmi_(T_WCmi.r(), T_WCmi.q()), p_WCai_(p_WCai),
         p_WCtij_(p_WCtij), pap_(pap) {
     computeIntermediates();
@@ -127,7 +127,7 @@ class DirectionFromParallaxAngleJacobian {
     axn_ = a_.cross(W_ni_);
     axn_norm_ = axn_.norm();
     if (axn_norm_ < 1e-6) {
-      axn_normalized_ = LWF::NormalVectorElement(W_ni_).getPerp1();
+      axn_normalized_ = swift_vio::NormalVectorElement(W_ni_).getPerp1();
     } else {
       axn_normalized_ = axn_ / axn_norm_;
     }
@@ -136,7 +136,7 @@ class DirectionFromParallaxAngleJacobian {
   std::pair<Eigen::Vector3d, Eigen::Quaterniond> T_WCmi_;
   Eigen::Vector3d p_WCai_;
   Eigen::Vector3d p_WCtij_;
-  LWF::ParallaxAnglePoint pap_;
+  swift_vio::ParallaxAnglePoint pap_;
 
   Eigen::Vector3d a_;
   Eigen::Vector3d b_;

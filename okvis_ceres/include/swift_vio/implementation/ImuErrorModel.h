@@ -1,3 +1,4 @@
+namespace swift_vio {
 template <class Scalar>
 ImuErrorModel<Scalar>::ImuErrorModel(const Eigen::Matrix<Scalar, 6, 1>& b_ga)
     : b_g(b_ga.template head<3>()),
@@ -179,3 +180,4 @@ void ImuErrorModel<Scalar>::dwa_B_dbgbaSTS(
   output.template block<3, 27>(0, 6) = domega_B_dSgTsSa(w_est, a_est);
   output.template block<3, 27>(3, 6) = dacc_B_dSgTsSa(a_est);
 }
+}  // namespace swift_vio

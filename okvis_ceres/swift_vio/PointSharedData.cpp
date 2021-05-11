@@ -3,6 +3,7 @@
 #include <glog/logging.h>
 
 #include <swift_vio/CameraRig.hpp>
+#include <swift_vio/FrameTypedefs.hpp>
 #include <swift_vio/imu/ImuRig.hpp>
 #include <swift_vio/imu/ImuOdometry.h>
 #include <okvis/ceres/PoseParameterBlock.hpp>
@@ -12,10 +13,10 @@ namespace swift_vio {
 void PointSharedData::computePoseAndVelocityAtObservation() {
   CHECK(status_ >= PointSharedDataState::ImuInfoReady)
       << "Set IMU data, params, camera time params before calling this method.";
-  int imuModelId = okvis::ImuModelNameToId(imuParameters_->model_type);
+  int imuModelId = ImuModelNameToId(imuParameters_->model_type);
   Eigen::Matrix<double, -1, 1> imuAugmentedParams;
-  okvis::getImuAugmentedStatesEstimate(imuAugmentedParamBlockPtrs_,
-                                       &imuAugmentedParams, imuModelId);
+  getImuAugmentedStatesEstimate(imuAugmentedParamBlockPtrs_,
+                                &imuAugmentedParams, imuModelId);
   if (0) {
     // naive approach, ignoring the rolling shutter effect and the time offset.
     for (auto& item : stateInfoForObservations_) {
@@ -31,9 +32,9 @@ void PointSharedData::computePoseAndVelocityAtObservation() {
       item.v_WBtij = sbj.head<3>();
       ImuErrorModel<double> iem(sbj.tail<6>(), imuAugmentedParams, true);
       okvis::ImuMeasurement interpolatedInertialData;
-      okvis::ImuOdometry::interpolateInertialData(*item.imuMeasurementPtr, iem,
-                                                  item.stateEpoch,
-                                                  interpolatedInertialData);
+      ImuOdometry::interpolateInertialData(*item.imuMeasurementPtr, iem,
+                                           item.stateEpoch,
+                                           interpolatedInertialData);
       item.omega_Btij = interpolatedInertialData.measurement.gyroscopes;
     }
     status_ = PointSharedDataState::NavStateReady;
@@ -51,7 +52,7 @@ void PointSharedData::computePoseAndVelocityAtObservation() {
             ->estimate();
     okvis::Duration featureTime(normalizedFeatureTime(item));
     okvis::ImuMeasurement interpolatedInertialData;
-    okvis::poseAndVelocityAtObservation(*item.imuMeasurementPtr, imuAugmentedParams,
+    poseAndVelocityAtObservation(*item.imuMeasurementPtr, imuAugmentedParams,
                                         *imuParameters_, item.stateEpoch,
                                         featureTime, &T_WB, &sb,
                                         &interpolatedInertialData, false);
@@ -67,9 +68,9 @@ void PointSharedData::computePoseAndVelocityForJacobians(
   CHECK(status_ == PointSharedDataState::NavStateReady);
   if (useFirstEstimate) {
     Eigen::Matrix<double, -1, 1> imuAugmentedParams;
-    okvis::getImuAugmentedStatesEstimate(
+    getImuAugmentedStatesEstimate(
         imuAugmentedParamBlockPtrs_, &imuAugmentedParams,
-        okvis::ImuModelNameToId(imuParameters_->model_type));
+        ImuModelNameToId(imuParameters_->model_type));
     for (auto& item : stateInfoForObservations_) {
       okvis::kinematics::Transformation lP_T_WB =
           std::static_pointer_cast<const okvis::ceres::PoseParameterBlock>(
@@ -86,7 +87,7 @@ void PointSharedData::computePoseAndVelocityForJacobians(
           posVelFirstEstimatePtr->head<3>(), lP_T_WB.q());
       lP_sb.head<3>() = posVelFirstEstimatePtr->tail<3>();
       okvis::Duration featureTime(normalizedFeatureTime(item));
-      okvis::poseAndLinearVelocityAtObservation(
+      poseAndLinearVelocityAtObservation(
           *item.imuMeasurementPtr, imuAugmentedParams, *imuParameters_,
           item.stateEpoch, featureTime, &lP_T_WB, &lP_sb);
       item.lP_v_WBtij = lP_sb.head<3>();
@@ -103,7 +104,7 @@ void PointSharedData::computePoseAndVelocityForJacobians(
 
 void PointSharedData::computeSharedJacobians(int cameraObservationModelId) {
   CHECK(status_ == PointSharedDataState::NavStateForJacReady);
-  if (cameraObservationModelId == okvis::cameras::kChordalDistanceId) {
+  if (cameraObservationModelId == cameras::kChordalDistanceId) {
 
   }
 }
@@ -142,8 +143,8 @@ void PointSharedData::removeExtraObservations(
   stateInfoForObservations_.resize(keepSize);
   imageNoise2dStdList->resize(keepSize * 2);
 
-  // Also update the observation index for anchor frames.
-  for (std::vector<okvis::AnchorFrameIdentifier>::iterator anchorIdIter =
+  // Also update thAnchorFrameIdentifieror frames.
+  for (std::vector<AnchorFrameIdentifier>::iterator anchorIdIter =
            anchorIds_.begin();
        anchorIdIter != anchorIds_.end(); ++anchorIdIter) {
     bool found = false;

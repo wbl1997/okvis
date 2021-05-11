@@ -7,7 +7,7 @@
 #include <memory>
 
 #include <okvis/Estimator.hpp>
-#include <okvis/KeyframeForLoopDetection.hpp>
+#include <loop_closure/KeyframeForLoopDetection.hpp>
 
 namespace okvis {
 // TODO(jhuai): Add heuristic rules to throttle loop query keyframes.
@@ -15,7 +15,7 @@ namespace okvis {
 // while keeping the keyframe of the previous message in the sliding window.
 bool Estimator::getLoopQueryKeyframeMessage(
     okvis::MultiFramePtr multiFrame,
-    std::shared_ptr<okvis::LoopQueryKeyframeMessage>* queryKeyframe) const {
+    std::shared_ptr<swift_vio::LoopQueryKeyframeMessage>* queryKeyframe) const {
   auto riter = statesMap_.rbegin();
   if (!riter->second.isKeyframe) {
     return false;
@@ -24,7 +24,7 @@ bool Estimator::getLoopQueryKeyframeMessage(
   get_T_WS(riter->first, T_WBr);
 
   uint64_t queryKeyframeId = riter->first;
-  queryKeyframe->reset(new okvis::LoopQueryKeyframeMessage(
+  queryKeyframe->reset(new swift_vio::LoopQueryKeyframeMessage(
       queryKeyframeId, riter->second.timestamp, T_WBr, multiFrame));
 
   getOdometryConstraintsForKeyframe(*queryKeyframe);
@@ -33,7 +33,7 @@ bool Estimator::getLoopQueryKeyframeMessage(
   // and corresponding indices into the 2d keypoint list.
   // The local camera frame will be used as their coordinate frame.
   const std::vector<uint64_t>& landmarkIdList =
-      multiFrame->getLandmarkIds(LoopQueryKeyframeMessage::kQueryCameraIndex);
+      multiFrame->getLandmarkIds(swift_vio::LoopQueryKeyframeMessage::kQueryCameraIndex);
   size_t numKeypoints = landmarkIdList.size();
   auto& keypointIndexForLandmarkList =
       (*queryKeyframe)->keypointIndexForLandmarkListMutable();
@@ -59,7 +59,7 @@ bool Estimator::getLoopQueryKeyframeMessage(
 }
 
 bool Estimator::getOdometryConstraintsForKeyframe(
-    std::shared_ptr<okvis::LoopQueryKeyframeMessage> queryKeyframe) const {
+    std::shared_ptr<swift_vio::LoopQueryKeyframeMessage> queryKeyframe) const {
   int j = 0;
   auto& odometryConstraintList = queryKeyframe->odometryConstraintListMutable();
   odometryConstraintList.reserve(poseGraphOptions_.maxOdometryConstraintForAKeyframe);
@@ -73,8 +73,8 @@ bool Estimator::getOdometryConstraintsForKeyframe(
       okvis::kinematics::Transformation T_WBn;
       get_T_WS(riter->first, T_WBn);
       okvis::kinematics::Transformation T_BnBr = T_WBn.inverse() * T_WBr;
-      std::shared_ptr<okvis::NeighborConstraintMessage> odometryConstraint(
-          new okvis::NeighborConstraintMessage(
+      std::shared_ptr<swift_vio::NeighborConstraintMessage> odometryConstraint(
+          new swift_vio::NeighborConstraintMessage(
               riter->first, riter->second.timestamp, T_BnBr, T_WBn));
       odometryConstraint->core_.squareRootInfo_.setIdentity();
       odometryConstraintList.emplace_back(odometryConstraint);

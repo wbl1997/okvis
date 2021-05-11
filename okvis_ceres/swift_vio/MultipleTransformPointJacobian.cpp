@@ -1,6 +1,6 @@
 #include "swift_vio/MultipleTransformPointJacobian.hpp"
 
-namespace okvis {
+namespace swift_vio {
 Eigen::Vector4d MultipleTransformPointJacobian::evaluate() const {
   int j = (int)exponentList_.size() - 1;
   Eigen::Vector4d p = point_;
@@ -55,5 +55,4 @@ void MultipleTransformPointJacobian::computeJacobians() {
     ++j;
   }
 }
-
-}  // namespace okvis
+}  // namespace swift_vio

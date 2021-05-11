@@ -10,8 +10,7 @@
 
 #include "swift_vio/imu/odeHybrid.hpp"
 
-namespace okvis {
-
+namespace swift_vio {
 class ImuOdometry {
   /// \brief The type of the covariance.
   typedef Eigen::Matrix<double, 15, 15> covariance_t;
@@ -148,11 +147,11 @@ class ImuOdometry {
  *     featureTime after correction for biases etc.
  */
 void poseAndVelocityAtObservation(
-    const ImuMeasurementDeque& imuMeas,
+    const okvis::ImuMeasurementDeque& imuMeas,
     const Eigen::Matrix<double, Eigen::Dynamic, 1>& imuAugmentedParams,
     const okvis::ImuParameters& imuParameters, const okvis::Time& stateEpoch,
-    const okvis::Duration& featureTime, kinematics::Transformation* T_WB,
-    SpeedAndBiases* sb, okvis::ImuMeasurement* interpolatedInertialData,
+    const okvis::Duration& featureTime, okvis::kinematics::Transformation* T_WB,
+    okvis::SpeedAndBiases* sb, okvis::ImuMeasurement* interpolatedInertialData,
     bool use_RK4);
 
 /**
@@ -168,11 +167,11 @@ void poseAndVelocityAtObservation(
  * @param sb
  */
 void poseAndLinearVelocityAtObservation(
-    const ImuMeasurementDeque& imuMeas,
+    const okvis::ImuMeasurementDeque& imuMeas,
     const Eigen::Matrix<double, Eigen::Dynamic, 1>& imuAugmentedParams,
     const okvis::ImuParameters& imuParameters, const okvis::Time& stateEpoch,
-    const okvis::Duration& featureTime, kinematics::Transformation* T_WB,
-    SpeedAndBiases* sb);
+    const okvis::Duration& featureTime, okvis::kinematics::Transformation* T_WB,
+    okvis::SpeedAndBiases* sb);
 
-}  // namespace okvis
+}  // namespace swift_vio
 #endif // INCLUDE_SWIFT_VIO_IMU_ODOMETRY_H_

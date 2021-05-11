@@ -4,7 +4,7 @@
 #include <Eigen/Core>
 #include <okvis/kinematics/Transformation.hpp>
 
-namespace okvis {
+namespace swift_vio {
 // Jacobians for $T_z = T_x^{-1} * T_y$.
 class InverseTransformMultiplyJacobian {
  public:
@@ -70,5 +70,5 @@ class InverseTransformMultiplyJacobian {
   std::pair<Eigen::Vector3d, Eigen::Quaterniond> T_WA_;
   std::pair<Eigen::Vector3d, Eigen::Quaterniond> T_WB_;
 };
-} // namespace okvis
+}  // namespace swift_vio
 #endif // INCLUDE_OKVIS_INVERSE_TRANSFORM_MULTIPLY_JACOBIAN_HPP

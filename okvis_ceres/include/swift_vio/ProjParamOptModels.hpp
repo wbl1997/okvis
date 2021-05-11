@@ -4,7 +4,7 @@
 #include <Eigen/Core>
 #include <swift_vio/ModelSwitch.hpp>
 
-namespace okvis {
+namespace swift_vio {
 //class ProjectionOptFixed {
 // public:
 //  static const int kModelId = 0;
@@ -258,5 +258,5 @@ inline void ProjectionOptToParamsInfo(int model_id, const std::string delimiter,
     }
 }
 
-}  // namespace okvis
+}  // namespace swift_vio
 #endif  // INCLUDE_SWIFT_VIO_PROJ_PARAM_OPT_MODELS_HPP_

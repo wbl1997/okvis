@@ -1,7 +1,7 @@
-#include <okvis/LoopClosureParameters.hpp>
-#include <okvis/LoopClosureMethod.hpp>
+#include <loop_closure/LoopClosureParameters.hpp>
+#include <loop_closure/LoopClosureMethod.hpp>
 
-namespace okvis {
+namespace swift_vio {
 LoopClosureParameters::LoopClosureParameters() :
   PipelineParams("Base Loop Closure Parameters") {}
 
@@ -21,4 +21,4 @@ void LoopClosureParameters::print() const {
 bool LoopClosureParameters::equals(const PipelineParams& /*obj*/) const {
   return true;
 }
-}  // namespace okvis
+}  // namespace swift_vio

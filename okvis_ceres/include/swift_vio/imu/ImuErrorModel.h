@@ -2,10 +2,9 @@
 #define IMU_ERROR_MODEL_H_
 
 #include <Eigen/Dense>
-// accelerometer and gyro error model by drawing inspirations from Mingyang Li
-// ICRA 2014, Titterton and Weston 12.5.2, and Tedaldi ICRA 2014 A robust and
-// easy to implement method. Here we follow exactly the model used in
-// Mingyang Li ICRA 2014 and Shelley 2014 master thesis
+
+namespace swift_vio {
+// The accelerometer and gyro error models used in Mingyang Li ICRA 2014 and Shelley 2014 master thesis.
 template <class Scalar>
 class ImuErrorModel {
  public:
@@ -95,6 +94,7 @@ class ImuErrorModel {
                       const Eigen::Matrix<Scalar, 3, 1>& a_est,
                       Eigen::Matrix<Scalar, 6, 27 + 6>& output) const;
 };
+}  // namespace swift_vio
 
 #include "../implementation/ImuErrorModel.h"
 #endif

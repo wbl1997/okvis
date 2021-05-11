@@ -5,12 +5,11 @@
  * @author Jianzhu Huai
  */
 
-#include <swift_vio/EpipolarFactor.hpp>
+#include <swift_vio/ceres/EpipolarFactor.hpp>
 #include <swift_vio/ProjParamOptModels.hpp>
 
 /// \brief okvis Main namespace of this package.
 namespace okvis {
-
 template <class GEOMETRY_TYPE>
 ::ceres::ResidualBlockId Estimator::addPointFrameResidual(
     uint64_t landmarkId, const KeypointIdentifier& kpi) {
@@ -168,23 +167,23 @@ bool Estimator::addEpipolarConstraint(uint64_t landmarkId, uint64_t poseId,
 
   std::shared_ptr<::ceres::CostFunction> twoViewError;
   switch (camera_rig_.getProjectionOptMode(camIdx)) {
-  case ProjectionOptFXY_CXY::kModelId:
-      twoViewError.reset(new ceres::EpipolarFactor<CAMERA_GEOMETRY_T, Extrinsic_p_BC_q_BC,
-                         ProjectionOptFXY_CXY>(
+  case swift_vio::ProjectionOptFXY_CXY::kModelId:
+      twoViewError.reset(new ceres::EpipolarFactor<CAMERA_GEOMETRY_T, swift_vio::Extrinsic_p_BC_q_BC,
+                         swift_vio::ProjectionOptFXY_CXY>(
                              argCameraGeometry, landmarkId, measurement12, covariance12,
                              imuMeasCanopy, stateEpoch, tdAtCreation,
                              speedAndBias12, gravityMag));
       break;
-  case ProjectionOptFX_CXY::kModelId:
-      twoViewError.reset(new ceres::EpipolarFactor<CAMERA_GEOMETRY_T, Extrinsic_p_BC_q_BC,
-                         ProjectionOptFX_CXY>(
+  case swift_vio::ProjectionOptFX_CXY::kModelId:
+      twoViewError.reset(new ceres::EpipolarFactor<CAMERA_GEOMETRY_T, swift_vio::Extrinsic_p_BC_q_BC,
+                         swift_vio::ProjectionOptFX_CXY>(
                              argCameraGeometry, landmarkId, measurement12, covariance12,
                              imuMeasCanopy, stateEpoch, tdAtCreation,
                              speedAndBias12, gravityMag));
       break;
-  case ProjectionOptFX::kModelId:
-      twoViewError.reset(new ceres::EpipolarFactor<CAMERA_GEOMETRY_T, Extrinsic_p_BC_q_BC,
-                         ProjectionOptFX>(
+  case swift_vio::ProjectionOptFX::kModelId:
+      twoViewError.reset(new ceres::EpipolarFactor<CAMERA_GEOMETRY_T, swift_vio::Extrinsic_p_BC_q_BC,
+                         swift_vio::ProjectionOptFX>(
                              argCameraGeometry, landmarkId, measurement12, covariance12,
                              imuMeasCanopy, stateEpoch, tdAtCreation,
                              speedAndBias12, gravityMag));

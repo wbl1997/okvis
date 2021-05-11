@@ -9,7 +9,7 @@
 #include <okvis/ceres/ode/ode.hpp>
 #include <okvis/kinematics/Transformation.hpp>
 
-namespace okvis {
+namespace swift_vio {
 
 OKVIS_DEFINE_EXCEPTION(Exception, std::runtime_error)
 
@@ -206,7 +206,7 @@ int ImuOdometry::propagation(
 
     const Eigen::Vector3d omega_S_true = 0.5 * (omega_est + omega_est_1);
     const double theta_half = omega_S_true.norm() * 0.5 * dt;
-    const double sinc_theta_half = ceres::ode::sinc(theta_half);
+    const double sinc_theta_half = okvis::ode::sinc(theta_half);
     const double cos_theta_half = cos(theta_half);
     dq.vec() = sinc_theta_half * omega_S_true * 0.5 * dt;
     dq.w() = cos_theta_half;
@@ -329,7 +329,7 @@ int ImuOdometry::propagation(
       F_delta.block<3, 3>(0, 9) = 0.5 * dt * F_delta.block<3, 3>(6, 9);
       F_delta.block<3, 3>(0, 12) = 0.5 * dt * F_delta.block<3, 3>(6, 12);
 
-      if (covRows == Imu_BG_BA_TG_TS_TA::getMinimalDim() + ceres::ode::kNavErrorStateDim) {
+      if (covRows == Imu_BG_BA_TG_TS_TA::getMinimalDim() + ode::kNavErrorStateDim) {
         F_delta.block<3, 9>(3, 15) =
             -0.5 * dt *
             (C * iem.invT_g * iem.dmatrix3_dvector9_multiply(omega_est) +
@@ -480,7 +480,7 @@ int ImuOdometry::propagation(
     F.block<3, 3>(6, 12) = -C_WS_0 * dv_db_a;
 
     if (covRows ==
-        Imu_BG_BA_TG_TS_TA::getMinimalDim() + ceres::ode::kNavErrorStateDim) {
+        Imu_BG_BA_TG_TS_TA::getMinimalDim() + ode::kNavErrorStateDim) {
       F.block<3, 9>(0, 15) = C_WS_0 * dp_dT_g;
       F.block<3, 9>(0, 24) = C_WS_0 * dp_dT_s;
       F.block<3, 9>(0, 33) = -C_WS_0 * dp_dT_a;
@@ -526,8 +526,8 @@ Eigen::Matrix<double, 9, 9> computeGQGt(const Eigen::Vector3d& p_WB,
                                  double sigma_a_c) {
   double qgc = sigma_g_c * sigma_g_c;
   double qac = sigma_a_c * sigma_a_c;
-  Eigen::Matrix3d px = kinematics::crossMx(p_WB);
-  Eigen::Matrix3d vx = kinematics::crossMx(v_WB);
+  Eigen::Matrix3d px = okvis::kinematics::crossMx(p_WB);
+  Eigen::Matrix3d vx = okvis::kinematics::crossMx(v_WB);
   Eigen::Matrix<double, 9, 9> result;
   result << qgc * Eigen::Matrix3d::Identity(), -qgc * vx, -qgc * px,
       qgc * vx,  qac * Eigen::Matrix3d::Identity() - vx * vx * qgc, -vx * px * qgc,
@@ -658,7 +658,7 @@ int ImuOdometry::propagationRightInvariantError(
 
     const Eigen::Vector3d omega_S_true = 0.5 * (omega_est + omega_est_1);
     const double theta_half = omega_S_true.norm() * 0.5 * dt;
-    const double sinc_theta_half = ceres::ode::sinc(theta_half);
+    const double sinc_theta_half = okvis::ode::sinc(theta_half);
     const double cos_theta_half = cos(theta_half);
     dq.vec() = sinc_theta_half * omega_S_true * 0.5 * dt;
     dq.w() = cos_theta_half;
@@ -879,7 +879,7 @@ int ImuOdometry::propagationBackward(
 
     const Eigen::Vector3d omega_S_true = 0.5 * (omega_est + omega_est_1);
     const double theta_half = omega_S_true.norm() * 0.5 * dt;
-    const double sinc_theta_half = ceres::ode::sinc(theta_half);
+    const double sinc_theta_half = okvis::ode::sinc(theta_half);
     const double cos_theta_half = cos(theta_half);
     dq.vec() = sinc_theta_half * omega_S_true * 0.5 * dt;
     dq.w() = cos_theta_half;
@@ -923,8 +923,8 @@ int ImuOdometry::propagationBackward(
 // note the RungeKutta method assumes that the z direction of the world frame is
 // negative gravity direction
 int ImuOdometry::propagation_RungeKutta(
-    const ImuMeasurementDeque& imuMeasurements, const ImuParameters& imuParams,
-    kinematics::Transformation& T_WS, okvis::SpeedAndBiases& speedAndBias,
+    const okvis::ImuMeasurementDeque& imuMeasurements, const okvis::ImuParameters& imuParams,
+    okvis::kinematics::Transformation& T_WS, okvis::SpeedAndBiases& speedAndBias,
     const ImuErrorModel<double>& iem, const okvis::Time& startTime,
     const okvis::Time& finishTime,
     Eigen::MatrixXd* P_ptr,
@@ -959,7 +959,7 @@ int ImuOdometry::propagation_RungeKutta(
       if (iter->timeStamp >= finishTime)  // in case the interval of start and
                                           // finish time is very small
       {
-        ceres::ode::integrateOneStep_RungeKutta(
+        ode::integrateOneStep_RungeKutta(
             iterLast->measurement.gyroscopes,
             iterLast->measurement.accelerometers, iter->measurement.gyroscopes,
             iter->measurement.accelerometers, imuParams.g, imuParams.sigma_g_c,
@@ -970,7 +970,7 @@ int ImuOdometry::propagation_RungeKutta(
         break;
       }
 
-      ceres::ode::integrateOneStep_RungeKutta(
+      ode::integrateOneStep_RungeKutta(
           iterLast->measurement.gyroscopes,
           iterLast->measurement.accelerometers, iter->measurement.gyroscopes,
           iter->measurement.accelerometers, imuParams.g, imuParams.sigma_g_c,
@@ -980,7 +980,7 @@ int ImuOdometry::propagation_RungeKutta(
 
     } else {
       if (iter->timeStamp >= finishTime) {
-        ceres::ode::integrateOneStep_RungeKutta(
+        ode::integrateOneStep_RungeKutta(
             iterLast->measurement.gyroscopes,
             iterLast->measurement.accelerometers, iter->measurement.gyroscopes,
             iter->measurement.accelerometers, imuParams.g, imuParams.sigma_g_c,
@@ -991,7 +991,7 @@ int ImuOdometry::propagation_RungeKutta(
         break;
       }
 
-      ceres::ode::integrateOneStep_RungeKutta(
+      ode::integrateOneStep_RungeKutta(
           iterLast->measurement.gyroscopes,
           iterLast->measurement.accelerometers, iter->measurement.gyroscopes,
           iter->measurement.accelerometers, imuParams.g, imuParams.sigma_g_c,
@@ -1002,13 +1002,13 @@ int ImuOdometry::propagation_RungeKutta(
     iterLast = iter;
     ++numUsedImuMeasurements;
   }
-  T_WS = kinematics::Transformation(p_WS_W, q_WS);
+  T_WS = okvis::kinematics::Transformation(p_WS_W, q_WS);
   return numUsedImuMeasurements;
 }
 
 int ImuOdometry::propagationBackward_RungeKutta(
-    const ImuMeasurementDeque& imuMeasurements, const ImuParameters& imuParams,
-    kinematics::Transformation& T_WS, okvis::SpeedAndBiases& speedAndBias,
+    const okvis::ImuMeasurementDeque& imuMeasurements, const okvis::ImuParameters& imuParams,
+    okvis::kinematics::Transformation& T_WS, okvis::SpeedAndBiases& speedAndBias,
     const ImuErrorModel<double>& iem, const okvis::Time& startTime,
     const okvis::Time& finishTime) {
   OKVIS_ASSERT_TRUE(
@@ -1036,7 +1036,7 @@ int ImuOdometry::propagationBackward_RungeKutta(
       if (iter->timeStamp <= finishTime)  // in case the interval of start and
                                           // finish time is very small
       {
-        ceres::ode::integrateOneStepBackward_RungeKutta(
+        ode::integrateOneStepBackward_RungeKutta(
             iter->measurement.gyroscopes, iter->measurement.accelerometers,
             iterLast->measurement.gyroscopes,
             iterLast->measurement.accelerometers, imuParams.g,
@@ -1047,7 +1047,7 @@ int ImuOdometry::propagationBackward_RungeKutta(
         break;
       }
 
-      ceres::ode::integrateOneStepBackward_RungeKutta(
+      ode::integrateOneStepBackward_RungeKutta(
           iter->measurement.gyroscopes, iter->measurement.accelerometers,
           iterLast->measurement.gyroscopes,
           iterLast->measurement.accelerometers, imuParams.g,
@@ -1057,7 +1057,7 @@ int ImuOdometry::propagationBackward_RungeKutta(
 
     } else {
       if (iter->timeStamp <= finishTime) {
-        ceres::ode::integrateOneStepBackward_RungeKutta(
+        ode::integrateOneStepBackward_RungeKutta(
             iter->measurement.gyroscopes, iter->measurement.accelerometers,
             iterLast->measurement.gyroscopes,
             iterLast->measurement.accelerometers, imuParams.g,
@@ -1068,7 +1068,7 @@ int ImuOdometry::propagationBackward_RungeKutta(
         break;
       }
 
-      ceres::ode::integrateOneStepBackward_RungeKutta(
+      ode::integrateOneStepBackward_RungeKutta(
           iter->measurement.gyroscopes, iter->measurement.accelerometers,
           iterLast->measurement.gyroscopes,
           iterLast->measurement.accelerometers, imuParams.g,
@@ -1079,7 +1079,7 @@ int ImuOdometry::propagationBackward_RungeKutta(
     iterLast = iter;
     ++numUsedImuMeasurements;
   }
-  T_WS = kinematics::Transformation(p_WS_W, q_WS);
+  T_WS = okvis::kinematics::Transformation(p_WS_W, q_WS);
   return numUsedImuMeasurements;
 }
 
@@ -1124,30 +1124,30 @@ bool ImuOdometry::interpolateInertialData(
 }
 
 void poseAndVelocityAtObservation(
-    const ImuMeasurementDeque& imuMeas,
+    const okvis::ImuMeasurementDeque& imuMeas,
     const Eigen::Matrix<double, Eigen::Dynamic, 1>& imuAugmentedParams,
     const okvis::ImuParameters& imuParameters, const okvis::Time& stateEpoch,
-    const okvis::Duration& featureTime, kinematics::Transformation* T_WB,
-    SpeedAndBiases* sb, okvis::ImuMeasurement* interpolatedInertialData,
+    const okvis::Duration& featureTime, okvis::kinematics::Transformation* T_WB,
+    okvis::SpeedAndBiases* sb, okvis::ImuMeasurement* interpolatedInertialData,
     bool use_RK4) {
   ImuErrorModel<double> iem(sb->tail<6>(), imuAugmentedParams, true);
   const double wedge = 5e-8;
   if (use_RK4) {
-    if (featureTime >= Duration(wedge)) {
+    if (featureTime >= okvis::Duration(wedge)) {
       ImuOdometry::propagation_RungeKutta(imuMeas, imuParameters, *T_WB, *sb,
                                           iem, stateEpoch,
                                           stateEpoch + featureTime);
-    } else if (featureTime <= Duration(-wedge)) {
+    } else if (featureTime <= okvis::Duration(-wedge)) {
       ImuOdometry::propagationBackward_RungeKutta(imuMeas, imuParameters, *T_WB,
                                                   *sb, iem, stateEpoch,
                                                   stateEpoch + featureTime);
     }
   } else {
     Eigen::Vector3d tempV_WS = sb->head<3>();
-    if (featureTime >= Duration(wedge)) {
+    if (featureTime >= okvis::Duration(wedge)) {
       ImuOdometry::propagation(imuMeas, imuParameters, *T_WB, tempV_WS, iem,
                                stateEpoch, stateEpoch + featureTime);
-    } else if (featureTime <= Duration(-wedge)) {
+    } else if (featureTime <= okvis::Duration(-wedge)) {
       ImuOdometry::propagationBackward(imuMeas, imuParameters, *T_WB, tempV_WS,
                                        iem, stateEpoch,
                                        stateEpoch + featureTime);
@@ -1159,15 +1159,15 @@ void poseAndVelocityAtObservation(
 }
 
 void poseAndLinearVelocityAtObservation(
-    const ImuMeasurementDeque& imuMeas,
+    const okvis::ImuMeasurementDeque& imuMeas,
     const Eigen::Matrix<double, Eigen::Dynamic, 1>& imuAugmentedParams,
     const okvis::ImuParameters& imuParameters, const okvis::Time& stateEpoch,
-    const okvis::Duration& featureTime, kinematics::Transformation* T_WB,
-    SpeedAndBiases* sb) {
+    const okvis::Duration& featureTime, okvis::kinematics::Transformation* T_WB,
+    okvis::SpeedAndBiases* sb) {
   ImuErrorModel<double> iem(sb->tail<6>(), imuAugmentedParams, true);
 
   Eigen::Vector3d tempV_WS = sb->head<3>();
-  if (featureTime >= Duration()) {
+  if (featureTime >= okvis::Duration()) {
     ImuOdometry::propagation(
         imuMeas, imuParameters, *T_WB, tempV_WS, iem, stateEpoch,
         stateEpoch + featureTime);
@@ -1178,5 +1178,4 @@ void poseAndLinearVelocityAtObservation(
   }
   sb->head<3>() = tempV_WS;
 }
-
-}  // namespace okvis
+}  // namespace swift_vio

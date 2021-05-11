@@ -15,7 +15,6 @@
 #include <okvis/FrameTypedefs.hpp>
 #include <okvis/ceres/ErrorInterface.hpp>
 
-/// \brief okvis Main namespace of this package.
 namespace okvis {
 /// \brief ceres Namespace for ceres-related functionality implemented in okvis.
 namespace ceres {
@@ -149,7 +148,6 @@ class EuclideanParamError : public ::ceres::SizedCostFunction<
   covariance_t covariance_; ///< The covariance matrix.
 
 };
-
 }  // namespace ceres
 }  // namespace okvis
 

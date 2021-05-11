@@ -9,11 +9,11 @@
 #include <okvis/cameras/RadialTangentialDistortion8.hpp>
 #include <okvis/cameras/FovDistortion.hpp>
 
-namespace okvis {
+namespace swift_vio {
 namespace cameras {
 
-std::shared_ptr<cameras::CameraBase> cloneCameraGeometry(
-    std::shared_ptr<const cameras::CameraBase> cameraGeometry) {
+std::shared_ptr<okvis::cameras::CameraBase> cloneCameraGeometry(
+    std::shared_ptr<const okvis::cameras::CameraBase> cameraGeometry) {
   std::string geometryType = cameraGeometry->type();
   std::string distortionType = cameraGeometry->distortionType();
   Eigen::VectorXd intrinsic_vec;
@@ -97,8 +97,8 @@ std::shared_ptr<cameras::CameraBase> cloneCameraGeometry(
     LOG(ERROR) << "unrecognized camera geometry type "
                << cameraGeometry->type();
   }
-  return std::shared_ptr<cameras::CameraBase>();
+  return std::shared_ptr<okvis::cameras::CameraBase>();
 }
 
 }  // namespace cameras
-}  // namespace okvis
+}  // namespace swift_vio

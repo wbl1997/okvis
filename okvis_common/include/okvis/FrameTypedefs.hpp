@@ -45,6 +45,7 @@
 
 #include <Eigen/Core>
 #include <okvis/kinematics/Transformation.hpp>
+#include <swift_vio/FrameTypedefs.hpp>
 
 /// \brief okvis Main namespace of this package.
 namespace okvis {
@@ -157,43 +158,6 @@ struct Match
 };
 typedef std::vector<Match> Matches;
 
-struct FeatureTrackStatus {
-  enum MeasurementType {
-    kPremature = 0,
-    kMsckfTrack,
-    kSlamObservation,
-    kSlamInitialization
-  };
-
-  enum MeasurementFate {
-    kUndetermined = 0,
-    kSuccessful,
-    kComputingJacobiansFailed,
-    kPotentialOutlier,
-    kLeftOver,
-  };
-
-  FeatureTrackStatus()
-      : inState(false), numMissFrames(0u), measurementType(kPremature),
-        measurementFate(kUndetermined) {}
-
-  void updateTrackStat(bool observedInCurrentFrame) {
-    if (observedInCurrentFrame) {
-      numMissFrames = 0u;
-    } else {
-      ++numMissFrames;
-    }
-  }
-
-  bool inState;
-  size_t numMissFrames; // number of successive miss frames since its last
-                     // observing frame. For instance, if it is not observed in
-                     // the last and current frame, it would be 2.
-
-  MeasurementType measurementType;
-  MeasurementFate measurementFate;
-};
-
 /**
  * @brief A type to store information about a point in the world map.
  */
@@ -236,8 +200,8 @@ struct MapPoint
 
   bool shouldRemove(size_t maxHibernationFrames) const {
     bool toRemove(false);
-    if (status.measurementType == FeatureTrackStatus::kMsckfTrack &&
-        status.measurementFate == FeatureTrackStatus::kSuccessful) {
+    if (status.measurementType == swift_vio::FeatureTrackStatus::kMsckfTrack &&
+        status.measurementFate == swift_vio::FeatureTrackStatus::kSuccessful) {
       toRemove = true;
     }
     if (status.numMissFrames >= maxHibernationFrames) {
@@ -267,11 +231,11 @@ struct MapPoint
   void updateStatus(uint64_t currentFrameId, size_t minTrackLengthForMsckf,
                     size_t minTrackLengthForSlam);
 
-  void setMeasurementType(FeatureTrackStatus::MeasurementType measurementType) {
+  void setMeasurementType(swift_vio::FeatureTrackStatus::MeasurementType measurementType) {
     status.measurementType = measurementType;
   }
 
-  void setMeasurementFate(FeatureTrackStatus::MeasurementFate measurementFate) {
+  void setMeasurementFate(swift_vio::FeatureTrackStatus::MeasurementFate measurementFate) {
     status.measurementFate = measurementFate;
   }
 
@@ -293,7 +257,7 @@ struct MapPoint
   uint64_t anchorStateId;
   size_t anchorCameraId;
 
-  FeatureTrackStatus status;
+  swift_vio::FeatureTrackStatus status;
   bool initialized; // is this landmark initialized in position?
 };
 
@@ -364,17 +328,6 @@ typedef std::vector<Observation, Eigen::aligned_allocator<Observation> > Observa
 // todo: find a better place for this
 typedef Eigen::Matrix<double, 9, 1> SpeedAndBiases;
 typedef Eigen::Matrix<double, 9, 1> SpeedAndBias;
-
-struct AnchorFrameIdentifier {
-  uint64_t frameId_;
-  size_t cameraIndex_; // which camera?
-  size_t observationIndex_; // index in the observation sequence.
-  AnchorFrameIdentifier(uint64_t frameId, size_t cameraIndex,
-                        size_t observationIndex)
-      : frameId_(frameId),
-        cameraIndex_(cameraIndex),
-        observationIndex_(observationIndex) {}
-};
 
 }  // namespace okvis
 

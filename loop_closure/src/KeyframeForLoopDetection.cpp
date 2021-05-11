@@ -1,7 +1,7 @@
-#include <okvis/KeyframeForLoopDetection.hpp>
+#include <loop_closure/KeyframeForLoopDetection.hpp>
 #include <okvis/kinematics/MatrixPseudoInverse.hpp>
 
-namespace okvis {
+namespace swift_vio {
 NeighborConstraintInDatabase::NeighborConstraintInDatabase() {}
 
 NeighborConstraintInDatabase::NeighborConstraintInDatabase(
@@ -73,5 +73,4 @@ void KeyframeInDatabase::setSquareRootInfoFromCovariance(
       std::numeric_limits<double>::epsilon());
   constraintList_.at(j)->squareRootInfo_.noalias() = pseudoL.transpose();
 }
-
-}  // namespace okvis
+}  // namespace swift_vio
