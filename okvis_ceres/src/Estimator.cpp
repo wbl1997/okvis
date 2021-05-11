@@ -52,6 +52,7 @@
 #include <swift_vio/ceres/CameraTimeParamBlock.hpp>
 #include <swift_vio/ceres/EuclideanParamBlock.hpp>
 #include <swift_vio/ceres/EuclideanParamBlockSized.hpp>
+#include <swift_vio/IoUtil.hpp>
 #include <swift_vio/VectorOperations.hpp>
 
 /// \brief okvis Main namespace of this package.
@@ -836,7 +837,7 @@ void Estimator::printNavStateAndBiases(std::ostream& stream, uint64_t poseId) co
     q_WS.coeffs() *= -1;
   }
   stream << currentTime << " " << multiFramePtrMap_.rbegin()->second->idInSource
-         << " " << T_WS.parameters().transpose().format(kSpaceInitFmt);
+         << " " << T_WS.parameters().transpose().format(swift_vio::kSpaceInitFmt);
 
   // imu sensor states
   const int imuIdx = 0;
@@ -848,7 +849,7 @@ void Estimator::printNavStateAndBiases(std::ostream& stream, uint64_t poseId) co
       std::static_pointer_cast<ceres::SpeedAndBiasParameterBlock>(
           mapPtr_->parameterBlockPtr(SBId));
   SpeedAndBiases sb = sbParamBlockPtr->estimate();
-  stream << " " << sb.transpose().format(kSpaceInitFmt);
+  stream << " " << sb.transpose().format(swift_vio::kSpaceInitFmt);
 }
 
 bool Estimator::print(std::ostream& stream) const {
@@ -858,7 +859,7 @@ bool Estimator::print(std::ostream& stream) const {
   Eigen::MatrixXd covariance;
   computeCovariance(&covariance);
   Eigen::VectorXd stateStd = covariance.diagonal().cwiseSqrt();
-  stream << " " << stateStd.transpose().format(kSpaceInitFmt);
+  stream << " " << stateStd.transpose().format(swift_vio::kSpaceInitFmt);
   return true;
 }
 

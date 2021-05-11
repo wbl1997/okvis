@@ -921,11 +921,6 @@ class Estimator : public VioBackendInterface
   swift_vio::PoseGraphOptions poseGraphOptions_;
 
 };
-
-// Space separated output format for Eigen matrices.
-static const Eigen::IOFormat kSpaceInitFmt(Eigen::StreamPrecision,
-                                           Eigen::DontAlignCols, " ", " ", "",
-                                           "", "", "");
 }  // namespace okvis
 
 #include "implementation/Estimator.hpp"

@@ -31,9 +31,10 @@
  *********************************************************************************/
 
 /**
- * @file ode.hpp
- * @brief File for ODE integration functionality.
- * @author Stefan Leutenegger
+ * @file odeHybrid.hpp
+ * @brief Runge Kutta based IMU forward and backward propagation with an extended IMU model.
+ * developed from ode.hpp in okvis.
+ * @author Jianzhu Huai
  */
 
 #ifndef INCLUDE_SWIFT_VIO_ODE_HYBRID_HPP_
@@ -52,13 +53,10 @@
 #include <okvis/kinematics/operators.hpp>
 
 namespace swift_vio {
-/// \brief ode Namespace for functionality related to ODE integration
-/// implemented in okvis.
 namespace ode {
-
 const int kNavErrorStateDim = 9;
-// Note this function assume that the W frame is with z up, negative gravity
-// direction, because in computing sb_dot and G world-centric velocities
+// Note this function assume that the W frame has z axis along the negative gravity.
+// This fact is used in computing velocity in the W frame.
 __inline__ void evaluateContinuousTimeOde(
     const Eigen::Vector3d& gyr, const Eigen::Vector3d& acc, double g,
     const Eigen::Vector3d& p_WS_W, const Eigen::Quaterniond& q_WS,
