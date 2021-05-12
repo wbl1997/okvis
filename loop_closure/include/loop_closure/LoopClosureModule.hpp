@@ -56,6 +56,7 @@ class LoopClosureModule {
  private:
   bool blocking_;  ///< Blocking option. Whether the addMeasurement() functions
                    ///< should wait until proccessing is complete.
+                   ///< Default to block because the PGO module requires all keyframes are connected.
 
   okvis::threadsafe::ThreadSafeQueue<
       std::shared_ptr<LoopQueryKeyframeMessage>>

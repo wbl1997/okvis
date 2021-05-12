@@ -371,7 +371,7 @@ void ThreadedKFVio::addDifferentialPressureMeasurement(const okvis::Time &,
 // should return immediately (blocking=false), or only when the processing is complete.
 void ThreadedKFVio::setBlocking(bool blocking) {
   blocking_ = blocking;
-  loopClosureModule_.setBlocking(blocking);
+//  loopClosureModule_.setBlocking(blocking);
   // disable time limit for optimization
   if(blocking_) {
     std::lock_guard<std::mutex> lock(estimator_mutex_);

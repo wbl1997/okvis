@@ -4,11 +4,11 @@
 
 namespace swift_vio {
 LoopClosureModule::LoopClosureModule()
-    : blocking_(false), loopClosureMethod_(new LoopClosureMethod()) {}
+    : blocking_(true), loopClosureMethod_(new LoopClosureMethod()) {}
 
 LoopClosureModule::LoopClosureModule(
     std::shared_ptr<LoopClosureMethod> loopClosureMethod)
-    : blocking_(false), loopClosureMethod_(loopClosureMethod) {}
+    : blocking_(true), loopClosureMethod_(loopClosureMethod) {}
 
 LoopClosureModule::~LoopClosureModule() {}
 
