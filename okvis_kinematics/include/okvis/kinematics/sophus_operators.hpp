@@ -126,6 +126,13 @@ inline Eigen::Matrix<double, 6, 1> ominus(
   delta.tail<3>() = vee(dR);
   return delta;
 }
+
+inline bool motionLessThan(const okvis::kinematics::Transformation& Tab,
+                           double distanceThreshold, double angleThreshold) {
+  return Tab.r().norm() < distanceThreshold &&
+      std::fabs(Eigen::AngleAxisd(Tab.q()).angle()) < angleThreshold;
+}
+
 } // namespace kinematics
 } // namespace okvis
 

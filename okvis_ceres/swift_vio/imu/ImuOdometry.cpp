@@ -6,7 +6,6 @@
 
 #include <okvis/Parameters.hpp>
 #include <okvis/assert_macros.hpp>
-#include <okvis/ceres/ode/ode.hpp>
 #include <okvis/kinematics/Transformation.hpp>
 
 namespace swift_vio {
@@ -206,7 +205,7 @@ int ImuOdometry::propagation(
 
     const Eigen::Vector3d omega_S_true = 0.5 * (omega_est + omega_est_1);
     const double theta_half = omega_S_true.norm() * 0.5 * dt;
-    const double sinc_theta_half = okvis::ode::sinc(theta_half);
+    const double sinc_theta_half = okvis::kinematics::sinc(theta_half);
     const double cos_theta_half = cos(theta_half);
     dq.vec() = sinc_theta_half * omega_S_true * 0.5 * dt;
     dq.w() = cos_theta_half;
@@ -658,7 +657,7 @@ int ImuOdometry::propagationRightInvariantError(
 
     const Eigen::Vector3d omega_S_true = 0.5 * (omega_est + omega_est_1);
     const double theta_half = omega_S_true.norm() * 0.5 * dt;
-    const double sinc_theta_half = okvis::ode::sinc(theta_half);
+    const double sinc_theta_half = okvis::kinematics::sinc(theta_half);
     const double cos_theta_half = cos(theta_half);
     dq.vec() = sinc_theta_half * omega_S_true * 0.5 * dt;
     dq.w() = cos_theta_half;
@@ -879,7 +878,7 @@ int ImuOdometry::propagationBackward(
 
     const Eigen::Vector3d omega_S_true = 0.5 * (omega_est + omega_est_1);
     const double theta_half = omega_S_true.norm() * 0.5 * dt;
-    const double sinc_theta_half = okvis::ode::sinc(theta_half);
+    const double sinc_theta_half = okvis::kinematics::sinc(theta_half);
     const double cos_theta_half = cos(theta_half);
     dq.vec() = sinc_theta_half * omega_S_true * 0.5 * dt;
     dq.w() = cos_theta_half;

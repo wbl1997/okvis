@@ -69,6 +69,8 @@ struct PointLandmarkOptions {
 
 struct PoseGraphOptions {
   int maxOdometryConstraintForAKeyframe;
+  double minDistance;
+  double minAngle;
   PoseGraphOptions();
 };
 

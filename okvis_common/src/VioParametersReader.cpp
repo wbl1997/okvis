@@ -304,8 +304,15 @@ void parsePoseGraphOptions(cv::FileNode pgNode, swift_vio::PoseGraphOptions* pgO
     pgNode["maxOdometryConstraintForAKeyframe"] >>
         pgOptions->maxOdometryConstraintForAKeyframe;
   }
-  LOG(INFO) << "Max odometry constraint for a keyframe "
-            << pgOptions->maxOdometryConstraintForAKeyframe;
+  if (pgNode["minDistance"].isReal()) {
+    pgNode["minDistance"] >> pgOptions->minDistance;
+  }
+  if (pgNode["minAngle"].isReal()) {
+    pgNode["minAngle"] >> pgOptions->minAngle;
+  }
+  LOG(INFO) << "Max #odometry constraint for a keyframe "
+            << pgOptions->maxOdometryConstraintForAKeyframe << ", Min distance "
+            << pgOptions->minDistance << ", Min angle " << pgOptions->minAngle;
 }
 
 // Read and parse a config file.

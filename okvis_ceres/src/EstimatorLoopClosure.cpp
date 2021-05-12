@@ -66,7 +66,7 @@ bool Estimator::getOdometryConstraintsForKeyframe(
   okvis::kinematics::Transformation T_WBr = queryKeyframe->T_WB_;
   queryKeyframe->setZeroCovariance();
   auto riter = statesMap_.rbegin();
-  for (++riter;  // skip the last frame which in this case should be a keyframe.
+  for (++riter;  // skip the last frame which is queryKeyframe.
        riter != statesMap_.rend() && j < poseGraphOptions_.maxOdometryConstraintForAKeyframe;
        ++riter) {
     if (riter->second.isKeyframe) {

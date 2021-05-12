@@ -10,7 +10,6 @@ EstimatorAlgorithm EstimatorAlgorithmNameToId(std::string description) {
   std::unordered_map<std::string, EstimatorAlgorithm> descriptionToId{
       {"OKVIS", EstimatorAlgorithm::OKVIS},
       {"GENERAL", EstimatorAlgorithm::General},
-      {"CONSISTENT", EstimatorAlgorithm::Consistent},
       {"MSCKF", EstimatorAlgorithm::MSCKF},
       {"TFVIO", EstimatorAlgorithm::TFVIO},
       {"INVARIANTEKF", EstimatorAlgorithm::InvariantEKF},
@@ -39,7 +38,6 @@ std::string EstimatorAlgorithmIdToName(EstimatorAlgorithm id) {
       idToDescription{
           {EstimatorAlgorithm::OKVIS, "OKVIS"},
           {EstimatorAlgorithm::General, "General"},
-          {EstimatorAlgorithm::Consistent, "Consistent"},
           {EstimatorAlgorithm::MSCKF, "MSCKF"},
           {EstimatorAlgorithm::TFVIO, "TFVIO"},
           {EstimatorAlgorithm::InvariantEKF, "InvariantEKF"},
@@ -66,7 +64,7 @@ FrontendOptions::FrontendOptions(bool initWithoutEnoughParallax,
       featureTrackingMethod(featureTrackingApproach) {}
 
 PoseGraphOptions::PoseGraphOptions()
-    : maxOdometryConstraintForAKeyframe(3) {}
+    : maxOdometryConstraintForAKeyframe(3), minDistance(0.1), minAngle(0.1) {}
 
 PointLandmarkOptions::PointLandmarkOptions()
     : landmarkModelId(0), minTrackLengthForMsckf(3u),

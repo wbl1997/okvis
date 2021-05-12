@@ -47,7 +47,6 @@
 #include <okvis/Parameters.hpp>
 #include <okvis/ceres/PoseLocalParameterization.hpp>
 #include <okvis/assert_macros.hpp>
-#include <okvis/ceres/ode/ode.hpp>
 #include <okvis/kinematics/Transformation.hpp>
 
 /// \brief okvis Main namespace of this package.
@@ -178,7 +177,7 @@ int ImuError::redoPreintegration(const okvis::kinematics::Transformation& /*T_WS
     const Eigen::Vector3d omega_S_true = (0.5 * (omega_S_0 + omega_S_1)
         - speedAndBiases.segment < 3 > (3));
     const double theta_half = omega_S_true.norm() * 0.5 * dt;
-    const double sinc_theta_half = ode::sinc(theta_half);
+    const double sinc_theta_half = kinematics::sinc(theta_half);
     const double cos_theta_half = cos(theta_half);
     dq.vec() = sinc_theta_half * omega_S_true * 0.5 * dt;
     dq.w() = cos_theta_half;
@@ -415,7 +414,7 @@ int ImuError::propagation(const okvis::ImuMeasurementDeque & imuMeasurements,
     Eigen::Quaterniond dq;
     const Eigen::Vector3d omega_S_true = (0.5*(omega_S_0+omega_S_1) - speedAndBiases.segment<3>(3));
     const double theta_half = omega_S_true.norm() * 0.5 * dt;
-    const double sinc_theta_half = ode::sinc(theta_half);
+    const double sinc_theta_half = kinematics::sinc(theta_half);
     const double cos_theta_half = cos(theta_half);
     dq.vec() = sinc_theta_half * omega_S_true * 0.5 * dt;
     dq.w() = cos_theta_half;
