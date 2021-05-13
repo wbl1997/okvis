@@ -28,10 +28,6 @@ EstimatorAlgorithm EstimatorAlgorithmNameToId(std::string description);
 std::string EstimatorAlgorithmIdToName(EstimatorAlgorithm id);
 
 struct FrontendOptions {
-  ///< Initialize the frontend under insufficient parallax, e.g., during pure
-  ///< rotation?
-  bool initializeWithoutEnoughParallax;
-
   ///< stereo matching with epipolar check and landmark fusion or
   /// the okvis stereo matching 2d-2d + 3d-2d + 3d-2d?
   bool stereoMatchWithEpipolarCheck;

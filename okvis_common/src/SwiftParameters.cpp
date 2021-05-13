@@ -58,8 +58,7 @@ FrontendOptions::FrontendOptions(bool initWithoutEnoughParallax,
                                  bool stereoWithEpipolarCheck,
                                  double epipolarDistanceThresh,
                                  int featureTrackingApproach)
-    : initializeWithoutEnoughParallax(initWithoutEnoughParallax),
-      stereoMatchWithEpipolarCheck(stereoWithEpipolarCheck),
+    : stereoMatchWithEpipolarCheck(stereoWithEpipolarCheck),
       epipolarDistanceThreshold(epipolarDistanceThresh),
       featureTrackingMethod(featureTrackingApproach) {}
 

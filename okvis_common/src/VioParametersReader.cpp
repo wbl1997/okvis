@@ -241,10 +241,6 @@ void parseOptimizationOptions(cv::FileNode optNode, Optimization *optParams) {
 
 void parseFrontendOptions(cv::FileNode frontendNode,
                           swift_vio::FrontendOptions* frontendOptions) {
-  parseBoolean(frontendNode["initializeWithoutEnoughParallax"],
-               frontendOptions->initializeWithoutEnoughParallax);
-  LOG(INFO) << "Initialize without enough parallax? "
-            << frontendOptions->initializeWithoutEnoughParallax;
   parseBoolean(frontendNode["stereoMatchWithEpipolarCheck"],
                frontendOptions->stereoMatchWithEpipolarCheck);
   LOG(INFO) << "Stereo match with epipolar check? "
