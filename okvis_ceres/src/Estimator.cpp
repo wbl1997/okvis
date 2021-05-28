@@ -587,7 +587,7 @@ bool Estimator::applyMarginalizationStrategy(
 
     for (size_t r = 0; r < residuals.size(); ++r) {
       // jhuai: redo fixation leads to inconsistent covariance.
-      if(!optimizationOptions_.getCovariance && std::dynamic_pointer_cast<ceres::PoseError>(
+      if(!optimizationOptions_.getSmootherCovariance && std::dynamic_pointer_cast<ceres::PoseError>(
            residuals[r].errorInterfacePtr)){ // avoids linearising initial pose error
         mapPtr_->removeResidualBlock(residuals[r].residualBlockId);
         reDoFixation = true;

@@ -267,7 +267,10 @@ struct Optimization{
 
   bool useEpipolarConstraint;
   int cameraObservationModelId;
-  bool getCovariance;
+
+  // set true to analyze the consistency of Estimator,
+  // set false to analyze the accuracy of Estimator.
+  bool getSmootherCovariance;
 
   Optimization();
 

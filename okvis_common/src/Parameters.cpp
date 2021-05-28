@@ -67,7 +67,7 @@ Optimization::Optimization()
       triangulationMaxDepth(1000.0),
       useEpipolarConstraint(false),
       cameraObservationModelId(0),
-      getCovariance(false) {}
+      getSmootherCovariance(false) {}
 
 std::string Optimization::toString(std::string lead) const {
   std::stringstream ss(lead);
