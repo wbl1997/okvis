@@ -9,7 +9,6 @@ EstimatorAlgorithm EstimatorAlgorithmNameToId(std::string description) {
                  ::toupper);
   std::unordered_map<std::string, EstimatorAlgorithm> descriptionToId{
       {"OKVIS", EstimatorAlgorithm::OKVIS},
-      {"GENERAL", EstimatorAlgorithm::General},
       {"MSCKF", EstimatorAlgorithm::MSCKF},
       {"TFVIO", EstimatorAlgorithm::TFVIO},
       {"INVARIANTEKF", EstimatorAlgorithm::InvariantEKF},
@@ -37,7 +36,6 @@ std::string EstimatorAlgorithmIdToName(EstimatorAlgorithm id) {
   std::unordered_map<EstimatorAlgorithm, std::string, EstimatorAlgorithmHash>
       idToDescription{
           {EstimatorAlgorithm::OKVIS, "OKVIS"},
-          {EstimatorAlgorithm::General, "General"},
           {EstimatorAlgorithm::MSCKF, "MSCKF"},
           {EstimatorAlgorithm::TFVIO, "TFVIO"},
           {EstimatorAlgorithm::InvariantEKF, "InvariantEKF"},

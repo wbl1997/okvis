@@ -993,8 +993,10 @@ bool Map::computeNavStateCovariance(uint64_t poseId, uint64_t speedAndBiasId,
                                     ::ceres::ResidualBlockId marginalResidualId,
                                     Eigen::MatrixXd* cov) {
   ceres::MarginalizationError marginalizer(*this);
-  // Add the marginalization residual first so that variables have proper first estimates.
-  marginalizer.addResidualBlock(marginalResidualId, true);
+  if (marginalResidualId) {
+    // Add the marginalization residual first so that variables have proper first estimates.
+    marginalizer.addResidualBlock(marginalResidualId, true);
+  }
   Map::ResidualBlockCollection poseResiduals = residuals(poseId);
   // Add a residual for the pose first to ensure that the pose precedes
   // speed and biases in the covariance matrix.

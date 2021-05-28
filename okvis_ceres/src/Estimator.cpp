@@ -374,6 +374,7 @@ bool Estimator::addStates(
 // Add a landmark.
 bool Estimator::addLandmark(uint64_t landmarkId,
                             const Eigen::Vector4d & landmark) {
+  // Landmark parameter blocks will be added by the estimator.
 //  std::shared_ptr<okvis::ceres::HomogeneousPointParameterBlock> pointParameterBlock(
 //      new okvis::ceres::HomogeneousPointParameterBlock(landmark, landmarkId));
 //  if (!mapPtr_->addParameterBlock(pointParameterBlock,
@@ -386,11 +387,11 @@ bool Estimator::addLandmark(uint64_t landmarkId,
   if(fabs(landmark[3])>1.0e-8){
     dist = (landmark/landmark[3]).head<3>().norm(); // euclidean distance
   }
-  landmarksMap_.insert(
+  auto result = landmarksMap_.insert(
       std::pair<uint64_t, MapPoint>(
           landmarkId, MapPoint(landmarkId, landmark, 0.0, dist)));
   OKVIS_ASSERT_TRUE_DBG(Exception, isLandmarkAdded(landmarkId), "bug: inconsistend landmarkdMap_ with mapPtr_.");
-  return true;
+  return result.second;
 }
 
 // Remove an observation from a landmark.
@@ -1485,15 +1486,11 @@ bool Estimator::addReprojectionFactors() {
     // reprojection factors for those with null residual pointers, terminate
     // until a valid residual pointer is hit.
     MapPoint& mp = pit->second;
-    std::map<okvis::KeypointIdentifier, uint64_t>::reverse_iterator breakIter =
-        mp.observations.rend();
     for (std::map<okvis::KeypointIdentifier, uint64_t>::reverse_iterator riter =
              mp.observations.rbegin();
          riter != mp.observations.rend(); ++riter) {
       ::ceres::ResidualBlockId retVal = 0u;
       if (riter->second == 0u) {
-// TODO(jhuai): Placing the switch statement outside the double for loops saves
-// most branchings of switch.
 #define DISTORTION_MODEL_CASE(camera_geometry_t)                               \
   retVal = addPointFrameResidual<camera_geometry_t>(pit->first, riter->first); \
   riter->second = reinterpret_cast<uint64_t>(retVal);
@@ -1501,19 +1498,6 @@ bool Estimator::addReprojectionFactors() {
         switch (distortionType) { DISTORTION_MODEL_SWITCH_CASES }
 
 #undef DISTORTION_MODEL_CASE
-      } else {
-        breakIter = riter;
-        break;
-      }
-    }
-
-    for (std::map<okvis::KeypointIdentifier, uint64_t>::reverse_iterator riter =
-             breakIter;
-         riter != mp.observations.rend(); ++riter) {
-      if (riter->second == 0u) {
-        LOG(WARNING) << "For landmark " << mp.id
-                     << ", residuals should be contiguously null or filled "
-                        "unless epipolar factors are used!";
       }
     }
   }
