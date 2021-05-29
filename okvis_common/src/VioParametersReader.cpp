@@ -270,9 +270,6 @@ void parsePointLandmarkOptions(cv::FileNode plNode,
         std::max(static_cast<int>(plNode["minTrackLength"]), 3));
   }
 
-  parseBoolean(plNode["anchorAtObservationTime"],
-               plOptions->anchorAtObservationTime);
-
   if (plNode["maxHibernationFrames"].isInt()) {
     plOptions->maxHibernationFrames = static_cast<size_t>(
         std::max(static_cast<int>(plNode["maxHibernationFrames"]), 1));

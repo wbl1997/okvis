@@ -27,7 +27,8 @@ struct TransformPointJacobianNode {
 
 /**
  * @brief The MultipleTransformPointJacobianNode struct
- * For q = T1^{a_1} * T2^{a_2} * ... * Tk^{a_k} * p, a_i = {+1, -1}
+ * For q = T1^{a_1} * T2^{a_2} * ... * Tk^{a_k} * p, a_i \in {+1, -1},
+ * p and q are 4D homogeneous points, Ti i = 1, 2, ..., k are Euclidean transforms.
  * first node contains
  * I=dq_dq, q, dq_d\delta T1
  * second node contains
@@ -38,7 +39,7 @@ struct TransformPointJacobianNode {
  * last node contains T1^{a_1} * T2^{a_2} * ... * Tk^{a_k} = dq_dqk, qk = p, 0.
  *
  * Error in Ti, \delta Ti is defined by okvis::kinematics::minus and oplus.
- * Error in point is defined as p = \hat{p} + \delta p.
+ * Error in point is defined as p = \hat{p} + \delta p, \delta p is a 4D vector.
  */
 class MultipleTransformPointJacobian {
  public:
