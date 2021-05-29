@@ -24,27 +24,32 @@ namespace cameras {
 std::shared_ptr<okvis::cameras::CameraBase> cloneCameraGeometry(
     std::shared_ptr<const okvis::cameras::CameraBase> cameraGeometry);
 
-static inline void DistortionNameToParamsInfo(const std::string& distortionName,
-                                              const std::string delimiter,
-                                              std::string* paramsInfo) {
-  std::map<std::string, std::string> distortionNameList{
-      {okvis::cameras::EquidistantDistortion().type(),
-       "k1" + delimiter + "k2" + delimiter + "k3" + delimiter + "k4"},
-      {okvis::cameras::RadialTangentialDistortion().type(),
-       "k1" + delimiter + "k2" + delimiter + "p1" + delimiter + "p2"},
-      {okvis::cameras::NoDistortion().type(), ""},
-      {okvis::cameras::RadialTangentialDistortion8().type(),
-       "k1" + delimiter + "k2" + delimiter + "p1" + delimiter + "p2" +
-           delimiter + "k3" + delimiter + "k4" + delimiter + "k5" + delimiter +
-           "k6"},
-      {okvis::cameras::FovDistortion().type(), "omega"}};
+static inline void DistortionTypeToParamsInfo(
+    const okvis::cameras::NCameraSystem::DistortionType dtype,
+    const std::string delimiter, std::string *paramsInfo) {
+  std::map<okvis::cameras::NCameraSystem::DistortionType, std::string>
+      distortionNameList{
+          {okvis::cameras::NCameraSystem::DistortionType::Equidistant,
+           "k1" + delimiter + "k2" + delimiter + "k3" + delimiter + "k4"},
+          {okvis::cameras::NCameraSystem::DistortionType::RadialTangential,
+           "k1" + delimiter + "k2" + delimiter + "p1" + delimiter + "p2"},
+          {okvis::cameras::NCameraSystem::DistortionType::NoDistortion, ""},
+          {okvis::cameras::NCameraSystem::DistortionType::RadialTangential8,
+           "k1" + delimiter + "k2" + delimiter + "p1" + delimiter + "p2" +
+               delimiter + "k3" + delimiter + "k4" + delimiter + "k5" +
+               delimiter + "k6"},
+          {okvis::cameras::NCameraSystem::DistortionType::FOV, "omega"}};
 
-  std::map<std::string, std::string>::iterator it = std::find_if(
-      distortionNameList.begin(), distortionNameList.end(),
-      [&distortionName](const std::pair<std::string, std::string>& val) {
-        if (val.first.compare(distortionName) == 0) return true;
-        return false;
-      });
+  std::map<okvis::cameras::NCameraSystem::DistortionType, std::string>::iterator
+      it = std::find_if(
+          distortionNameList.begin(), distortionNameList.end(),
+          [&dtype](
+              const std::pair<okvis::cameras::NCameraSystem::DistortionType,
+                              std::string> &val) {
+            if (val.first == dtype)
+              return true;
+            return false;
+          });
   if (it == distortionNameList.end()) {
     *paramsInfo = "";
   } else {

@@ -92,9 +92,9 @@ int Estimator::addCameraParameterStds(
 }
 
 void Estimator::addCameraSystem(const okvis::cameras::NCameraSystem& cameras) {
-  camera_rig_.clear();
+  cameraRig_.clear();
   for (size_t i = 0; i < cameras.numCameras(); ++i) {
-    camera_rig_.addCamera(cameras.T_SC(i), cameras.cameraGeometry(i),
+    cameraRig_.addCamera(cameras.T_SC(i), cameras.cameraGeometry(i),
                           cameras.projOptRep(i), cameras.extrinsicOptRep(i));
     bool fixProjectionIntrinsics = false;
     swift_vio::ProjectionOptNameToId(cameras.projOptRep(i), &fixProjectionIntrinsics);
@@ -113,7 +113,7 @@ int Estimator::addImu(const ImuParameters & imuParameters)
     return -1;
   }
   imuParametersVec_.push_back(imuParameters);
-  imu_rig_.addImu(imuParameters);
+  imuRig_.addImu(imuParameters);
   return imuParametersVec_.size() - 1;
 }
 
@@ -853,7 +853,7 @@ void Estimator::printNavStateAndBiases(std::ostream& stream, uint64_t poseId) co
   stream << " " << sb.transpose().format(swift_vio::kSpaceInitFmt);
 }
 
-bool Estimator::print(std::ostream& stream) const {
+bool Estimator::printStatesAndStdevs(std::ostream& stream) const {
   uint64_t poseId = statesMap_.rbegin()->first;
   printNavStateAndBiases(stream, poseId);
 
@@ -862,6 +862,23 @@ bool Estimator::print(std::ostream& stream) const {
   Eigen::VectorXd stateStd = covariance.diagonal().cwiseSqrt();
   stream << " " << stateStd.transpose().format(swift_vio::kSpaceInitFmt);
   return true;
+}
+
+std::string Estimator::headerLine(const std::string delimiter) const {
+  std::stringstream stream;
+  std::vector<std::string> variableList{
+      "timestamp(sec)", "frameId",       "p_WB_W_x(m)",   "p_WB_W_y(m)",
+      "p_WB_W_z(m)",    "q_WB_x",        "q_WB_y",        "q_WB_z",
+      "q_WB_w",         "v_WB_W_x(m/s)", "v_WB_W_y(m/s)", "v_WB_W_z(m/s)",
+      "b_g_x(rad/s)",   "b_g_y(rad/s)",  "b_g_z(rad/s)",  "b_a_x(m/s^2)",
+      "b_a_y(m/s^2)",   "b_a_z(m/s^2)"};
+  for (auto variable : variableList) {
+    stream << variable << delimiter;
+  }
+  for (auto variable : variableList) {
+    stream << "std_" << variable << delimiter;
+  }
+  return stream.str();
 }
 
 // Initialise pose from IMU measurements. For convenience as static.
@@ -1467,7 +1484,7 @@ uint64_t Estimator::mergeTwoLandmarks(uint64_t lmIdA, uint64_t lmIdB) {
 
 bool Estimator::addReprojectionFactors() {
   okvis::cameras::NCameraSystem::DistortionType distortionType =
-      camera_rig_.getDistortionType(0);
+      cameraRig_.getDistortionType(0);
 
   for (PointMap::iterator pit = landmarksMap_.begin();
        pit != landmarksMap_.end(); ++pit) {
@@ -1505,7 +1522,7 @@ bool Estimator::addReprojectionFactors() {
 }
 
 Eigen::Matrix<double, Eigen::Dynamic, 1> Estimator::computeImuAugmentedParamsError() const {
-  return imu_rig_.computeImuAugmentedParamsError(0);
+  return imuRig_.computeImuAugmentedParamsError(0);
 }
 
 okvis::Time Estimator::removeState(uint64_t stateId) {
@@ -1529,6 +1546,10 @@ okvis::Time Estimator::removeState(uint64_t stateId) {
 }
 
 bool Estimator::computeCovariance(Eigen::MatrixXd* cov) const {
+  if (!optimizationOptions_.getSmootherCovariance) {
+    *cov = Eigen::Matrix<double, 15, 15>::Identity();
+    return false;
+  }
   uint64_t poseId = statesMap_.rbegin()->second.id;
   uint64_t speedAndBiasId = statesMap_.rbegin()
                                 ->second.sensors.at(SensorStates::Imu)
@@ -1643,7 +1664,7 @@ size_t Estimator::gatherMapPointObservations(
     // use the latest estimates for camera intrinsic parameters
     Eigen::Vector3d backProjectionDirection;
     std::shared_ptr<const cameras::CameraBase> cameraGeometry =
-        camera_rig_.getCameraGeometry(itObs->first.cameraIndex);
+        cameraRig_.getCameraGeometry(itObs->first.cameraIndex);
     bool validDirection =
         cameraGeometry->backProject(measurement, &backProjectionDirection);
     if (!validDirection) {
@@ -1654,7 +1675,7 @@ size_t Estimator::gatherMapPointObservations(
     okvis::kinematics::Transformation T_WB;
     get_T_WS(poseId, T_WB);
     okvis::kinematics::Transformation T_BC =
-        camera_rig_.getCameraExtrinsic(itObs->first.cameraIndex);
+        cameraRig_.getCameraExtrinsic(itObs->first.cameraIndex);
     T_CWs->emplace_back((T_WB * T_BC).inverse());
 
     double kpSize = 1.0;
@@ -1667,13 +1688,13 @@ size_t Estimator::gatherMapPointObservations(
 }
 
 int Estimator::getCameraExtrinsicOptType(size_t cameraIdx) const {
-  return camera_rig_.getExtrinsicOptMode(cameraIdx);
+  return cameraRig_.getExtrinsicOptMode(cameraIdx);
 }
 
 bool Estimator::getCameraSensorExtrinsics(
     uint64_t poseId, size_t cameraIdx,
     okvis::kinematics::Transformation& T_BCi) const {
-  if (camera_rig_.getExtrinsicOptMode(cameraIdx) ==
+  if (cameraRig_.getExtrinsicOptMode(cameraIdx) ==
       swift_vio::Extrinsic_p_C0C_q_C0C::kModelId) {
     OKVIS_ASSERT_NE_DBG(
         Exception, kMainCameraIndex, cameraIdx,

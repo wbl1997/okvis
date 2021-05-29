@@ -13,14 +13,11 @@
 namespace swift_vio {
 enum class EstimatorAlgorithm {
   OKVIS = 0,  ///< Okvis original keyframe-based estimator.
-  General,  ///< Adapted keyframe-based estimator using only epipolar constraints.
-  Consistent,  ///< Consistent keyframe-based estimator.
   SlidingWindowSmoother, ///< Gtsam::FixedLagSmoother.
   RiSlidingWindowSmoother, ///< Gtsam::FixedLagSmoother with right invariant errors.
   HybridFilter, ///< MSCKF + EKF-SLAM with keyframe-based marginalization.
   MSCKF,  ///< MSCKF with keyframe-based marginalization.
-  TFVIO,  ///< Triangulate-free VIO with only epipolar constraints.
-  InvariantEKF, ///< MSCKF with right invariant errors.
+  TFVIO  ///< Triangulate-free VIO with only epipolar constraints.
 };
 
 EstimatorAlgorithm EstimatorAlgorithmNameToId(std::string description);

@@ -495,14 +495,9 @@ class Estimator : public VioBackendInterface
    */
   virtual bool getStateStd(Eigen::Matrix<double, Eigen::Dynamic, 1>* stateStd) const;
 
-  /**
-   * @brief print the most recent nav state estimate and OPTIMIZED sensor
-   * parameters and/or stddevs of these optimized variables.
-   * Constant parameters will not be printed.
-   * @param stream
-   * @return true
-   */
-  virtual bool print(std::ostream& stream) const;
+  bool printStatesAndStdevs(std::ostream& stream) const override;
+
+  std::string headerLine(const std::string delimiter=" ") const override;
 
   void printNavStateAndBiases(std::ostream& stream, uint64_t poseId) const;
 
@@ -518,9 +513,9 @@ class Estimator : public VioBackendInterface
    * @return minimal dim
    */
   size_t cameraParamsMinimalDimen(size_t camIdx = 0) const {
-    return (fixCameraExtrinsicParams_[camIdx] ? 0 : camera_rig_.getMinimalExtrinsicDimen(camIdx)) +
-           (fixCameraIntrinsicParams_[camIdx] ? 0 : camera_rig_.getMinimalProjectionDimen(camIdx) +
-           camera_rig_.getDistortionDimen(camIdx)) + 2u;  // 2 for td and tr
+    return (fixCameraExtrinsicParams_[camIdx] ? 0 : cameraRig_.getMinimalExtrinsicDimen(camIdx)) +
+           (fixCameraIntrinsicParams_[camIdx] ? 0 : cameraRig_.getMinimalProjectionDimen(camIdx) +
+           cameraRig_.getDistortionDimen(camIdx)) + 2u;  // 2 for td and tr
   }
 
   bool getImageDelay(uint64_t poseId, int camIdx, okvis::Duration *td) const;
@@ -891,11 +886,11 @@ class Estimator : public VioBackendInterface
 
   // An evolving camera rig to store the optimized camera
   // parameters and interface with the camera models.
-  swift_vio::cameras::CameraRig camera_rig_;
+  swift_vio::cameras::CameraRig cameraRig_;
 
   // An evolving imu rig to store the optimized imu parameters and
   // interface with the IMU models.
-  swift_vio::ImuRig imu_rig_;
+  swift_vio::ImuRig imuRig_;
 
   // sequential imu measurements covering states in the estimator
   swift_vio::BoundedImuDeque inertialMeasForStates_;

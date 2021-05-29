@@ -23,7 +23,7 @@ template <class GEOMETRY_TYPE>
   information *= 64.0 / (size * size);
 
   std::shared_ptr<const GEOMETRY_TYPE> cameraGeometry =
-      camera_rig_.template geometryAs<GEOMETRY_TYPE>(kpi.cameraIndex);
+      cameraRig_.template geometryAs<GEOMETRY_TYPE>(kpi.cameraIndex);
 
   std::shared_ptr<ceres::ReprojectionError<GEOMETRY_TYPE>> reprojectionError(
       new ceres::ReprojectionError<GEOMETRY_TYPE>(cameraGeometry, kpi.cameraIndex,
@@ -122,7 +122,7 @@ bool Estimator::addEpipolarConstraint(uint64_t landmarkId, uint64_t poseId,
   covariance12[1] *= (size * size) / 64.0;
 
   std::shared_ptr<okvis::cameras::CameraBase> baseCameraGeometry =
-      camera_rig_.getMutableCameraGeometry(camIdx);
+      cameraRig_.getMutableCameraGeometry(camIdx);
   std::shared_ptr<CAMERA_GEOMETRY_T> argCameraGeometry =
       std::static_pointer_cast<CAMERA_GEOMETRY_T>(baseCameraGeometry);
 
@@ -166,7 +166,7 @@ bool Estimator::addEpipolarConstraint(uint64_t landmarkId, uint64_t poseId,
   double gravityMag = imuParametersVec_.at(0).g;
 
   std::shared_ptr<::ceres::CostFunction> twoViewError;
-  switch (camera_rig_.getProjectionOptMode(camIdx)) {
+  switch (cameraRig_.getProjectionOptMode(camIdx)) {
   case swift_vio::ProjectionOptFXY_CXY::kModelId:
       twoViewError.reset(new ceres::EpipolarFactor<CAMERA_GEOMETRY_T, swift_vio::Extrinsic_p_BC_q_BC,
                          swift_vio::ProjectionOptFXY_CXY>(

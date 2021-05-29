@@ -246,6 +246,8 @@ class ThreadedKFVio : public VioInterface {
 
   void saveStatistics(const std::string& filename) const;
 
+  std::string headerLine() const { return estimator_->headerLine(); }
+
   void appendPgoStateCallback(const StateCallback& pgoStateCallback);
 
  private:

@@ -181,6 +181,21 @@ class VioBackendInterface {
    */
   virtual bool isLandmarkInitialized(uint64_t landmarkId) const = 0;
 
+  /**
+   * @brief print the most recent nav state estimate and calibrated sensor
+   * parameters and stdevs of these estimated variables.
+   * Note constant parameters will not be printed.
+   * @param stream
+   * @return true
+   */
+  virtual bool printStatesAndStdevs(std::ostream& /*stream*/) const {
+    return false;
+  }
+
+  virtual std::string headerLine(const std::string /*delimiter*/=" ") const {
+    return "";
+  }
+
   /// @name Getters
   ///\{
   /**
