@@ -476,8 +476,8 @@ bool ChordalDistance<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDM
         T_WCtai_jacobian.multiply();
     swift_vio::DirectionFromParallaxAngleJacobian directionFromParallaxAngleJacobian(
         pair_T_WCtmi, pair_T_WCtai.first, pair_T_WCtij.first, pap);
-    Eigen::Vector3d lP_Nij = directionFromParallaxAngleJacobian.evaluate();
-    swift_vio::VectorNormalizationJacobian unit_Nij_jacobian(lP_Nij);
+    Eigen::Vector3d Nij_fej = directionFromParallaxAngleJacobian.evaluate();
+    swift_vio::VectorNormalizationJacobian unit_Nij_jacobian(Nij_fej);
     Eigen::Matrix3d de_dN;
     unit_Nij_jacobian.dxi_dvec(&de_dN);
     Eigen::Matrix3d dN_dp_WCtij;

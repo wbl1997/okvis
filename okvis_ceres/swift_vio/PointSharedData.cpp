@@ -72,31 +72,31 @@ void PointSharedData::computePoseAndVelocityForJacobians(
         imuAugmentedParamBlockPtrs_, &imuAugmentedParams,
         ImuModelNameToId(imuParameters_->model_type));
     for (auto& item : stateInfoForObservations_) {
-      okvis::kinematics::Transformation lP_T_WB =
+      okvis::kinematics::Transformation T_WB_fej =
           std::static_pointer_cast<const okvis::ceres::PoseParameterBlock>(
               item.T_WBj_ptr)
               ->estimate();
-      okvis::SpeedAndBiases lP_sb =
+      okvis::SpeedAndBiases speedAndBiasesFej =
           std::static_pointer_cast<
               const okvis::ceres::SpeedAndBiasParameterBlock>(
               item.speedAndBiasPtr)
               ->estimate();
       std::shared_ptr<const Eigen::Matrix<double, 6, 1>>
           posVelFirstEstimatePtr = item.positionVelocityPtr;
-      lP_T_WB = okvis::kinematics::Transformation(
-          posVelFirstEstimatePtr->head<3>(), lP_T_WB.q());
-      lP_sb.head<3>() = posVelFirstEstimatePtr->tail<3>();
+      T_WB_fej = okvis::kinematics::Transformation(
+          posVelFirstEstimatePtr->head<3>(), T_WB_fej.q());
+      speedAndBiasesFej.head<3>() = posVelFirstEstimatePtr->tail<3>();
       okvis::Duration featureTime(normalizedFeatureTime(item));
       poseAndLinearVelocityAtObservation(
           *item.imuMeasurementPtr, imuAugmentedParams, *imuParameters_,
-          item.stateEpoch, featureTime, &lP_T_WB, &lP_sb);
-      item.lP_v_WBtij = lP_sb.head<3>();
-      item.lP_T_WBtij = lP_T_WB;
+          item.stateEpoch, featureTime, &T_WB_fej, &speedAndBiasesFej);
+      item.v_WBtij_fej = speedAndBiasesFej.head<3>();
+      item.T_WBtij_fej = T_WB_fej;
     }
   } else {
     for (auto& item : stateInfoForObservations_) {
-      item.lP_T_WBtij = item.T_WBtij;
-      item.lP_v_WBtij = item.v_WBtij;
+      item.T_WBtij_fej = item.T_WBtij;
+      item.v_WBtij_fej = item.v_WBtij;
     }
   }
   status_ = PointSharedDataState::NavStateForJacReady;

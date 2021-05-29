@@ -49,13 +49,13 @@ int ImuOdometry::propagation(
 
   // record the linearization point for position p_WS, and v_WS at two
   // subsequent steps
-  Eigen::Matrix<double, 6, 1> lP;
+  Eigen::Matrix<double, 6, 1> linPoint;
   if (use_first_estimate) {
-    lP = *linearizationPointAtTStart;
+    linPoint = *linearizationPointAtTStart;
   } else {
-    lP << r_0, v_WS;
+    linPoint << r_0, v_WS;
   }
-  Eigen::Matrix<double, 6, 1> lP_1;
+  Eigen::Matrix<double, 6, 1> linPoint_1;
 
   // increments (initialise with identity)
   // denote t_start by $t_0$
@@ -291,10 +291,10 @@ int ImuOdometry::propagation(
     // covariance propagation of \delta[p^W, \alpha, v^W, b_g, b_a, \vec[S_g,
     // T_s, S_a]
     if (covariance) {
-      lP_1.head<3>() =
+      linPoint_1.head<3>() =
           r_0 + v_WS * Delta_t +
           C_WS_0 * (acc_doubleintegral)-0.5 * g_W * Delta_t * Delta_t;
-      lP_1.tail<3>() = v_WS + C_WS_0 * (acc_integral_1)-g_W * Delta_t;
+      linPoint_1.tail<3>() = v_WS + C_WS_0 * (acc_integral_1)-g_W * Delta_t;
 
       Eigen::MatrixXd
           F_delta = Eigen::MatrixXd::Identity(covRows, covRows);
@@ -313,10 +313,10 @@ int ImuOdometry::propagation(
       if (use_first_estimate) {
         F_delta.block<3, 3>(6, 3) = okvis::kinematics::crossMx(
             -C_WS_0.transpose() *
-            (lP_1.tail<3>() - lP.tail<3>() + g_W * dt));  // vq
+            (linPoint_1.tail<3>() - linPoint.tail<3>() + g_W * dt));  // vq
         F_delta.block<3, 3>(0, 3) = okvis::kinematics::crossMx(
             -C_WS_0.transpose() *
-            (lP_1.head<3>() - lP.head<3>() - lP.tail<3>() * dt +
+            (linPoint_1.head<3>() - linPoint.head<3>() - linPoint.tail<3>() * dt +
              0.5 * g_W * dt * dt));  // pq
       } else {
         F_delta.block<3, 3>(6, 3) = -okvis::kinematics::crossMx(
@@ -412,7 +412,7 @@ int ImuOdometry::propagation(
           F_delta.topRightCorner(9, covRows - 9);
 
 #endif
-      lP = lP_1;
+      linPoint = linPoint_1;
     }
 
     // memory shift
@@ -463,12 +463,12 @@ int ImuOdometry::propagation(
     F.block<3, 3>(3, 12) = C_WS_0 * dalpha_db_a;
 
     if (use_first_estimate) {
-      lP = *linearizationPointAtTStart;
+      linPoint = *linearizationPointAtTStart;
       F.block<3, 3>(0, 3) = okvis::kinematics::crossMx(
-          -(lP_1.head<3>() - lP.head<3>() - lP.tail<3>() * Delta_t +
+          -(linPoint_1.head<3>() - linPoint.head<3>() - linPoint.tail<3>() * Delta_t +
             0.5 * g_W * Delta_t * Delta_t));  // pq
       F.block<3, 3>(6, 3) = okvis::kinematics::crossMx(
-          -(lP_1.tail<3>() - lP.tail<3>() + g_W * Delta_t));  // vq
+          -(linPoint_1.tail<3>() - linPoint.tail<3>() + g_W * Delta_t));  // vq
     } else {
       F.block<3, 3>(0, 3) =
           -okvis::kinematics::crossMx(C_WS_0 * acc_doubleintegral);
@@ -564,9 +564,9 @@ int ImuOdometry::propagationRightInvariantError(
   const Eigen::Matrix3d gx = okvis::kinematics::crossMx(g_W);
 
   // linearization point for position p_WS, and v_WS at two subsequent steps.
-  Eigen::Matrix<double, 6, 1> lP;
-  lP << r_0, v_WS;
-  Eigen::Matrix<double, 6, 1> lP_1;
+  Eigen::Matrix<double, 6, 1> linPoint;
+  linPoint << r_0, v_WS;
+  Eigen::Matrix<double, 6, 1> linPoint_1;
 
   // increments (initialise with identity), denote t_start by $t_0$
   Eigen::Quaterniond Delta_q(1, 0, 0, 0);  // quaternion of DCM from Si to S0
@@ -673,9 +673,9 @@ int ImuOdometry::propagationRightInvariantError(
     acc_doubleintegral += 0.5 * (acc_integral + acc_integral_1) * dt;
     if (covariance) {
       // https://github.com/RossHartley/invariant-ekf/blob/master/src/InEKF.cpp#L154-L187
-      lP_1.head<3>() = r_0 + v_WS * Delta_t + C_WS_0 * acc_doubleintegral +
+      linPoint_1.head<3>() = r_0 + v_WS * Delta_t + C_WS_0 * acc_doubleintegral +
                        0.5 * g_W * Delta_t * Delta_t;
-      lP_1.tail<3>() = v_WS + C_WS_0 * acc_integral_1 + g_W * Delta_t;
+      linPoint_1.tail<3>() = v_WS + C_WS_0 * acc_integral_1 + g_W * Delta_t;
 
       Eigen::MatrixXd F_delta = Eigen::MatrixXd::Identity(covRows, covRows);
       double dt2 = dt * dt;
@@ -695,15 +695,15 @@ int ImuOdometry::propagationRightInvariantError(
       F_delta.block<3, 3>(3, 12) =
           -0.25 * dt2 * gx * (R_WS + R_WS_1) -
           dt * 0.5 *
-              (okvis::kinematics::crossMx(lP.tail<3>()) * R_WS +
-               okvis::kinematics::crossMx(lP_1.tail<3>()) * R_WS_1);
+              (okvis::kinematics::crossMx(linPoint.tail<3>()) * R_WS +
+               okvis::kinematics::crossMx(linPoint_1.tail<3>()) * R_WS_1);
       F_delta.block<3, 3>(6, 12) =
           -dt * 0.5 *
-              (okvis::kinematics::crossMx(lP.head<3>()) * R_WS +
-               okvis::kinematics::crossMx(lP_1.head<3>()) * R_WS_1) -
+              (okvis::kinematics::crossMx(linPoint.head<3>()) * R_WS +
+               okvis::kinematics::crossMx(linPoint_1.head<3>()) * R_WS_1) -
           dt2 * 0.25 *
-              (okvis::kinematics::crossMx(lP.tail<3>()) * R_WS +
-               okvis::kinematics::crossMx(lP_1.tail<3>()) * R_WS_1) -
+              (okvis::kinematics::crossMx(linPoint.tail<3>()) * R_WS +
+               okvis::kinematics::crossMx(linPoint_1.tail<3>()) * R_WS_1) -
           dt2 / 12 * gx * (R_WS + R_WS_1);
       *covariance = F_delta * *covariance * F_delta.transpose();
       // add noise
@@ -712,14 +712,14 @@ int ImuOdometry::propagationRightInvariantError(
       Eigen::Matrix<double, 15, 15> GQGt_1 =
           Eigen::Matrix<double, 15, 15>::Zero();
       GQGt.topLeftCorner<9, 9>() = computeGQGt(
-          lP.head<3>(), lP.tail<3>(), imuParams.sigma_g_c, imuParams.sigma_a_c);
+          linPoint.head<3>(), linPoint.tail<3>(), imuParams.sigma_g_c, imuParams.sigma_a_c);
       GQGt.block<3, 3>(9, 9) = Eigen::Matrix3d::Identity() *
                                imuParams.sigma_aw_c * imuParams.sigma_aw_c;
       GQGt.block<3, 3>(12, 12) = Eigen::Matrix3d::Identity() *
                                  imuParams.sigma_gw_c * imuParams.sigma_gw_c;
 
       GQGt_1.topLeftCorner<9, 9>() =
-          computeGQGt(lP_1.head<3>(), lP_1.tail<3>(), imuParams.sigma_g_c,
+          computeGQGt(linPoint_1.head<3>(), linPoint_1.tail<3>(), imuParams.sigma_g_c,
                       imuParams.sigma_a_c);
       GQGt_1.block<3, 3>(9, 9) = Eigen::Matrix3d::Identity() *
                                  imuParams.sigma_aw_c * imuParams.sigma_aw_c;
@@ -735,7 +735,7 @@ int ImuOdometry::propagationRightInvariantError(
               jacobian->topRightCorner(9, covRows - 9) +
           F_delta.topRightCorner(9, covRows - 9);
 
-      lP = lP_1;
+      linPoint = linPoint_1;
     }
 
     // memory shift

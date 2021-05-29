@@ -46,8 +46,8 @@ struct StateInfoForOneKeypoint {
     okvis::kinematics::Transformation T_WBtij;
     Eigen::Vector3d v_WBtij;
     Eigen::Vector3d omega_Btij;
-    okvis::kinematics::Transformation  lP_T_WBtij;
-    Eigen::Vector3d lP_v_WBtij;
+    okvis::kinematics::Transformation  T_WBtij_fej;
+    Eigen::Vector3d v_WBtij_fej;
 };
 
 enum class PointSharedDataState {
@@ -162,7 +162,7 @@ class PointSharedData {
 
   okvis::kinematics::Transformation T_WB_mainAnchorForJacobian(bool useFirstEstimate) const {
     if (useFirstEstimate)
-      return stateInfoForObservations_[anchorIds_[0].observationIndex_].lP_T_WBtij;
+      return stateInfoForObservations_[anchorIds_[0].observationIndex_].T_WBtij_fej;
     else
       return T_WB_mainAnchor();
   }
@@ -179,17 +179,17 @@ class PointSharedData {
       bool useFirstEstimate) const {
     const StateInfoForOneKeypoint& mainAnchorItem =
         stateInfoForObservations_.at(anchorIds_[0].observationIndex_);
-    okvis::kinematics::Transformation lP_T_WB =
+    okvis::kinematics::Transformation T_WB_fej =
         std::static_pointer_cast<const okvis::ceres::PoseParameterBlock>(
             mainAnchorItem.T_WBj_ptr)
             ->estimate();
     if (useFirstEstimate) {
       std::shared_ptr<const Eigen::Matrix<double, 6, 1>>
           posVelFirstEstimatePtr = mainAnchorItem.positionVelocityPtr;
-      lP_T_WB = okvis::kinematics::Transformation(
-          posVelFirstEstimatePtr->head<3>(), lP_T_WB.q());
+      T_WB_fej = okvis::kinematics::Transformation(
+          posVelFirstEstimatePtr->head<3>(), T_WB_fej.q());
     }
-    return lP_T_WB;
+    return T_WB_fej;
   }
   /// @}
 
@@ -305,7 +305,7 @@ class PointSharedData {
   }
 
   okvis::kinematics::Transformation T_WBtij_ForJacobian(int index) const {
-    return stateInfoForObservations_[index].lP_T_WBtij;
+    return stateInfoForObservations_[index].T_WBtij_fej;
   }
 
   Eigen::Matrix3d Phi_pq_feature(int observationIndex) const {
@@ -314,14 +314,14 @@ class PointSharedData {
     double relFeatureTime = normalizedFeatureTime(item);
     Eigen::Vector3d gW(0, 0, -imuParameters_->g);
     Eigen::Vector3d dr =
-        -(item.lP_T_WBtij.r() - item.positionVelocityPtr->head<3>() -
+        -(item.T_WBtij_fej.r() - item.positionVelocityPtr->head<3>() -
           item.positionVelocityPtr->tail<3>() * relFeatureTime -
           0.5 * gW * relFeatureTime * relFeatureTime);
     return okvis::kinematics::crossMx(dr);
   }
 
   Eigen::Vector3d v_WBtij_ForJacobian(int index) const {
-    return stateInfoForObservations_[index].lP_v_WBtij;
+    return stateInfoForObservations_[index].v_WBtij_fej;
   }
 
   PointSharedDataState status() const {

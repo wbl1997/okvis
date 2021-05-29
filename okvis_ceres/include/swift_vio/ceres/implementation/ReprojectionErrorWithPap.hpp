@@ -217,11 +217,11 @@ bool ReprojectionErrorWithPap<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MOD
         T_WCtai_jacobian.multiply();
     swift_vio::DirectionFromParallaxAngleJacobian directionFromParallaxAngleJacobian(
         pair_T_WCtmi, pair_T_WCtai.first, pair_T_WCtij.first, pap);
-    Eigen::Vector3d lP_Nij = directionFromParallaxAngleJacobian.evaluate();
+    Eigen::Vector3d Nij_fej = directionFromParallaxAngleJacobian.evaluate();
 
     Eigen::Matrix3d R_CtijW = pair_T_WCtij.second.toRotationMatrix().transpose();
     Eigen::Matrix<double, 3, 3> dNC_dN = R_CtijW;
-    Eigen::Matrix<double, 3, 3> dNC_dtheta_WCtij = R_CtijW * okvis::kinematics::crossMx(lP_Nij);
+    Eigen::Matrix<double, 3, 3> dNC_dtheta_WCtij = R_CtijW * okvis::kinematics::crossMx(Nij_fej);
     Eigen::Matrix<double, kNumResiduals, 3> de_dN = pointJacobian * dNC_dN;
 
     Eigen::Matrix3d dN_dp_WCtij;
