@@ -447,10 +447,9 @@ bool Estimator::removeObservation(uint64_t landmarkId, uint64_t poseId,
 
 // Applies the dropping/marginalization strategy according to the RSS'13/IJRR'14 paper.
 // The new number of frames in the window will be numKeyframes+numImuFrames.
-bool Estimator::applyMarginalizationStrategy(
-    size_t numKeyframes, size_t numImuFrames,
-    okvis::MapPointVector& removedLandmarks)
-{
+bool Estimator::applyMarginalizationStrategy(okvis::MapPointVector& removedLandmarks) {
+  size_t numKeyframes = optimizationOptions_.numKeyframes;
+  size_t numImuFrames = optimizationOptions_.numImuFrames;
   // keep the newest numImuFrames
   std::map<uint64_t, States>::reverse_iterator rit = statesMap_.rbegin();
   for(size_t k=0; k<numImuFrames; k++){

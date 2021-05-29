@@ -187,13 +187,10 @@ class Estimator : public VioBackendInterface
   /**
    * @brief Applies the dropping/marginalization strategy according to the RSS'13/IJRR'14 paper.
    *        The new number of frames in the window will be numKeyframes+numImuFrames.
-   * @param numKeyframes Number of keyframes.
-   * @param numImuFrames Number of frames in IMU window.
    * @param removedLandmarks Get the landmarks that were removed by this operation.
    * @return True if successful.
    */
-  bool applyMarginalizationStrategy(size_t numKeyframes, size_t numImuFrames,
-                                    okvis::MapPointVector& removedLandmarks) override;
+  bool applyMarginalizationStrategy(okvis::MapPointVector& removedLandmarks) override;
 
   /**
    * @brief Initialise pose from IMU measurements. For convenience as static.

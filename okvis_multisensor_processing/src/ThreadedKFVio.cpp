@@ -815,10 +815,7 @@ void ThreadedKFVio::optimizationLoop() {
           estimator_->oldestFrameTimestamp() + optimizedImageDelay - Estimator::half_window_;
 
       marginalizationTimer.start();
-      estimator_->applyMarginalizationStrategy(
-          parameters_.optimization.numKeyframes,
-          parameters_.optimization.numImuFrames,
-          result.transferredLandmarks);
+      estimator_->applyMarginalizationStrategy(result.transferredLandmarks);
       marginalizationTimer.stop();
       afterOptimizationTimer.start();
 

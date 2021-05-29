@@ -164,8 +164,7 @@ class VioBackendInterface {
   virtual bool setOptimizationTimeLimit(double timeLimit, int minIterations) = 0;
 
   virtual bool
-  applyMarginalizationStrategy(size_t numKeyframes, size_t numImuFrames,
-                               okvis::MapPointVector &removedLandmarks) = 0;
+  applyMarginalizationStrategy(okvis::MapPointVector &removedLandmarks) = 0;
 
   /**
    * @brief Checks whether the landmark is added to the estimator.

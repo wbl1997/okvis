@@ -266,7 +266,11 @@ TEST(okvisTestSuite, Estimator) {
     std::cout << "== TRY MARGINALIZATION ==" << std::endl;
     // try out the marginalization strategy
     okvis::MapPointVector removedLandmarks;
-    estimator.applyMarginalizationStrategy(2, 3, removedLandmarks);
+    okvis::Optimization optOptions;
+    optOptions.numKeyframes = 2;
+    optOptions.numImuFrames = 3;
+    estimator.setOptimizationOptions(optOptions);
+    estimator.applyMarginalizationStrategy(removedLandmarks);
     // run the optimization
     std::cout << "== LAST OPTIMIZATION ==" << std::endl;
     estimator.optimize(10, 4, false);

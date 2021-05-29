@@ -38,7 +38,7 @@ TEST(OkvisVioInterfaces, testFrameSync)
     .Times(Between(8, 13));
   EXPECT_CALL(dummy, addStates(_,_,_))
     .Times(Between(3,6));
-  EXPECT_CALL(dummy, applyMarginalizationStrategy(_,_,_))
+  EXPECT_CALL(dummy, applyMarginalizationStrategy(_))
     .Times(Between(3,6));
   EXPECT_CALL(dummy, setOptimizationTimeLimit(_,_))
     .Times(1);

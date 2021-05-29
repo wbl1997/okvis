@@ -45,7 +45,7 @@ TEST(OkvisVioInterfaces, testDataFlow)
     .Times(1);
   EXPECT_CALL(dummy, addStates(_,_,_))
     .Times(Between(5, 10));
-  EXPECT_CALL(dummy, applyMarginalizationStrategy(_,_,_))
+  EXPECT_CALL(dummy, applyMarginalizationStrategy(_))
     .Times(Between(5,10));
   EXPECT_CALL(dummy, setOptimizationTimeLimit(_,_))
     .Times(1);
