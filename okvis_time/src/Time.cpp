@@ -276,6 +276,14 @@ bool Time::waitForValid(const okvis::WallDuration& /*timeout*/) {
   return false;
 }
 
+Time minusSafe(Time right, Duration dura) {
+  if (right > Time(dura.sec, dura.nsec)) {
+    return right - dura;
+  } else {
+    return Time(0, 0);
+  }
+}
+
 std::ostream& operator<<(std::ostream& os, const Time &rhs) {
   os << rhs.sec << "." << std::setw(9) << std::setfill('0') << rhs.nsec;
   return os;

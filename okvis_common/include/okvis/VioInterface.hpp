@@ -88,14 +88,10 @@ class VioInterface {
       void(const okvis::Time &, const okvis::MapPointVector &,
            const okvis::MapPointVector &)> LandmarksCallback;
   typedef std::function<void(
-      const okvis::Time &, const okvis::kinematics::Transformation &,
+      const okvis::Time &, int, const okvis::kinematics::Transformation &,
       const Eigen::Matrix<double, 9, 1> &, const Eigen::Matrix<double, 3, 1> &,
-      const int,
-      const std::vector<
-          Eigen::VectorXd,
-          Eigen::aligned_allocator<Eigen::VectorXd>> &,
       const Eigen::Matrix<double, Eigen::Dynamic, 1> &,
-      const Eigen::Matrix<double, Eigen::Dynamic, 1> &,
+      const std::vector<Eigen::VectorXd, Eigen::aligned_allocator<Eigen::VectorXd>> &,
       const Eigen::Matrix<double, Eigen::Dynamic, 1> &,
       const std::vector<okvis::kinematics::Transformation,
               Eigen::aligned_allocator<okvis::kinematics::Transformation> >&)>

@@ -265,6 +265,7 @@ class WallTime : public TimeBase<WallTime, WallDuration> {
   }
 };
 
+Time minusSafe(Time right, Duration dura);
 std::ostream &operator <<(std::ostream &os, const Time &rhs);
 std::ostream &operator <<(std::ostream &os, const WallTime &rhs);
 

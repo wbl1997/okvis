@@ -1,38 +1,11 @@
 #ifndef INCLUDE_SWIFT_VIO_PROJ_PARAM_OPT_MODELS_HPP_
 #define INCLUDE_SWIFT_VIO_PROJ_PARAM_OPT_MODELS_HPP_
 
+#include <vector>
 #include <Eigen/Core>
 #include <swift_vio/ModelSwitch.hpp>
 
 namespace swift_vio {
-//class ProjectionOptFixed {
-// public:
-//  static const int kModelId = 0;
-//  static const size_t kNumParams = 0;
-//  static inline int getMinimalDim() { return kNumParams; }
-//  static void kneadIntrinsicJacobian(Eigen::Matrix2Xd* intrinsicJacobian) {
-//      int resultCols = intrinsicJacobian->cols() - 4;
-//      intrinsicJacobian->block(0, 0, 2, resultCols) =
-//              intrinsicJacobian->block(0, 4, 2, resultCols);
-//      intrinsicJacobian->conservativeResize(Eigen::NoChange, resultCols);
-//  }
-//  static void localToGlobal(const Eigen::VectorXd& /*local_opt_params*/,
-//                            Eigen::VectorXd* /*global_proj_params*/) {
-//    return;
-//  }
-//  static void globalToLocal(const Eigen::VectorXd& /*global_proj_params*/,
-//                            Eigen::VectorXd* /*local_opt_params*/) {
-//    return;
-//  }
-//  static Eigen::MatrixXd getInitCov(double /*sigma_focal_length*/,
-//                                    double /*sigma_principal_point*/) {
-//    return Eigen::MatrixXd();
-//  }
-//  static void toParamsInfo(const std::string /*delimiter*/, std::string* params_info) {
-//    *params_info = "";
-//  }
-//};
-
 class ProjectionOptFXY_CXY {
  public:
   static const int kModelId = 1;
@@ -57,8 +30,13 @@ class ProjectionOptFXY_CXY {
         std::pow(sigma_principal_point, 2);
     return covProjIntrinsics;
   }
-  static void toParamsInfo(const std::string delimiter, std::string* params_info) {
-    *params_info = "fx[pixel]" + delimiter + "fy" + delimiter + "cx" + delimiter + "cy";
+  static void toDimensionLabels(std::vector<std::string>* dimensionLabels) {
+    *dimensionLabels = {"fx[pixel]", "fy", "cx", "cy"};
+  }
+
+  static void toDesiredStdevs(Eigen::VectorXd* desiredStdevs) {
+    desiredStdevs->resize(4);
+    desiredStdevs->setConstant(1.0);
   }
 };
 
@@ -95,8 +73,13 @@ class ProjectionOptFX_CXY {
         std::pow(sigma_principal_point, 2);
     return covProjIntrinsics;
   }
-  static void toParamsInfo(const std::string delimiter, std::string* params_info) {
-    *params_info = "fx[pixel]" + delimiter + "cx" + delimiter + "cy";
+  static void toDimensionLabels(std::vector<std::string>* dimensionLabels) {
+    *dimensionLabels = {"fx[pixel]", "cx", "cy"};
+  }
+
+  static void toDesiredStdevs(Eigen::VectorXd* desiredStdevs) {
+    desiredStdevs->resize(3);
+    desiredStdevs->setConstant(1.0);
   }
 };
 
@@ -130,8 +113,12 @@ class ProjectionOptFX {
         std::pow(sigma_focal_length, 2);
     return covProjIntrinsics;
   }
-  static void toParamsInfo(const std::string /*delimiter*/, std::string* params_info) {
-    *params_info = "fx[pixel]";
+  static void toDimensionLabels(std::vector<std::string>* dimensionLabels) {
+    *dimensionLabels = {"fx[pixel]"};
+  }
+  static void toDesiredStdevs(Eigen::VectorXd* desiredStdevs) {
+    desiredStdevs->resize(1);
+    desiredStdevs->setConstant(1.0);
   }
 };
 
@@ -244,18 +231,33 @@ inline Eigen::MatrixXd ProjectionModelGetInitCov(int model_id,
   return Eigen::MatrixXd();
 }
 
-inline void ProjectionOptToParamsInfo(int model_id, const std::string delimiter, std::string* params_info) {
+inline void ProjectionOptToDimensionLabels(int model_id, std::vector<std::string>* dimensionLabels) {
     switch (model_id) {
   #define MODEL_CASES PROJ_OPT_MODEL_CASES
   #define PROJ_OPT_MODEL_CASE(ProjOptModel) \
     case ProjOptModel::kModelId:            \
-      return ProjOptModel::toParamsInfo(delimiter, params_info);
+      return ProjOptModel::toDimensionLabels(dimensionLabels);
 
       MODEL_SWITCH_CASES
 
   #undef PROJ_OPT_MODEL_CASE
   #undef MODEL_CASES
     }
+}
+
+inline void ProjectionOptToDesiredStdevs(int model_id,
+                                         Eigen::VectorXd *desiredStdevs) {
+  switch (model_id) {
+#define MODEL_CASES PROJ_OPT_MODEL_CASES
+#define PROJ_OPT_MODEL_CASE(ProjOptModel)                                      \
+  case ProjOptModel::kModelId:                                                 \
+    return ProjOptModel::toDesiredStdevs(desiredStdevs);
+
+    MODEL_SWITCH_CASES
+
+#undef PROJ_OPT_MODEL_CASE
+#undef MODEL_CASES
+  }
 }
 
 }  // namespace swift_vio

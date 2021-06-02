@@ -13,7 +13,7 @@ class PointLandmarkSimulation
    * @param homogeneousPoints
    * @param T_WS_ref
    * @param cameraSystemRef
-   * @param framesInOut the keypoints for every frame are created from
+   * @param[in, out] nframes the keypoints for every frame are created from
    * observations of successfully projected landmarks.
    * @param frameLandmarkIndices {{landmark index of every keypoint} in every
    * frame}, every entry >= 0
@@ -27,7 +27,7 @@ class PointLandmarkSimulation
           homogeneousPoints,
       okvis::kinematics::Transformation& T_WS_ref,
       std::shared_ptr<const okvis::cameras::NCameraSystem> cameraSystemRef,
-      std::shared_ptr<okvis::MultiFrame> framesInOut,
+      std::shared_ptr<okvis::MultiFrame> nframes,
       std::vector<std::vector<size_t>>* frameLandmarkIndices,
       std::vector<std::vector<int>>* keypointIndices,
       const double* imageNoiseMag);

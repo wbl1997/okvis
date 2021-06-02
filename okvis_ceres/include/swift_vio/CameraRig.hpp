@@ -24,36 +24,63 @@ namespace cameras {
 std::shared_ptr<okvis::cameras::CameraBase> cloneCameraGeometry(
     std::shared_ptr<const okvis::cameras::CameraBase> cameraGeometry);
 
-static inline void DistortionTypeToParamsInfo(
+static inline void DistortionTypeToDimensionLabels(
     const okvis::cameras::NCameraSystem::DistortionType dtype,
-    const std::string delimiter, std::string *paramsInfo) {
-  std::map<okvis::cameras::NCameraSystem::DistortionType, std::string>
+    std::vector<std::string> *dimensionLabels) {
+  std::map<okvis::cameras::NCameraSystem::DistortionType,
+           std::vector<std::string>>
       distortionNameList{
           {okvis::cameras::NCameraSystem::DistortionType::Equidistant,
-           "k1" + delimiter + "k2" + delimiter + "k3" + delimiter + "k4"},
+           {"k1", "k2", "k3", "k4"}},
           {okvis::cameras::NCameraSystem::DistortionType::RadialTangential,
-           "k1" + delimiter + "k2" + delimiter + "p1" + delimiter + "p2"},
-          {okvis::cameras::NCameraSystem::DistortionType::NoDistortion, ""},
+           {"k1", "k2", "p1", "p2"}},
+          {okvis::cameras::NCameraSystem::DistortionType::NoDistortion, {}},
           {okvis::cameras::NCameraSystem::DistortionType::RadialTangential8,
-           "k1" + delimiter + "k2" + delimiter + "p1" + delimiter + "p2" +
-               delimiter + "k3" + delimiter + "k4" + delimiter + "k5" +
-               delimiter + "k6"},
-          {okvis::cameras::NCameraSystem::DistortionType::FOV, "omega"}};
+           {"k1", "k2", "p1", "p2", "k3", "k4", "k5", "k6"}},
+          {okvis::cameras::NCameraSystem::DistortionType::FOV, {"omega"}}};
 
-  std::map<okvis::cameras::NCameraSystem::DistortionType, std::string>::iterator
-      it = std::find_if(
+  std::map<okvis::cameras::NCameraSystem::DistortionType,
+           std::vector<std::string>>::iterator it =
+      std::find_if(
           distortionNameList.begin(), distortionNameList.end(),
           [&dtype](
               const std::pair<okvis::cameras::NCameraSystem::DistortionType,
-                              std::string> &val) {
+                              std::vector<std::string>> &val) {
             if (val.first == dtype)
               return true;
             return false;
           });
   if (it == distortionNameList.end()) {
-    *paramsInfo = "";
+    dimensionLabels->clear();
   } else {
-    *paramsInfo = it->second;
+    *dimensionLabels = it->second;
+  }
+}
+
+static inline void DistortionTypeToDesiredStdevs(
+    const okvis::cameras::NCameraSystem::DistortionType dtype,
+    Eigen::VectorXd *desiredStdevs) {
+  switch (dtype) {
+  case okvis::cameras::NCameraSystem::DistortionType::Equidistant:
+    desiredStdevs->resize(4);
+    desiredStdevs->setConstant(0.002);
+    break;
+  case okvis::cameras::NCameraSystem::DistortionType::RadialTangential:
+    desiredStdevs->resize(4);
+    desiredStdevs->setConstant(0.002);
+    break;
+  case okvis::cameras::NCameraSystem::DistortionType::NoDistortion:
+    desiredStdevs->resize(0);
+    break;
+  case okvis::cameras::NCameraSystem::DistortionType::RadialTangential8:
+    desiredStdevs->resize(8);
+    desiredStdevs->head<4>().setConstant(0.002);
+    desiredStdevs->tail<4>().setConstant(0.0002);
+    break;
+  case okvis::cameras::NCameraSystem::DistortionType::FOV:
+    desiredStdevs->resize(1);
+    desiredStdevs->setConstant(0.002);
+    break;
   }
 }
 

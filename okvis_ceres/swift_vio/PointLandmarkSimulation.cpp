@@ -10,13 +10,13 @@ void PointLandmarkSimulation::projectLandmarksToNFrame(
         homogeneousPoints,
     okvis::kinematics::Transformation& T_WS_ref,
     std::shared_ptr<const okvis::cameras::NCameraSystem> cameraSystemRef,
-    std::shared_ptr<okvis::MultiFrame> framesInOut,
+    std::shared_ptr<okvis::MultiFrame> nframes,
     std::vector<std::vector<size_t>>* frameLandmarkIndices,
     std::vector<std::vector<int>>* keypointIndices,
     const double* imageNoiseMag) {
-  size_t numFrames = framesInOut->numFrames();
+  size_t numFrames = nframes->numFrames();
   std::vector<std::vector<cv::KeyPoint>> frame_keypoints;
-  // project landmarks onto frames of framesInOut
+  // project landmarks onto frames of nframes
   for (size_t i = 0; i < numFrames; ++i) {
     std::vector<size_t> lmk_indices;
     std::vector<cv::KeyPoint> keypoints;
@@ -44,7 +44,7 @@ void PointLandmarkSimulation::projectLandmarksToNFrame(
     }
     frameLandmarkIndices->emplace_back(lmk_indices);
     frame_keypoints.emplace_back(keypoints);
-    framesInOut->resetKeypoints(i, keypoints);
+    nframes->resetKeypoints(i, keypoints);
     keypointIndices->emplace_back(frameKeypointIndices);
   }
 }

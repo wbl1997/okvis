@@ -17,6 +17,8 @@
 // The sensor rig body frame denoted by B is used to express the motion of the rig.
 // It varies depending on the IMU model.
 
+#include <vector>
+
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
@@ -462,44 +464,107 @@ inline int ImuModelGetAugmentedEuclideanDim(int model_id) {
   return 0;
 }
 
-inline void ImuModelToFormatString(const int imu_model,
-                                const std::string delimiter,
-                                std::string* format_string) {
-  std::stringstream stream;
-  stream << "b_g_x[rad/s]" << delimiter << "b_g_y" << delimiter << "b_g_z"
-         << delimiter << "b_a_x[m/s^2]" << delimiter << "b_a_y" << delimiter
-         << "b_a_z";
+inline void ImuModelToAugmentedDesiredStdevs(const int imu_model,
+                                             Eigen::VectorXd *stdevs) {
+  int index = 0;
   switch (imu_model) {
-    case Imu_BG_BA_TG_TS_TA::kModelId:
-      stream << delimiter << "Tg_1" << delimiter << "Tg_2" << delimiter
-             << "Tg_3" << delimiter << "Tg_4" << delimiter << "Tg_5"
-             << delimiter << "Tg_6" << delimiter << "Tg_7" << delimiter
-             << "Tg_8" << delimiter << "Tg_9" << delimiter << "Ts_1"
-             << delimiter << "Ts_2" << delimiter << "Ts_3" << delimiter
-             << "Ts_4" << delimiter << "Ts_5" << delimiter << "Ts_6"
-             << delimiter << "Ts_7" << delimiter << "Ts_8" << delimiter
-             << "Ts_9" << delimiter << "Ta_1" << delimiter << "Ta_2"
-             << delimiter << "Ta_3" << delimiter << "Ta_4" << delimiter
-             << "Ta_5" << delimiter << "Ta_6" << delimiter << "Ta_7"
-             << delimiter << "Ta_8" << delimiter << "Ta_9";
-      break;
-    case ScaledMisalignedImu::kModelId:
-      stream << delimiter << "Mg_11" << delimiter << "Mg_21" << delimiter
-             << "Mg_22" << delimiter << "Mg_31" << delimiter << "Mg_32"
-             << delimiter << "Mg_33" << delimiter << "A_11" << delimiter
-             << "A_12" << delimiter << "A_13" << delimiter << "A_21"
-             << delimiter << "A_22" << delimiter << "A_23" << delimiter
-             << "A_31" << delimiter << "A_32" << delimiter << "A_33"
-             << delimiter << "Ma_11" << delimiter << "Ma_21" << delimiter
-             << "Ma_22" << delimiter << "Ma_31" << delimiter << "Ma_32"
-             << delimiter << "Ma_33" << delimiter << "q_g_a_x" << delimiter
-             << "q_g_a_y" << delimiter << "q_g_a_z" << delimiter << "q_g_a_w";
-      break;
-    case Imu_BG_BA::kModelId:
-    default:
-      break;
+  case Imu_BG_BA_TG_TS_TA::kModelId:
+    stdevs->resize(27);
+    for (int i = 0; i < 9; ++i) {
+      (*stdevs)[i] = 4e-3;
+    }
+    index = 9;
+    for (int i = 0; i < 9; ++i) {
+      (*stdevs)[i + index] = 1e-3;
+    }
+    index += 9;
+    for (int i = 0; i < 9; ++i) {
+      (*stdevs)[i + index] = 5e-3;
+    }
+    break;
+  case ScaledMisalignedImu::kModelId:
+    stdevs->resize(24);
+    for (int i = 0; i < 6; ++i) {
+      (*stdevs)[i] = 4e-3;
+    }
+    index += 6;
+    for (int i = 0; i < 9; ++i) {
+      (*stdevs)[i + index] = 1e-3;
+    }
+    index += 9;
+    for (int i = 0; i < 6; ++i) {
+      (*stdevs)[i + index] = 5e-3;
+    }
+    index += 6;
+    for (int i = 0; i < 3; ++i) {
+      (*stdevs)[i + index] = 5e-3;
+    }
+    index += 3;
+    break;
+  case Imu_BG_BA::kModelId:
+  default:
+    stdevs->resize(0);
+    break;
   }
-  *format_string = stream.str();
+}
+
+inline void
+ImuModelToMinimalAugmentedDimensionLabels(const int imu_model,
+                                          std::vector<std::string> *labels) {
+  std::vector<std::string> extraLabels;
+  switch (imu_model) {
+  case Imu_BG_BA_TG_TS_TA::kModelId:
+    extraLabels = {"Tg_1", "Tg_2", "Tg_3", "Tg_4", "Tg_5", "Tg_6", "Tg_7",
+                   "Tg_8", "Tg_9", "Ts_1", "Ts_2", "Ts_3", "Ts_4", "Ts_5",
+                   "Ts_6", "Ts_7", "Ts_8", "Ts_9", "Ta_1", "Ta_2", "Ta_3",
+                   "Ta_4", "Ta_5", "Ta_6", "Ta_7", "Ta_8", "Ta_9"};
+    break;
+  case ScaledMisalignedImu::kModelId:
+    extraLabels = {"Mg_11", "Mg_21",       "Mg_22",       "Mg_31",      "Mg_32",
+                   "Mg_33", "A_11",        "A_12",        "A_13",       "A_21",
+                   "A_22",  "A_23",        "A_31",        "A_32",       "A_33",
+                   "Ma_11", "Ma_21",       "Ma_22",       "Ma_31",      "Ma_32",
+                   "Ma_33", "theta_g_a_x", "theta_g_a_y", "theta_g_a_z"};
+    break;
+  case Imu_BG_BA::kModelId:
+  default:
+    break;
+  }
+  *labels = extraLabels;
+}
+
+inline void
+ImuModelToAugmentedDimensionLabels(const int imu_model,
+                                   std::vector<std::string> *labels) {
+  std::vector<std::string> extraLabels;
+  switch (imu_model) {
+  case Imu_BG_BA_TG_TS_TA::kModelId:
+    extraLabels = {"Tg_1", "Tg_2", "Tg_3", "Tg_4", "Tg_5", "Tg_6", "Tg_7",
+                   "Tg_8", "Tg_9", "Ts_1", "Ts_2", "Ts_3", "Ts_4", "Ts_5",
+                   "Ts_6", "Ts_7", "Ts_8", "Ts_9", "Ta_1", "Ta_2", "Ta_3",
+                   "Ta_4", "Ta_5", "Ta_6", "Ta_7", "Ta_8", "Ta_9"};
+    break;
+  case ScaledMisalignedImu::kModelId:
+    extraLabels = {"Mg_11", "Mg_21",   "Mg_22",   "Mg_31",   "Mg_32",
+                   "Mg_33", "A_11",    "A_12",    "A_13",    "A_21",
+                   "A_22",  "A_23",    "A_31",    "A_32",    "A_33",
+                   "Ma_11", "Ma_21",   "Ma_22",   "Ma_31",   "Ma_32",
+                   "Ma_33", "q_g_a_x", "q_g_a_y", "q_g_a_z", "q_g_a_w"};
+    break;
+  case Imu_BG_BA::kModelId:
+  default:
+    break;
+  }
+  *labels = extraLabels;
+}
+
+inline void ImuModelToDimensionLabels(const int imu_model,
+                                      std::vector<std::string> *labels) {
+  *labels = {"b_g_x[rad/s]", "b_g_y", "b_g_z",
+             "b_a_x[m/s^2]", "b_a_y", "b_a_z"};
+  std::vector<std::string> extraLabels;
+  ImuModelToAugmentedDimensionLabels(imu_model, &extraLabels);
+  labels->insert(labels->end(), extraLabels.begin(), extraLabels.end());
 }
 
 inline int ImuModelNameToId(std::string imu_error_model_descrip) {

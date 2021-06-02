@@ -306,6 +306,10 @@ class MultiFrame
     return cameraSystem_.distortionType(cameraIdx);
   }
 
+  void setCameraSystem(const okvis::cameras::NCameraSystem& cameraSystem) {
+    cameraSystem_ = cameraSystem;
+  }
+
   void setRelativeMotion(size_t cameraIdx, uint64_t relativeFrameId,
                          RelativeMotionType rmt) {
     frames_[cameraIdx].setRelativeMotion(relativeFrameId, rmt);

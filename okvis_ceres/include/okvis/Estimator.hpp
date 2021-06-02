@@ -114,6 +114,8 @@ class Estimator : public VioBackendInterface
    */
   void addCameraSystem(const okvis::cameras::NCameraSystem& cameras) override;
 
+  okvis::cameras::NCameraSystem getEstimatedCameraSystem() const;
+
   /**
    * @brief Add an IMU to the configuration.
    * @warning Currently there is only one IMU supported.
@@ -433,36 +435,12 @@ class Estimator : public VioBackendInterface
 
   ///@}
 
-  /**
-   * @brief Checks if a particular frame is a keyframe.
-   * @param[in] frameId ID of frame to check.
-   * @return True if the frame is a keyframe.
-   */
-  bool isKeyframe(uint64_t frameId) const override {
-    return statesMap_.at(frameId).isKeyframe;
-  }
-
-  /**
-   * @brief Checks if a particular frame is still in the IMU window.
-   * @param[in] frameId ID of frame to check.
-   * @return True if the frame is in IMU window.
-   */
-  bool isInImuWindow(uint64_t frameId) const;
-
-  /// @name Getters
-  /// @{
-  /**
-   * @brief Get the timestamp for a particular frame.
-   * @param[in] frameId ID of frame.
-   * @return Timestamp of frame.
-   */
-  okvis::Time timestamp(uint64_t frameId) const override {
-    return statesMap_.at(frameId).timestamp;
-  }
-
-  virtual int getEstimatedVariableMinimalDim() const {
-    return -1;
-  }
+  virtual bool computeErrors(
+      const okvis::kinematics::Transformation &ref_T_WS,
+      const Eigen::Vector3d &ref_v_WS,
+      const okvis::ImuSensorReadings &refBiases,
+      std::shared_ptr<const okvis::cameras::NCameraSystem> refCameraSystem,
+      Eigen::VectorXd *errors) const;
 
   /**
    * @brief computeCovariance compute covariance by okvis marginalization module
@@ -484,13 +462,6 @@ class Estimator : public VioBackendInterface
   computeCovarianceCeres(Eigen::MatrixXd *cov,
                          ::ceres::CovarianceAlgorithmType covAlgorithm) const;
 
-  /**
-   * @brief get std. dev. of state for nav state (p,q,v), imu(bg ba), and optionally
-   * imu augmented intrinsic parameters, camera extrinsic, intrinsic, td, tr.
-   * @param stateStd
-   * @return true if std. dev. of states are computed successfully.
-   */
-  virtual bool getStateStd(Eigen::Matrix<double, Eigen::Dynamic, 1>* stateStd) const;
 
   bool printStatesAndStdevs(std::ostream& stream) const override;
 
@@ -499,6 +470,42 @@ class Estimator : public VioBackendInterface
   void printNavStateAndBiases(std::ostream& stream, uint64_t poseId) const;
 
   virtual void printTrackLengthHistogram(std::ostream& /*stream*/) const {}
+
+  /// @name Getters
+  /// @{
+  /**
+   * @brief Get the timestamp for a particular frame.
+   * @param[in] frameId ID of frame.
+   * @return Timestamp of frame.
+   */
+  okvis::Time timestamp(uint64_t frameId) const override {
+    return statesMap_.at(frameId).timestamp;
+  }
+
+  /**
+   * @brief Checks if a particular frame is a keyframe.
+   * @param[in] frameId ID of frame to check.
+   * @return True if the frame is a keyframe.
+   */
+  bool isKeyframe(uint64_t frameId) const override {
+    return statesMap_.at(frameId).isKeyframe;
+  }
+
+  /**
+   * @brief Checks if a particular frame is still in the IMU window.
+   * @param[in] frameId ID of frame to check.
+   * @return True if the frame is in IMU window.
+   */
+  bool isInImuWindow(uint64_t frameId) const;
+  /**
+   * @brief get std. dev. of state for nav state (p,q,v), imu(bg ba), and optionally
+   * imu augmented intrinsic parameters, camera extrinsic, intrinsic, td, tr.
+   * @param stateStd
+   * @return true if std. dev. of states are computed successfully.
+   */
+  virtual bool getStateStd(Eigen::Matrix<double, Eigen::Dynamic, 1>* stateStd) const;
+
+  virtual bool getDesiredStdevs(Eigen::VectorXd* desiredStdevs, std::vector<std::string>* dimensionLabels) const;
 
   bool getFrameId(uint64_t poseId, int & frameIdInSource, bool & isKF) const;
 
@@ -514,8 +521,6 @@ class Estimator : public VioBackendInterface
            (fixCameraIntrinsicParams_[camIdx] ? 0 : cameraRig_.getMinimalProjectionDimen(camIdx) +
            cameraRig_.getDistortionDimen(camIdx)) + 2u;  // 2 for td and tr
   }
-
-  bool getImageDelay(uint64_t poseId, int camIdx, okvis::Duration *td) const;
 
   /**
    * @brief gatherMapPointObservations gather all observations of a landmark
@@ -554,14 +559,15 @@ class Estimator : public VioBackendInterface
       okvis::kinematics::Transformation& T_BCi) const;
 
   /**
-   * @brief getCameraCalibrationEstimate get the estimate of OPTIMIZED camera
-   * calibration parameters
+   * @brief getEstimatedCameraIntrinsics get the estimate of OPTIMIZED
+   * intrinsic parameters of camIdx.
    * @param cameraParams[out] including projection and distortion intrinsic
    * parameters and time delay and readout time.
+   * @param camIdx
    * @return
    */
-  virtual void getCameraCalibrationEstimate(
-      Eigen::Matrix<double, Eigen::Dynamic, 1>* cameraParams) const;
+  virtual void getEstimatedCameraIntrinsics(
+      Eigen::Matrix<double, Eigen::Dynamic, 1>* cameraParams, size_t camIdx) const;
 
   /**
    * @brief getImuAugmentedStatesEstimate get the lastest estimate of IMU augmented params.
@@ -570,6 +576,7 @@ class Estimator : public VioBackendInterface
    */
   virtual void getImuAugmentedStatesEstimate(
       Eigen::Matrix<double, Eigen::Dynamic, 1>* extraParams) const;
+
   /**
    * @brief get the latest keyframe and its info which is used for loop detection.
    */
@@ -704,7 +711,7 @@ class Estimator : public VioBackendInterface
   // Note camera observations in MSCKF will not occur at the latest frame.
   static const okvis::Duration half_window_;
 
-  const size_t kMainCameraIndex = 0u;
+  static const size_t kMainCameraIndex = 0u;
 
  protected:
   template <class GEOMETRY_TYPE>
@@ -898,7 +905,7 @@ class Estimator : public VioBackendInterface
   std::vector<std::shared_ptr<swift_vio::LoopFrameAndMatches>> loopFrameAndMatchesList_;
 
   // whether camera intrinsic parameters will be estimated? If true,
-  // the camera intrinsic parameter blocks (including distortion) will not be created.
+  // the camera intrinsic parameter blocks (including distortion) will not be updated.
   std::vector<bool> fixCameraIntrinsicParams_;
 
   // whether camera extrinsic parameters will be estimated? If true,

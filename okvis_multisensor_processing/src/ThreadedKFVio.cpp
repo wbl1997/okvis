@@ -54,14 +54,14 @@ namespace okvis {
 
 static const int max_camera_input_queue_size = 10;
 
-// overlap of imu data before and after two consecutive frames [seconds] if too
-// large, frame consumer loop will be blocked for too long by waiting for imu
-// meas.
-// The frontend waits until frame time + lastOptimizedImageDelay_ +
-// temporal_imu_data_overlap for each frame.
+// overlap of imu data before and after two consecutive frames [seconds].
+// The frontend waits until frame time + camera i's delay +
+// temporal_imu_data_overlap for a frame by camera i.
+
 // When inertial data for a feature in the most recent frame are requested, the
 // feature's observation time may exceed the latest available IMU data, so
-// temporal_imu_data_overlap should be greater than frame readout time.
+// temporal_imu_data_overlap should be greater than half of the frame readout time,
+// assuming a frame is stamped with its central row time.
 static const okvis::Duration temporal_imu_data_overlap(0.02);
 
 #ifdef USE_MOCK
@@ -147,7 +147,7 @@ void ThreadedKFVio::init() {
             << frontend_->getKeyframeInsertionMatchingRatioThreshold()
             << std::endl;
 
-  lastOptimizedImageDelay_ = okvis::Duration(parameters_.nCameraSystem.cameraGeometry(0)->imageDelay());
+  lastOptimizedCameraSystem_ = parameters_.nCameraSystem;
   lastOptimizedStateTimestamp_ = okvis::Time(0.0) + Estimator::half_window_;;  // s.t. last_timestamp_ - overlap >= 0 (since okvis::time(-0.02) returns big number)
   lastAddedStateTimestamp_ = okvis::Time(0.0) + Estimator::half_window_;  // s.t. last_timestamp_ - overlap >= 0 (since okvis::time(-0.02) returns big number)
 
@@ -421,12 +421,14 @@ void ThreadedKFVio::frameConsumerLoop(size_t cameraIndex) {
       T_WS = lastOptimized_T_WS_;
       speedAndBiases = lastOptimizedSpeedAndBiases_;
       lastTimestamp = lastOptimizedStateTimestamp_;
-      lastImageDelay = lastOptimizedImageDelay_;
+      lastImageDelay.fromSec(lastOptimizedCameraSystem_.cameraGeometry(cameraIndex)->imageDelay());
     }
 
-    // -- get relevant imu messages for new state
-    okvis::Time imuDataEndTime =
-        multiFrame->timestamp() + lastImageDelay + temporal_imu_data_overlap;
+    // get imu messages for predicting the new frame's pose which is used to align its feature descriptors.
+    // The IMU propagation starts from time of the last optimized state per the IMU clock, and ends at
+    // the predicted time of the new frame per the IMU clock.
+    okvis::Time predictedFrameTime = multiFrame->timestamp(cameraIndex) + lastImageDelay;
+    okvis::Time imuDataEndTime = predictedFrameTime + temporal_imu_data_overlap;
     okvis::Time imuDataBeginTime = lastTimestamp - Estimator::half_window_;
 
     OKVIS_ASSERT_TRUE_DBG(Exception,imuDataBeginTime < imuDataEndTime,"imu data end time is smaller than begin time.");
@@ -466,8 +468,8 @@ void ThreadedKFVio::frameConsumerLoop(size_t cameraIndex) {
         lastOptimizedSpeedAndBiases_.head<3>() = parameters_.initialState.v_WS;
         lastOptimizedSpeedAndBiases_.segment<3>(3) = imu_params_.g0;
         lastOptimizedSpeedAndBiases_.segment<3>(6) = imu_params_.a0;
-        lastOptimizedImageDelay_ = okvis::Duration(parameters_.nCameraSystem.cameraGeometry(0)->imageDelay());
-        lastOptimizedStateTimestamp_ = multiFrame->timestamp() + lastOptimizedImageDelay_;
+        lastOptimizedStateTimestamp_ = multiFrame->timestamp(Estimator::kMainCameraIndex) +
+            okvis::Duration(lastOptimizedCameraSystem_.cameraGeometry(Estimator::kMainCameraIndex)->imageDelay());
       }
       OKVIS_ASSERT_TRUE_DBG(Exception, success,
           "pose could not be initialized from imu measurements.");
@@ -480,7 +482,7 @@ void ThreadedKFVio::frameConsumerLoop(size_t cameraIndex) {
       propagationTimer.start();
       okvis::ceres::ImuError::propagation(imuData, parameters_.imu, T_WS,
                                           speedAndBiases, lastTimestamp,
-                                          multiFrame->timestamp() + lastImageDelay);
+                                          predictedFrameTime);
       propagationTimer.stop();
     }
     okvis::kinematics::Transformation T_WC = T_WS
@@ -520,14 +522,6 @@ void ThreadedKFVio::frameConsumerLoop(size_t cameraIndex) {
   }
 }
 
-okvis::Time minusSafe(okvis::Time right, okvis::Duration dura) {
-  if (right > okvis::Time(dura.sec, dura.nsec)) {
-    return right - dura;
-  } else {
-    return okvis::Time(0, 0);
-  }
-}
-
 // Loop that matches frames with existing frames.
 void ThreadedKFVio::matchingLoop() {
   TimerSwitchable prepareToAddStateTimer("2.1 prepareToAddState",true);
@@ -544,16 +538,29 @@ void ThreadedKFVio::matchingLoop() {
       return;
 
     prepareToAddStateTimer.start();
-    // -- get relevant imu messages for new state
-    okvis::Duration lastImageDelay;
+    // get latest received IMU data which will be used by the estimator to predict poses at image features.
+    // To ensure the estimator receive all IMU data, the IMU data need to start from
+    // lastAddedStateTimestamp with an overlap.
+    // To ensure pose for image features can be predicted, the IMU data should end at the latest frame time.
+    // After all, relevant IMU data should have been available because of the wait in frameConsumerLoop.
+    okvis::Duration lastMainCameraDelay;
+    okvis::Time latestFrameTime(0);
     {
       std::lock_guard<std::mutex> lock(lastState_mutex_);
-      lastImageDelay = lastOptimizedImageDelay_;
+      lastMainCameraDelay.fromSec(lastOptimizedCameraSystem_.cameraGeometry(Estimator::kMainCameraIndex)->imageDelay());
+
+      for (size_t i = 0u; i < lastOptimizedCameraSystem_.numCameras(); ++i) {
+        latestFrameTime = std::max(
+            latestFrameTime,
+            frame->timestamp(i) +
+                okvis::Duration(lastOptimizedCameraSystem_.cameraGeometry(i)
+                                    ->imageDelay()));
+      }
+      // Use the optimized camera system for the upcoming feature association.
+      frame->setCameraSystem(lastOptimizedCameraSystem_);
     }
-    okvis::Time imuDataEndTime = frame->timestamp() + lastImageDelay +
-                                 temporal_imu_data_overlap;
-    okvis::Time imuDataBeginTime =
-        lastAddedStateTimestamp_ - Estimator::half_window_;
+    okvis::Time imuDataEndTime = latestFrameTime + temporal_imu_data_overlap;
+    okvis::Time imuDataBeginTime = lastAddedStateTimestamp_ - Estimator::half_window_;
     if (imuDataBeginTime.toSec() == 0.0) {  // first state not yet added
       imuDataBeginTime = minusSafe(frame->timestamp(), Estimator::half_window_);
     }
@@ -599,7 +606,8 @@ void ThreadedKFVio::matchingLoop() {
       okvis::Time t0Matching = okvis::Time::now();
       bool asKeyframe = false;
       if (estimator_->addStates(frame, imuData, asKeyframe)) {
-        lastAddedStateTimestamp_ = frame->timestamp() + lastImageDelay;
+        // We are strict with the timestamps, though lastAddedStateTimestamp does not need to be so precise.
+        lastAddedStateTimestamp_ = frame->timestamp(Estimator::kMainCameraIndex) + lastMainCameraDelay;
         addStateTimer.stop();
       } else {
         LOG(ERROR) << "Failed to add state! will drop multiframe.";
@@ -809,10 +817,8 @@ void ThreadedKFVio::optimizationLoop() {
             estimator_->frameIdByAge(parameters_.optimization.numImuFrames))
             ->timestamp() - temporal_imu_data_overlap;
       }*/
-      okvis::Duration optimizedImageDelay;
-      estimator_->getImageDelay(frame_pairs->id(), 0, &optimizedImageDelay);
       deleteImuMeasurementsUntil =
-          estimator_->oldestFrameTimestamp() + optimizedImageDelay - Estimator::half_window_;
+          estimator_->oldestFrameTimestamp() - Estimator::half_window_;
 
       marginalizationTimer.start();
       estimator_->applyMarginalizationStrategy(result.transferredLandmarks);
@@ -835,7 +841,7 @@ void ThreadedKFVio::optimizationLoop() {
         std::lock_guard<std::mutex> lock(lastState_mutex_);
         lastOptimized_T_WS_ = latest_T_WS;
         lastOptimizedSpeedAndBiases_ = latestSpeedAndBias;
-        lastOptimizedImageDelay_ = optimizedImageDelay;
+        lastOptimizedCameraSystem_ = estimator_->getEstimatedCameraSystem();
         lastOptimizedStateTimestamp_ = latestStateTime;
       }
       {
@@ -919,21 +925,29 @@ void ThreadedKFVio::dumpCalibrationParameters(uint64_t latestNFrameId, Optimizat
   result->isKeyframe = isKF;
 
   result->vector_of_T_SCi.clear();
-  result->opt_T_SCi_coeffs.clear();
-  for (size_t i = 0; i < parameters_.nCameraSystem.numCameras(); ++i) {
+  result->variableCameraParams_.resize(parameters_.nCameraSystem.numCameras());
+  for (size_t i = 0u; i < parameters_.nCameraSystem.numCameras(); ++i) {
     okvis::kinematics::Transformation T_XC;
     estimator_->getCameraSensorStates(latestNFrameId, i, T_XC);
     result->vector_of_T_SCi.emplace_back(T_XC);
 
     int extrinsic_opt_type = estimator_->getCameraExtrinsicOptType(i);
-    Eigen::VectorXd optimized_coeffs;
-    swift_vio::ExtrinsicModelToParamValues(extrinsic_opt_type, T_XC, &optimized_coeffs);
-    result->opt_T_SCi_coeffs.emplace_back(optimized_coeffs);
+    Eigen::VectorXd optimizedExtrinsicCoeffs;
+    swift_vio::ExtrinsicModelToParamValues(extrinsic_opt_type, T_XC,
+                                           &optimizedExtrinsicCoeffs);
+
+    Eigen::VectorXd optimizedIntrinsics;
+    estimator_->getEstimatedCameraIntrinsics(&optimizedIntrinsics, i);
+
+    result->variableCameraParams_.at(i).resize(
+        optimizedExtrinsicCoeffs.size() + optimizedIntrinsics.size(), 1);
+    result->variableCameraParams_.at(i).head(optimizedExtrinsicCoeffs.size()) =
+        optimizedExtrinsicCoeffs;
+    result->variableCameraParams_.at(i).tail(optimizedIntrinsics.size()) =
+        optimizedIntrinsics;
   }
 
   estimator_->getImuAugmentedStatesEstimate(&result->imuExtraParams_);
-  estimator_->getCameraCalibrationEstimate(&result->cameraParams_);
-
   estimator_->getStateStd(&result->stateStd_);
 }
 
@@ -958,9 +972,8 @@ void ThreadedKFVio::publisherLoop() {
                                        result.vector_of_T_SCi);
     if (fullStateCallbackWithAllCalibration_) {
       fullStateCallbackWithAllCalibration_(
-          result.stamp, result.T_WS, result.speedAndBiases, result.omega_S,
-          result.frameIdInSource, result.opt_T_SCi_coeffs, result.imuExtraParams_,
-          result.cameraParams_, result.stateStd_, result.vector_of_T_SCi);
+          result.stamp, result.frameIdInSource, result.T_WS, result.speedAndBiases, result.omega_S,
+          result.imuExtraParams_, result.variableCameraParams_, result.stateStd_, result.vector_of_T_SCi);
     }
     if (landmarksCallback_ && !result.landmarksVector.empty())
       landmarksCallback_(result.stamp, result.landmarksVector,

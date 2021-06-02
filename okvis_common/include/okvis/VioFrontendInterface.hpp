@@ -96,7 +96,7 @@ class VioFrontendInterface {
    * @param T_WS_propagated Pose of sensor at image capture time.
    * @param params          Configuration parameters.
    * @param map             Current map.
-   * @param framesInOut     Multiframe including the descriptors of all the keypoints.
+   * @param[in, out] nframes     Multiframe including the descriptors of all the keypoints.
    * @param[out] asKeyframe Should the frame be a keyframe?
    * @return True if successful.
    */
@@ -105,7 +105,7 @@ class VioFrontendInterface {
       okvis::kinematics::Transformation& T_WS_propagated,
       const okvis::VioParameters & params,
       const std::shared_ptr<okvis::MapPointVector> map,
-      std::shared_ptr<okvis::MultiFrame> framesInOut, bool* asKeyframe) = 0;
+      std::shared_ptr<okvis::MultiFrame> nframes, bool* asKeyframe) = 0;
 
   /**
    * @brief Propagates pose, speeds and biases with given IMU measurements.

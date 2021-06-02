@@ -300,16 +300,15 @@ class ThreadedKFVio : public VioInterface {
     /// The relative transformation of the cameras to the sensor (IMU) frame
     std::vector<okvis::kinematics::Transformation,
         Eigen::aligned_allocator<okvis::kinematics::Transformation> > vector_of_T_SCi;
-   /// the optimized parameters of T_SCi
-    std::vector<Eigen::VectorXd, Eigen::aligned_allocator<Eigen::VectorXd>>
-        opt_T_SCi_coeffs;
+
     okvis::MapPointVector landmarksVector;      ///< Vector containing the current landmarks.
     okvis::MapPointVector transferredLandmarks; ///< Vector of the landmarks that have been marginalized out.
     bool onlyPublishLandmarks;                  ///< Boolean to signalise the publisherLoop() that only the landmarks should be published
     int frameIdInSource;
     bool isKeyframe;
     Eigen::Matrix<double, Eigen::Dynamic, 1> imuExtraParams_;
-    Eigen::Matrix<double, Eigen::Dynamic, 1> cameraParams_;  ///< camera projection intrinsic parameters, distortion, time delay, readout time
+    ///< optimized extrinsics, projection intrinsic parameters, distortion, time delay, readout time of cameras.
+    std::vector<Eigen::VectorXd, Eigen::aligned_allocator<Eigen::VectorXd>> variableCameraParams_;
  
     Eigen::Matrix<double, Eigen::Dynamic, 1> stateStd_;  ///< std. dev. of nav, imu, [cam extrinsic, intrinsic, td tr] parameters
   };
@@ -347,10 +346,10 @@ class ThreadedKFVio : public VioInterface {
   /// \brief Timestamp of the state for the newest multiframe used in optimization.
   /// \warning Lock lastState_mutex_.
   okvis::Time lastOptimizedStateTimestamp_;
-  /// \brief The latest estimate of time delay.
-  /// Image raw timestamp + time delay = image timestamp in IMU clock.
+
   /// \warning Lock lastState_mutex_.
-  okvis::Duration lastOptimizedImageDelay_;
+  okvis::cameras::NCameraSystem lastOptimizedCameraSystem_;
+
   /// This is set to true after optimization to signal the IMU consumer loop to
   /// repropagate the state from the lastOptimizedStateTimestamp_.
   std::atomic_bool repropagationNeeded_;

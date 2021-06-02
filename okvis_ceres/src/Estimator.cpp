@@ -1544,6 +1544,27 @@ okvis::Time Estimator::removeState(uint64_t stateId) {
   return removedStateTime;
 }
 
+bool Estimator::computeErrors(
+    const okvis::kinematics::Transformation &ref_T_WS,
+    const Eigen::Vector3d &ref_v_WS, const okvis::ImuSensorReadings &refBiases,
+    std::shared_ptr<const okvis::cameras::NCameraSystem> /*refCameraSystem*/,
+    Eigen::VectorXd *errors) const {
+  errors->resize(15);
+  okvis::kinematics::Transformation est_T_WS;
+  uint64_t currFrameId = currentFrameId();
+  get_T_WS(currFrameId, est_T_WS);
+  errors->head<3>() = ref_T_WS.r() - est_T_WS.r();
+  Eigen::Matrix3d dR = ref_T_WS.C() * est_T_WS.C().transpose();
+  errors->segment<3>(3) = okvis::kinematics::vee(dR);
+
+  okvis::SpeedAndBias speedAndBiasEstimate;
+  getSpeedAndBias(currFrameId, 0, speedAndBiasEstimate);
+  errors->segment<3>(6) = speedAndBiasEstimate.head<3>() - ref_v_WS;
+  errors->segment<3>(9) = speedAndBiasEstimate.segment<3>(3) - refBiases.gyroscopes;
+  errors->segment<3>(12) = speedAndBiasEstimate.tail<3>() - refBiases.accelerometers;
+  return true;
+}
+
 bool Estimator::computeCovariance(Eigen::MatrixXd* cov) const {
   if (!optimizationOptions_.getSmootherCovariance) {
     *cov = Eigen::Matrix<double, 15, 15>::Identity();
@@ -1596,32 +1617,17 @@ bool Estimator::getStateStd(
   return true;
 }
 
-bool Estimator::getImageDelay(uint64_t poseId, int camIdx,
-                              okvis::Duration* td) const {
-  double tdd = 0.0;
-  if (statesMap_.find(poseId) == statesMap_.end()) {
-    OKVIS_THROW_DBG(Exception,
-                    "pose with id = " << poseId << " does not exist.");
-    *td = okvis::Duration(0, 0);
-    return false;
-  }
+bool Estimator::getDesiredStdevs(
+    Eigen::VectorXd *desiredStdevs,
+    std::vector<std::string> *dimensionLabels) const {
+  desiredStdevs->resize(15, 1);
 
-  // obtain the parameter block ID
-  const SpecificSensorStatesContainer& oneSensor =
-      statesMap_.at(poseId).sensors.at(SensorStates::Camera).at(camIdx);
-  if (static_cast<size_t>(CameraSensorStates::TD) >= oneSensor.size()) {
-    *td = okvis::Duration(0, 0);
-    return false;
-  }
-  uint64_t id = oneSensor.at(CameraSensorStates::TD).id;
-  if (!mapPtr_->parameterBlockExists(id)) {
-    OKVIS_THROW_DBG(Exception,
-                    "pose with id = " << poseId << " does not exist.");
-    *td = okvis::Duration(0, 0);
-    return false;
-  }
-  tdd = mapPtr_->parameterBlockPtr(id)->parameters()[0];
-  *td = okvis::Duration(tdd);
+  (*desiredStdevs) << 0.3, 0.3, 0.3, 0.08, 0.08, 0.08, 0.1, 0.1, 0.1, 0.002,
+      0.002, 0.002, 0.02, 0.02, 0.02;
+  dimensionLabels->resize(15);
+  *dimensionLabels = {"Position x", "Position y", "Position z", "Roll", "Pitch", "Yaw",
+                      "Velocity x", "Velocity y", "Velocity z", "Bg x", "Bg y", "Bg z",
+                     "Ba x", "Ba y", "Ba z"};
   return true;
 }
 
@@ -1715,14 +1721,28 @@ bool Estimator::getCameraSensorExtrinsics(
   }
 }
 
-void Estimator::getCameraCalibrationEstimate(
-    Eigen::Matrix<double, Eigen::Dynamic, 1>* /*cameraParams*/) const {
+void Estimator::getEstimatedCameraIntrinsics(
+    Eigen::Matrix<double, Eigen::Dynamic, 1>* cameraParams, size_t /*camIdx*/) const {
+  cameraParams->resize(0);
 }
 
 void Estimator::getImuAugmentedStatesEstimate(
-    Eigen::Matrix<double, Eigen::Dynamic, 1>* /*extraParams*/) const {
+    Eigen::Matrix<double, Eigen::Dynamic, 1>* extraParams) const {
+  extraParams->resize(0);
 }
 
+okvis::cameras::NCameraSystem Estimator::getEstimatedCameraSystem() const {
+  okvis::cameras::NCameraSystem cameraSystem;
+  for (size_t i = 0u; i < cameraRig_.numberCameras(); ++i) {
+    cameraSystem.addCamera(std::shared_ptr<okvis::kinematics::Transformation>(
+                               new okvis::kinematics::Transformation(
+                                   cameraRig_.getCameraExtrinsic(i))),
+                           swift_vio::cameras::cloneCameraGeometry(
+                               cameraRig_.getCameraGeometry(i)),
+                           cameraRig_.getDistortionType(i));
+  }
+  return cameraSystem;
+}
 
 const okvis::Duration Estimator::half_window_(2, 0);
 

@@ -13,67 +13,6 @@
 #include <okvis/kinematics/sophus_operators.hpp>
 
 namespace swift_vio {
-//class ExtrinsicFixed {
-// public:
-//  static const int kModelId = 0;
-//  static const size_t kNumParams = 0;
-//  static const size_t kGlobalDim = 7;
-//  static inline int getMinimalDim() { return kNumParams; }
-//  static inline Eigen::MatrixXd initCov(double /*sigma_translation*/,
-//                                        double /*sigma_orientation*/) {
-//    return Eigen::MatrixXd();
-//  }
-//  static void dpC_dExtrinsic(const Eigen::Vector3d& /*pC*/,
-//                             const Eigen::Matrix3d& /*R_CB*/,
-//                             Eigen::MatrixXd* dpC_dT,
-//                             const Eigen::Matrix3d* /*R_CfCa*/,
-//                             const Eigen::Vector4d* /*ab1rho*/) {
-//    *dpC_dT = Eigen::MatrixXd();
-//  }
-//  static void updateState(const Eigen::Vector3d& r, const Eigen::Quaterniond& q,
-//                          const Eigen::VectorXd& /*delta*/,
-//                          Eigen::Vector3d* r_delta,
-//                          Eigen::Quaterniond* q_delta) {
-//    *r_delta = r;
-//    *q_delta = q;
-//  }
-
-//  static void dpC_dExtrinsic_AIDP(const Eigen::Vector3d& /*pC*/,
-//                             const Eigen::Matrix3d& /*R_CB*/,
-//                             Eigen::MatrixXd* dpC_dT,
-//                             const Eigen::Matrix3d* /*R_CfCa*/,
-//                             const Eigen::Vector4d* /*ab1rho*/) {
-//    *dpC_dT = Eigen::MatrixXd();
-//  }
-
-//  static void dpC_dExtrinsic_HPP(const Eigen::Vector4d& /*hpC*/,
-//                                 const Eigen::Matrix3d& /*R_CB*/,
-//                                 Eigen::MatrixXd* dpC_dT) {
-//    *dpC_dT = Eigen::MatrixXd();
-//  }
-
-//  static void toParamsInfo(const std::string /*delimiter*/,
-//                           std::string* extrinsic_format) {
-//    *extrinsic_format = "";
-//  }
-//  static void toParamsValueString(const okvis::kinematics::Transformation& /*T_SC*/,
-//                                  const std::string /*delimiter*/,
-//                                  std::string* extrinsic_string) {
-//    *extrinsic_string = "";
-//  }
-//  static void toParamValues(
-//      const okvis::kinematics::Transformation& /*T_SC*/,
-//      Eigen::VectorXd* /*extrinsic_opt_coeffs*/) {
-//    return;
-//  }
-//  template <class Scalar>
-//  static std::pair<Eigen::Matrix<Scalar, 3, 1>, Eigen::Quaternion<Scalar>> get_T_BC(
-//      const okvis::kinematics::Transformation& T_BC_base,
-//      const Scalar* /*parameters*/) {
-//    return std::make_pair(T_BC_base.r().cast<Scalar>(), T_BC_base.q().cast<Scalar>());
-//  }
-//};
-
 class Extrinsic_p_CB final : public ::ceres::LocalParameterization {
   // of T_BC only p_CB is variable.
  public:
@@ -132,28 +71,22 @@ class Extrinsic_p_CB final : public ::ceres::LocalParameterization {
   }
 
   template <typename Scalar>
-  static void ominus(const Scalar* x,
-                     const Scalar* x_delta,
+  static void ominus(const Scalar* T_BC,
+                     const Scalar* T_BC_plus,
                      Scalar* delta) {
-    Eigen::Map<const Eigen::Quaternion<Scalar>> q(x + 3);
+    Eigen::Map<const Eigen::Quaternion<Scalar>> q(T_BC + 3);
     Eigen::Map<Eigen::Vector3d> deltaVec(delta);
-    deltaVec = q.conjugate() * (Eigen::Map<const Eigen::Vector3d>(x) -
-                                Eigen::Map<const Eigen::Vector3d>(x_delta));
+    deltaVec = q.conjugate() * (Eigen::Map<const Eigen::Vector3d>(T_BC) -
+                                Eigen::Map<const Eigen::Vector3d>(T_BC_plus));
   }
 
-  static void toParamsInfo(const std::string delimiter,
-                           std::string* extrinsic_format) {
-    *extrinsic_format =
-        "p_CS_C_x[m]" + delimiter + "p_CS_C_y" + delimiter + "p_CS_C_z";
+  static void toDimensionLabels(std::vector<std::string>* extrinsicLabels) {
+    *extrinsicLabels = {"p_CS_C_x[m]", "p_CS_C_y", "p_CS_C_z"};
   }
 
-  static void toParamsValueString(const okvis::kinematics::Transformation& T_BC,
-                                  const std::string delimiter,
-                                  std::string* extrinsic_string) {
-    Eigen::Vector3d r = T_BC.q().conjugate() * (-T_BC.r());
-    std::stringstream ss;
-    ss << r[0] << delimiter << r[1] << delimiter << r[2];
-    *extrinsic_string = ss.str();
+  static void toDesiredStdevs(Eigen::VectorXd* desiredStdevs) {
+    desiredStdevs->resize(3);
+    desiredStdevs->setConstant(0.04);
   }
 
   static void toParamValues(
@@ -254,28 +187,18 @@ class Extrinsic_p_BC_q_BC_base : public ::ceres::LocalParameterization {
    * PoseLocalParameterization::minus(x, x_plus_delta, delta);
    */
   template <typename Scalar>
-  static void ominus(const Scalar* x,
-                     const Scalar* x_plus_delta,
+  static void ominus(const Scalar* T_XC,
+                     const Scalar* T_XC_plus,
                      Scalar* delta) {
-    delta[0] = x_plus_delta[0] - x[0];
-    delta[1] = x_plus_delta[1] - x[1];
-    delta[2] = x_plus_delta[2] - x[2];
-    const Eigen::Quaterniond q_plus_delta_(x_plus_delta[6], x_plus_delta[3],
-                                           x_plus_delta[4], x_plus_delta[5]);
-    const Eigen::Quaterniond q_(x[6], x[3], x[4], x[5]);
-    Eigen::Map<Eigen::Vector3d> delta_q_(&delta[3]);
+    delta[0] = T_XC_plus[0] - T_XC[0];
+    delta[1] = T_XC_plus[1] - T_XC[1];
+    delta[2] = T_XC_plus[2] - T_XC[2];
+    const Eigen::Quaterniond q_plus(T_XC_plus[6], T_XC_plus[3],
+                                           T_XC_plus[4], T_XC_plus[5]);
+    const Eigen::Quaterniond q(T_XC[6], T_XC[3], T_XC[4], T_XC[5]);
+    Eigen::Map<Eigen::Vector3d> delta_q(&delta[3]);
     double theta;
-    delta_q_ = okvis::kinematics::logAndTheta(q_plus_delta_ * q_.inverse(), &theta);
-  }
-
-  static void toParamsValueString(const okvis::kinematics::Transformation& T_BC,
-                                  const std::string delimiter,
-                                  std::string* extrinsic_string) {
-    const Eigen::Matrix<double, 7, 1>& rq = T_BC.coeffs();
-    std::stringstream ss;
-    ss << rq[0] << delimiter << rq[1] << delimiter << rq[2];
-    ss << delimiter << rq[3] << delimiter << rq[4] << delimiter << rq[5] << delimiter << rq[6];
-    *extrinsic_string = ss.str();
+    delta_q = okvis::kinematics::logAndTheta(q_plus * q.inverse(), &theta);
   }
 
   /**
@@ -336,11 +259,14 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   static const int kModelId = 2;
 
-  static void toParamsInfo(const std::string delimiter,
-                           std::string* extrinsic_format) {
-    *extrinsic_format = "p_SC_S_x[m]" + delimiter + "p_SC_S_y" + delimiter +
-                        "p_SC_S_z" + delimiter + "q_SC_x" + delimiter +
-                        "q_SC_y" + delimiter + "q_SC_z" + delimiter + "q_SC_w";
+  static void toDimensionLabels(std::vector<std::string>* extrinsicLabels) {
+    *extrinsicLabels = {"p_SC_S_x[m]", "p_SC_S_y", "p_SC_S_z", "q_SC_x", "q_SC_y", "q_SC_z", "q_SC_w"};
+  }
+
+  static void toDesiredStdevs(Eigen::VectorXd* desiredStdevs) {
+    desiredStdevs->resize(6);
+    desiredStdevs->head<3>().setConstant(0.04);
+    desiredStdevs->tail<3>().setConstant(0.01);
   }
 
   template <class Scalar>
@@ -414,11 +340,14 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   static const int kModelId = 3;
 
-  static void toParamsInfo(const std::string delimiter,
-                           std::string* extrinsic_format) {
-    *extrinsic_format = "p_C0C_C0_x[m]" + delimiter + "p_C0C_C0_y" + delimiter +
-                        "p_C0C_C0_z" + delimiter + "q_C0C_x" + delimiter +
-                        "q_C0C_y" + delimiter + "q_C0C_z" + delimiter + "q_C0C_w";
+  static void toDimensionLabels(std::vector<std::string>* extrinsicLabels) {
+    *extrinsicLabels = {"p_C0C_C0_x[m]", "p_C0C_C0_y", "p_C0C_C0_z", "q_C0C_x", "q_C0C_y", "q_C0C_z", "q_C0C_w"};
+  }
+
+  static void toDesiredStdevs(Eigen::VectorXd* desiredStdevs) {
+    desiredStdevs->resize(6);
+    desiredStdevs->head<3>().setConstant(0.04);
+    desiredStdevs->tail<3>().setConstant(0.01);
   }
 
   static void dT_BC_dExtrinsic(const okvis::kinematics::Transformation& T_BCi,
@@ -593,36 +522,19 @@ inline void ExtrinsicModel_dpC_dExtrinsic_HPP(int model_id, const Eigen::Vector4
   }
 }
 
-inline void ExtrinsicModelToParamsInfo(
-    int model_id, const std::string delimiter, std::string* extrinsic_format) {
+inline void ExtrinsicModelToDimensionLabels(
+    int model_id, std::vector<std::string>* dimensionLabels) {
     switch (model_id) {
   #define MODEL_CASES EXTRINSIC_MODEL_CASES
   #define EXTRINSIC_MODEL_CASE(ExtrinsicModel) \
     case ExtrinsicModel::kModelId:             \
-      return ExtrinsicModel::toParamsInfo(delimiter, extrinsic_format);
+      return ExtrinsicModel::toDimensionLabels(dimensionLabels);
 
       MODEL_SWITCH_CASES
 
   #undef EXTRINSIC_MODEL_CASE
   #undef MODEL_CASES
     }
-}
-
-inline void ExtrinsicModelToParamsValueString(
-    int model_id, const okvis::kinematics::Transformation& T_XC,
-    const std::string delimiter, std::string* extrinsic_string) {
-  switch (model_id) {
-#define MODEL_CASES EXTRINSIC_MODEL_CASES
-#define EXTRINSIC_MODEL_CASE(ExtrinsicModel)                    \
-  case ExtrinsicModel::kModelId:                                \
-    return ExtrinsicModel::toParamsValueString(T_XC, delimiter, \
-                                               extrinsic_string);
-
-    MODEL_SWITCH_CASES
-
-#undef EXTRINSIC_MODEL_CASE
-#undef MODEL_CASES
-  }
 }
 
 inline void ExtrinsicModelToParamValues(
@@ -634,6 +546,22 @@ inline void ExtrinsicModelToParamValues(
   case ExtrinsicModel::kModelId:                                \
     return ExtrinsicModel::toParamValues(                       \
         T_XC, extrinsic_opt_coeffs);
+
+    MODEL_SWITCH_CASES
+
+#undef EXTRINSIC_MODEL_CASE
+#undef MODEL_CASES
+  }
+}
+
+
+inline void ExtrinsicModelToDesiredStdevs(
+    int model_id, Eigen::VectorXd* desiredStdevs) {
+  switch (model_id) {
+#define MODEL_CASES EXTRINSIC_MODEL_CASES
+#define EXTRINSIC_MODEL_CASE(ExtrinsicModel)                    \
+  case ExtrinsicModel::kModelId:                                \
+    return ExtrinsicModel::toDesiredStdevs(desiredStdevs);
 
     MODEL_SWITCH_CASES
 
