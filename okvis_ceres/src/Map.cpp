@@ -768,7 +768,7 @@ std::shared_ptr<ParameterBlock> Map::internalAddParameterBlockById(
   }
   if (parameterBlock->fixed()) {
     problem->SetParameterBlockConstant(parameterBlockCopy->parameters());
-  }  // else do nothing as parameters are default to be variable.
+  }  // else pass as parameters are default to be variable.
   return parameterBlockCopy;
 }
 

@@ -169,6 +169,7 @@ void VioKeyframeWindowMatchingAlgorithm<CAMERA_GEOMETRY_T>::doSetup() {
       if (lm_id == 0 || !estimator_->isLandmarkAdded(lm_id)) {
         // this can happen, if you called the 2D-2D version just before,
         // without inserting the landmark into the graph
+        // jhuai: This happens because a landmark removed in the estimator can have observations lurk in multiframes.
         skipA_[k] = true;
         continue;
       }
