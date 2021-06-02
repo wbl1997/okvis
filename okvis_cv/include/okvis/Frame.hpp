@@ -197,18 +197,6 @@ class Frame
 
   inline const std::vector<uint64_t>& getLandmarkIds() const;
 
-  inline void setRelativeMotion(uint64_t relativeFrameId,
-                                RelativeMotionType relativeMotionType) {
-    relativeFrameId_ = relativeFrameId;
-    relativeMotionType_ = relativeMotionType;
-  }
-
-  inline void getRelativeMotion(uint64_t* relativeFrameId,
-                                RelativeMotionType* relativeMotionType) const {
-    *relativeFrameId = relativeFrameId_;
-    *relativeMotionType = relativeMotionType_;
-  }
-
   cv::Mat getDescriptors() const {
     return descriptors_;
   }
@@ -242,8 +230,6 @@ class Frame
   std::vector<cv::KeyPoint> keypoints_;  ///< we store keypoints using OpenCV's struct
   cv::Mat descriptors_;  ///< we store the descriptors using OpenCV's matrices
   std::vector<uint64_t> landmarkIds_;  ///< landmark Id, if associated -- 0 otherwise
-  uint64_t relativeFrameId_;
-  RelativeMotionType relativeMotionType_;
   okvis::Time stamp_;
 };
 

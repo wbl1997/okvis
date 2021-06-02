@@ -285,10 +285,6 @@ class MultiFrame
   inline std::vector<KeypointReduced, Eigen::aligned_allocator<KeypointReduced>>
   copyKeypoints(int cameraIdx) const;
 
-  void getRelativeMotion(size_t cameraIdx, uint64_t* relativeFrameId,
-                         RelativeMotionType* rmt) const {
-    frames_[cameraIdx].getRelativeMotion(relativeFrameId, rmt);
-  }
 
   cv::Mat getDescriptors(size_t cameraIdx) const {
     return frames_[cameraIdx].getDescriptors();
@@ -308,11 +304,6 @@ class MultiFrame
 
   void setCameraSystem(const okvis::cameras::NCameraSystem& cameraSystem) {
     cameraSystem_ = cameraSystem;
-  }
-
-  void setRelativeMotion(size_t cameraIdx, uint64_t relativeFrameId,
-                         RelativeMotionType rmt) {
-    frames_[cameraIdx].setRelativeMotion(relativeFrameId, rmt);
   }
 
   int idInSource; /// (0 based) id of the frame within the video or the image folder
