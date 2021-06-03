@@ -875,7 +875,7 @@ bool VioParametersReader::getCameraCalibration(
   if (parseOk && monocularInput) {
     calibrations.resize(1);
   }
-  LOG(INFO) << "monocular_input?" << monocularInput << " #Cameras:" << calibrations.size();
+  LOG(INFO) << "Use images from " << calibrations.size() << " cameras.";
 #ifdef HAVE_LIBVISENSOR
   if (useDriver && !success) {
     // start up sensor

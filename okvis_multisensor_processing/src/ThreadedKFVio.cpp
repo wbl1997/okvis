@@ -148,8 +148,8 @@ void ThreadedKFVio::init() {
             << std::endl;
 
   lastOptimizedCameraSystem_ = parameters_.nCameraSystem;
-  lastOptimizedStateTimestamp_ = okvis::Time(0.0) + Estimator::half_window_;;  // s.t. last_timestamp_ - overlap >= 0 (since okvis::time(-0.02) returns big number)
-  lastAddedStateTimestamp_ = okvis::Time(0.0) + Estimator::half_window_;  // s.t. last_timestamp_ - overlap >= 0 (since okvis::time(-0.02) returns big number)
+  lastOptimizedStateTimestamp_ = okvis::Time(1e-6) + Estimator::half_window_;;  // s.t. last_timestamp_ - overlap >= 0 (since okvis::time(-0.02) returns big number)
+  lastAddedStateTimestamp_ = okvis::Time(1e-6) + Estimator::half_window_;  // s.t. last_timestamp_ - overlap >= 0 (since okvis::time(-0.02) returns big number)
 
   estimator_->addImu(parameters_.imu);
   estimator_->addCameraSystem(parameters_.nCameraSystem);

@@ -117,7 +117,7 @@ class VioParametersReader{
     std::string toString() const {
       std::stringstream ss;
       ss << "T_SC\n" << T_SC.T3x4()
-         << "\nimage dimension after downscale "
+         << "\nimage dimension "
          << imageDimension.transpose() << " distortion type "
          << distortionType.c_str()
          << "\ndistortion " << distortionCoefficients.transpose()

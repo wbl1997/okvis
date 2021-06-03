@@ -586,7 +586,7 @@ bool Estimator::applyMarginalizationStrategy(okvis::MapPointVector& removedLandm
 
     for (size_t r = 0; r < residuals.size(); ++r) {
       // jhuai: redo fixation leads to inconsistent covariance.
-      if(!optimizationOptions_.getSmootherCovariance && std::dynamic_pointer_cast<ceres::PoseError>(
+      if(!optimizationOptions_.computeOkvisNees && std::dynamic_pointer_cast<ceres::PoseError>(
            residuals[r].errorInterfacePtr)){ // avoids linearising initial pose error
         mapPtr_->removeResidualBlock(residuals[r].residualBlockId);
         reDoFixation = true;
@@ -1566,7 +1566,7 @@ bool Estimator::computeErrors(
 }
 
 bool Estimator::computeCovariance(Eigen::MatrixXd* cov) const {
-  if (!optimizationOptions_.getSmootherCovariance) {
+  if (!optimizationOptions_.computeOkvisNees) {
     *cov = Eigen::Matrix<double, 15, 15>::Identity();
     return false;
   }

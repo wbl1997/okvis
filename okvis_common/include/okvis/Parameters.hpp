@@ -270,7 +270,7 @@ struct Optimization{
 
   // set true to analyze the consistency of Estimator,
   // set false to analyze the accuracy of Estimator.
-  bool getSmootherCovariance;
+  bool computeOkvisNees;
 
   Optimization();
 

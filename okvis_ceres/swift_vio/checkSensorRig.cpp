@@ -8,7 +8,7 @@ bool doesExtrinsicModelFitImuModel(const std::string& extrinsicModel,
   switch (imuModelId) {
     case Imu_BG_BA_TG_TS_TA::kModelId:
       if (extrinsicModelId != Extrinsic_p_CB::kModelId) {
-        LOG(WARNING) << "When IMU model is BG_BA_TG_TS_TA, the first camera's "
+        LOG(ERROR) << "When IMU model is BG_BA_TG_TS_TA, the first camera's "
                         "extrinsic model should be P_CB!";
         return false;
       }
@@ -16,7 +16,7 @@ bool doesExtrinsicModelFitImuModel(const std::string& extrinsicModel,
     case Imu_BG_BA::kModelId:
     case ScaledMisalignedImu::kModelId:
       if (extrinsicModelId != Extrinsic_p_BC_q_BC::kModelId) {
-        LOG(WARNING) << "When IMU model is BG_BA or ScaledMisalignedImu, the "
+        LOG(ERROR) << "When IMU model is BG_BA or ScaledMisalignedImu, the "
                         "first camera's extrinsic model should be P_BC_Q_BC!";
         return false;
       }
@@ -38,9 +38,10 @@ bool doesExtrinsicModelFitOkvisBackend(
       int extrinsicModelId =
           ExtrinsicModelNameToId(extrinsicModel, nullptr);
       if (extrinsicModelId == Extrinsic_p_C0C_q_C0C::kModelId) {
-        LOG(WARNING) << "When the OKVIS backend is used, the second camera's "
-                        "extrinsic model should NOT be P_C0C_Q_C0C which leads "
-                        "to wrong extrinsics in frontend!";
+        LOG(FATAL) << "When the OKVIS backend is used, the second camera's "
+                      "extrinsic model should be P_BC_Q_BC instead of "
+                      "P_C0C_Q_C0C which leads "
+                      "to wrong extrinsics in frontend!";
         return false;
       }
     }
