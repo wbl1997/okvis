@@ -80,8 +80,8 @@ class NCameraSystem
   /// @param[in] cameraGeometries a vector of camera geometries (same length as T_SC).
   /// @param[in] distortionTypes a vector of distortion types (same length as T_SC).
   /// @param[in] computeOverlaps Indicate, if the overlap computation (can take a while) should be performed.
-  inline NCameraSystem(const std::vector<std::shared_ptr<const okvis::kinematics::Transformation>> & T_SC,
-                       const std::vector<std::shared_ptr<const cameras::CameraBase>> & cameraGeometries,
+  inline NCameraSystem(const std::vector<std::shared_ptr<okvis::kinematics::Transformation>> & T_SC,
+                       const std::vector<std::shared_ptr<cameras::CameraBase>> & cameraGeometries,
                        const std::vector<DistortionType>& distortionTypes,
                        bool computeOverlaps);
 
@@ -93,8 +93,8 @@ class NCameraSystem
   /// @param[in] cameraGeometries a vector of camera geometries (same length as T_SC).
   /// @param[in] distortionTypes a vector of distortion types (same length as T_SC).
   /// @param[in] computeOverlaps Indicate, if the overlap computation (can take a while) should be performed.
-  inline void reset(const std::vector<std::shared_ptr<const okvis::kinematics::Transformation>> & T_SC,
-                    const std::vector<std::shared_ptr<const cameras::CameraBase>> & cameraGeometries,
+  inline void reset(const std::vector<std::shared_ptr<okvis::kinematics::Transformation>> & T_SC,
+                    const std::vector<std::shared_ptr<cameras::CameraBase>> & cameraGeometries,
                     const std::vector<DistortionType>& distortionTypes,
                     bool computeOverlaps);
 
@@ -103,8 +103,8 @@ class NCameraSystem
   /// @param[in] cameraGeometry Camera geometry.
   /// @param[in] distortionType Distortion type.
   /// @param[in] computeOverlaps Indicate, if the overlap computation (can take a while) should be performed.
-  inline void addCamera(std::shared_ptr<const okvis::kinematics::Transformation> T_SC,
-                        std::shared_ptr<const cameras::CameraBase> cameraGeometry,
+  inline void addCamera(std::shared_ptr<okvis::kinematics::Transformation> T_SC,
+                        std::shared_ptr<cameras::CameraBase> cameraGeometry,
                         DistortionType distortionType,
                         std::string proj_opt_rep = "",
                         std::string extrinsic_opt_rep = "",
@@ -150,12 +150,25 @@ class NCameraSystem
 
   inline std::string extrinsicOptRep(size_t cameraIndex) const;
 
- protected:
+  inline void
+  set_T_SC(size_t camIdx,
+           std::shared_ptr<const okvis::kinematics::Transformation> T_SC);
+
+  inline void setCameraIntrinsics(int camera_id,
+                                  const Eigen::VectorXd &intrinsic_vec);
+
+  inline void setImageDelay(int camera_id, double td);
+
+  inline void setReadoutTime(int camera_id, double tr);
+
+  std::shared_ptr<NCameraSystem> deepCopy() const;
+
+protected:
   /// \brief Use this to check overlapMats_ and overlaps_ have correct sizes
   /// @return True, if valid.
   inline bool overlapComputationValid() const;
-  std::vector<std::shared_ptr<const okvis::kinematics::Transformation>> T_SC_;  ///< Mounting transformations from IMU
-  std::vector<std::shared_ptr<const cameras::CameraBase>> cameraGeometries_;  ///< Camera geometries
+  std::vector<std::shared_ptr<okvis::kinematics::Transformation>> T_SC_;  ///< Mounting transformations from IMU
+  std::vector<std::shared_ptr<cameras::CameraBase>> cameraGeometries_;  ///< Camera geometries
   std::vector<DistortionType> distortionTypes_;
   std::vector<std::vector<cv::Mat>> overlapMats_;  ///< Overlaps between cameras: mats
   std::vector<std::vector<bool>> overlaps_;  ///< Overlaps between cameras: binary
@@ -163,6 +176,15 @@ class NCameraSystem
   std::vector<std::string> proj_opt_rep_;
   std::vector<std::string> extrinsic_opt_rep_;
 };
+
+/**
+* @brief cloneCameraGeometry
+* @warning Use it sparingly as it is expensive.
+* @param cameraGeometry
+* @return
+*/
+std::shared_ptr<okvis::cameras::CameraBase> cloneCameraGeometry(
+  std::shared_ptr<const okvis::cameras::CameraBase> cameraGeometry);
 
 }  // namespace cameras
 }  // namespace okvis

@@ -17,11 +17,11 @@ class TestDataGenerator {
                 0, 1, 0, 0,
                 0, 0, 1, 0,
                 0, 0, 0, 0;
-      std::shared_ptr<const okvis::kinematics::Transformation> T_SC_ok_ptr(
+      std::shared_ptr<okvis::kinematics::Transformation> T_SC_ok_ptr(
             new okvis::kinematics::Transformation(T_SC_e));
       nCameraSystem.addCamera(
             T_SC_ok_ptr,
-            std::shared_ptr<const okvis::cameras::CameraBase>(
+            std::shared_ptr<okvis::cameras::CameraBase>(
               new okvis::cameras::PinholeCamera<
                   okvis::cameras::RadialTangentialDistortion>(
                   752,480,

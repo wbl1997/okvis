@@ -45,16 +45,17 @@ const okvis::ImuMeasurementDeque BoundedImuDeque::findWindow(
   okvis::ImuMeasurementDeque raw_meas =
           getImuMeasurements(center_time - half_window, center_time + half_window,
                             this->imu_meas_, nullptr);
-  // for a few frames at the beginning, the imu meas may not cover the
-  // frame readout window
-  if (raw_meas.front().timeStamp + half_window > center_time) {
-    // This warning can be mostly hushed if half window is decreased near t_r/2
-//    LOG(WARNING) << "IMU meas padded at the lower side from "
-//                 << raw_meas.front().timeStamp << " to "
-//                 << center_time - half_window << " with half window "
-//                 << half_window;
-    raw_meas.push_front(raw_meas.front());
-    raw_meas.front().timeStamp = center_time - half_window;
+  if (raw_meas.size()) {
+    if (raw_meas.front().timeStamp > center_time - half_window) {
+      // Pad at the left. This can happen at the begnning of data streams.
+      raw_meas.push_front(raw_meas.front());
+      raw_meas.front().timeStamp = center_time - half_window;
+    }
+    if (raw_meas.back().timeStamp < center_time + half_window) {
+      // Pad at the right. This always happen for the latest NFrame when half_window is big say >0.2 s.
+      raw_meas.push_back(raw_meas.back());
+      raw_meas.back().timeStamp = center_time + half_window;
+    }
   }
   return raw_meas;
 }

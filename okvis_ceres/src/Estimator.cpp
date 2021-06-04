@@ -1731,17 +1731,8 @@ void Estimator::getImuAugmentedStatesEstimate(
   extraParams->resize(0);
 }
 
-okvis::cameras::NCameraSystem Estimator::getEstimatedCameraSystem() const {
-  okvis::cameras::NCameraSystem cameraSystem;
-  for (size_t i = 0u; i < cameraRig_.numberCameras(); ++i) {
-    cameraSystem.addCamera(std::shared_ptr<okvis::kinematics::Transformation>(
-                               new okvis::kinematics::Transformation(
-                                   cameraRig_.getCameraExtrinsic(i))),
-                           swift_vio::cameras::cloneCameraGeometry(
-                               cameraRig_.getCameraGeometry(i)),
-                           cameraRig_.getDistortionType(i));
-  }
-  return cameraSystem;
+void Estimator::getEstimatedCameraSystem(std::shared_ptr<okvis::cameras::NCameraSystem> cameraSystem) const {
+  cameraRig_.assign(cameraSystem);
 }
 
 const okvis::Duration Estimator::half_window_(2, 0);

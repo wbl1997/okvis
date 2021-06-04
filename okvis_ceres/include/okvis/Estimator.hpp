@@ -114,7 +114,7 @@ class Estimator : public VioBackendInterface
    */
   void addCameraSystem(const okvis::cameras::NCameraSystem& cameras) override;
 
-  okvis::cameras::NCameraSystem getEstimatedCameraSystem() const;
+  void getEstimatedCameraSystem(std::shared_ptr<okvis::cameras::NCameraSystem> cameraSystem) const;
 
   /**
    * @brief Add an IMU to the configuration.

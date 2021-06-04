@@ -98,9 +98,9 @@ TEST(okvisTestSuite, Estimator) {
     std::shared_ptr<okvis::ceres::Map> mapPtr(new okvis::ceres::Map);
 
     // camera extrinsics:
-    std::shared_ptr<const okvis::kinematics::Transformation> T_SC_0(
+    std::shared_ptr<okvis::kinematics::Transformation> T_SC_0(
         new okvis::kinematics::Transformation());
-    std::shared_ptr<const okvis::kinematics::Transformation> T_SC_1(
+    std::shared_ptr<okvis::kinematics::Transformation> T_SC_1(
         new okvis::kinematics::Transformation(Eigen::Vector3d(0,0.1,0),Eigen::Quaterniond(1,0,0,0)));
 
     // some parameters on how to do the online estimation:
@@ -115,9 +115,9 @@ TEST(okvisTestSuite, Estimator) {
         * (c / 2);
 
     // set up camera with intrinsics
-    std::shared_ptr<const okvis::cameras::CameraBase> cameraGeometry0(
+    std::shared_ptr<okvis::cameras::CameraBase> cameraGeometry0(
         okvis::cameras::PinholeCamera<okvis::cameras::EquidistantDistortion>::createTestObject());
-    std::shared_ptr<const okvis::cameras::CameraBase> cameraGeometry1(
+    std::shared_ptr<okvis::cameras::CameraBase> cameraGeometry1(
         okvis::cameras::PinholeCamera<okvis::cameras::EquidistantDistortion>::createTestObject());
 
     // create an N-camera system:

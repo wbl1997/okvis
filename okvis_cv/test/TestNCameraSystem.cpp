@@ -48,7 +48,7 @@ TEST(NCameraSystem, functions)
 {
 
   // instantiate all possible versions of test cameras
-  std::vector<std::shared_ptr<const okvis::cameras::CameraBase> > cameras;
+  std::vector<std::shared_ptr<okvis::cameras::CameraBase> > cameras;
   std::vector<okvis::cameras::NCameraSystem::DistortionType> distortions;
   cameras.push_back(
       okvis::cameras::PinholeCamera<okvis::cameras::NoDistortion>::createTestObject());
@@ -61,7 +61,7 @@ TEST(NCameraSystem, functions)
   distortions.push_back(okvis::cameras::NCameraSystem::Equidistant);
 
   // the mounting transformations. The third one is opposite direction
-  std::vector<std::shared_ptr<const okvis::kinematics::Transformation>> T_SC;
+  std::vector<std::shared_ptr<okvis::kinematics::Transformation>> T_SC;
   T_SC.push_back(
       std::shared_ptr<okvis::kinematics::Transformation>(
           new okvis::kinematics::Transformation(Eigen::Vector3d(0.1, 0.1, 0.1),

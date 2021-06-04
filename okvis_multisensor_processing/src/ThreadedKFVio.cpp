@@ -147,9 +147,9 @@ void ThreadedKFVio::init() {
             << frontend_->getKeyframeInsertionMatchingRatioThreshold()
             << std::endl;
 
-  lastOptimizedCameraSystem_ = parameters_.nCameraSystem;
-  lastOptimizedStateTimestamp_ = okvis::Time(1e-6) + Estimator::half_window_;;  // s.t. last_timestamp_ - overlap >= 0 (since okvis::time(-0.02) returns big number)
-  lastAddedStateTimestamp_ = okvis::Time(1e-6) + Estimator::half_window_;  // s.t. last_timestamp_ - overlap >= 0 (since okvis::time(-0.02) returns big number)
+  lastOptimizedCameraSystem_ = parameters_.nCameraSystem.deepCopy();
+  lastOptimizedStateTimestamp_ = okvis::Time(0.0) + Estimator::half_window_;;  // s.t. last_timestamp_ - overlap >= 0 (since okvis::time(-0.02) returns big number)
+  lastAddedStateTimestamp_ = okvis::Time(0.0) + Estimator::half_window_;  // s.t. last_timestamp_ - overlap >= 0 (since okvis::time(-0.02) returns big number)
 
   estimator_->addImu(parameters_.imu);
   estimator_->addCameraSystem(parameters_.nCameraSystem);
@@ -421,7 +421,7 @@ void ThreadedKFVio::frameConsumerLoop(size_t cameraIndex) {
       T_WS = lastOptimized_T_WS_;
       speedAndBiases = lastOptimizedSpeedAndBiases_;
       lastTimestamp = lastOptimizedStateTimestamp_;
-      lastImageDelay.fromSec(lastOptimizedCameraSystem_.cameraGeometry(cameraIndex)->imageDelay());
+      lastImageDelay.fromSec(lastOptimizedCameraSystem_->cameraGeometry(cameraIndex)->imageDelay());
     }
 
     // get imu messages for predicting the new frame's pose which is used to align its feature descriptors.
@@ -469,7 +469,7 @@ void ThreadedKFVio::frameConsumerLoop(size_t cameraIndex) {
         lastOptimizedSpeedAndBiases_.segment<3>(3) = imu_params_.g0;
         lastOptimizedSpeedAndBiases_.segment<3>(6) = imu_params_.a0;
         lastOptimizedStateTimestamp_ = multiFrame->timestamp(Estimator::kMainCameraIndex) +
-            okvis::Duration(lastOptimizedCameraSystem_.cameraGeometry(Estimator::kMainCameraIndex)->imageDelay());
+            okvis::Duration(lastOptimizedCameraSystem_->cameraGeometry(Estimator::kMainCameraIndex)->imageDelay());
       }
       OKVIS_ASSERT_TRUE_DBG(Exception, success,
           "pose could not be initialized from imu measurements.");
@@ -547,17 +547,17 @@ void ThreadedKFVio::matchingLoop() {
     okvis::Time latestFrameTime(0);
     {
       std::lock_guard<std::mutex> lock(lastState_mutex_);
-      lastMainCameraDelay.fromSec(lastOptimizedCameraSystem_.cameraGeometry(Estimator::kMainCameraIndex)->imageDelay());
+      lastMainCameraDelay.fromSec(lastOptimizedCameraSystem_->cameraGeometry(Estimator::kMainCameraIndex)->imageDelay());
 
-      for (size_t i = 0u; i < lastOptimizedCameraSystem_.numCameras(); ++i) {
+      for (size_t i = 0u; i < lastOptimizedCameraSystem_->numCameras(); ++i) {
         latestFrameTime = std::max(
             latestFrameTime,
             frame->timestamp(i) +
-                okvis::Duration(lastOptimizedCameraSystem_.cameraGeometry(i)
+                okvis::Duration(lastOptimizedCameraSystem_->cameraGeometry(i)
                                     ->imageDelay()));
       }
       // Use the optimized camera system for the upcoming feature association.
-      frame->setCameraSystem(lastOptimizedCameraSystem_);
+      frame->setCameraSystem(*lastOptimizedCameraSystem_);
     }
     okvis::Time imuDataEndTime = latestFrameTime + temporal_imu_data_overlap;
     okvis::Time imuDataBeginTime = lastAddedStateTimestamp_ - Estimator::half_window_;
@@ -569,7 +569,6 @@ void ThreadedKFVio::matchingLoop() {
       LOG(WARNING) << "Warn: Too long interval between two frames "
                    << lastAddedStateTimestamp_.toSec() << " and "
                    << frame->timestamp().toSec();
-      imuDataBeginTime = imuDataEndTime - Duration(8);
     }
     OKVIS_ASSERT_TRUE_DBG(Exception, imuDataBeginTime < imuDataEndTime,
                           "imu data end time is smaller than begin time."
@@ -841,7 +840,7 @@ void ThreadedKFVio::optimizationLoop() {
         std::lock_guard<std::mutex> lock(lastState_mutex_);
         lastOptimized_T_WS_ = latest_T_WS;
         lastOptimizedSpeedAndBiases_ = latestSpeedAndBias;
-        lastOptimizedCameraSystem_ = estimator_->getEstimatedCameraSystem();
+        estimator_->getEstimatedCameraSystem(lastOptimizedCameraSystem_);
         lastOptimizedStateTimestamp_ = latestStateTime;
       }
       {

@@ -21,8 +21,6 @@
 
 namespace swift_vio {
 namespace cameras {
-std::shared_ptr<okvis::cameras::CameraBase> cloneCameraGeometry(
-    std::shared_ptr<const okvis::cameras::CameraBase> cameraGeometry);
 
 static inline void DistortionTypeToDimensionLabels(
     const okvis::cameras::NCameraSystem::DistortionType dtype,
@@ -245,21 +243,47 @@ class CameraRig {
 
     camera_geometries_[camera_id]->setIntrinsics(intrinsicParameters);
   }
-  inline int addCamera(
-      std::shared_ptr<const okvis::kinematics::Transformation> T_SC,
-      std::shared_ptr<const okvis::cameras::CameraBase> cameraGeometry,
-      std::string pinhole_opt_rep, std::string extrinsic_opt_rep) {
+  inline int
+  addCamera(std::shared_ptr<const okvis::kinematics::Transformation> T_SC,
+            std::shared_ptr<const okvis::cameras::CameraBase> cameraGeometry,
+            std::string pinhole_opt_rep, std::string extrinsic_opt_rep) {
+    return addCamera(T_SC, cameraGeometry,
+                     ProjectionOptNameToId(pinhole_opt_rep),
+                     ExtrinsicModelNameToId(extrinsic_opt_rep));
+  }
+
+  inline int
+  addCamera(std::shared_ptr<const okvis::kinematics::Transformation> T_SC,
+            std::shared_ptr<const okvis::cameras::CameraBase> cameraGeometry,
+            int pinhole_opt_rep_id, int extrinsic_opt_rep_id) {
     T_SC_.emplace_back(
         std::make_shared<okvis::kinematics::Transformation>(*T_SC));
-    camera_geometries_.emplace_back(cloneCameraGeometry(cameraGeometry));
-    distortionTypes_.emplace_back(DistortionNameToTypeId(cameraGeometry->distortionType()));
-    proj_opt_rep_.emplace_back(ProjectionOptNameToId(pinhole_opt_rep));
-    LOG(INFO) << "added proj opt rep " << pinhole_opt_rep << " of id "
-              << proj_opt_rep_.back();
-    extrinsic_opt_rep_.emplace_back(ExtrinsicModelNameToId(extrinsic_opt_rep));
-    LOG(INFO) << "added extrinsic opt rep " << extrinsic_opt_rep << " of id "
-              << extrinsic_opt_rep_.back();
+    camera_geometries_.emplace_back(okvis::cameras::cloneCameraGeometry(cameraGeometry));
+    distortionTypes_.emplace_back(
+        DistortionNameToTypeId(cameraGeometry->distortionType()));
+    proj_opt_rep_.emplace_back(pinhole_opt_rep_id);
+    extrinsic_opt_rep_.emplace_back(extrinsic_opt_rep_id);
     return static_cast<int>(T_SC_.size()) - 1;
+  }
+
+  CameraRig deepCopy() const {
+    CameraRig rig;
+    for (size_t i = 0u; i < T_SC_.size(); ++i) {
+      rig.addCamera(T_SC_[i], camera_geometries_[i], proj_opt_rep_[i],
+                    extrinsic_opt_rep_[i]);
+    }
+    return rig;
+  }
+
+  void assign(std::shared_ptr<okvis::cameras::NCameraSystem> rig) const {
+    for (size_t i = 0u; i < T_SC_.size(); ++i) {
+      rig->set_T_SC(i, T_SC_[i]);
+      Eigen::VectorXd intrinsics;
+      camera_geometries_[i]->getIntrinsics(intrinsics);
+      rig->setCameraIntrinsics(i, intrinsics);
+      rig->setImageDelay(i, getImageDelay(i));
+      rig->setReadoutTime(i, getReadoutTime(i));
+    }
   }
 };
 

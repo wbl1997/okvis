@@ -50,8 +50,8 @@ NCameraSystem::NCameraSystem()
 }
 // Construct with vector of extrinsics and geometries
 NCameraSystem::NCameraSystem(
-    const std::vector<std::shared_ptr<const okvis::kinematics::Transformation>> & T_SC,
-    const std::vector<std::shared_ptr<const cameras::CameraBase>> & cameraGeometries,
+    const std::vector<std::shared_ptr<okvis::kinematics::Transformation>> & T_SC,
+    const std::vector<std::shared_ptr<cameras::CameraBase>> & cameraGeometries,
     const std::vector<DistortionType>& distortionTypes,
     bool computeOverlaps)
     : T_SC_(T_SC),
@@ -76,8 +76,8 @@ NCameraSystem::~NCameraSystem()
 
 // Reset with vector of extrinsics and geometries
 void NCameraSystem::reset(
-    const std::vector<std::shared_ptr<const okvis::kinematics::Transformation>> & T_SC,
-    const std::vector<std::shared_ptr<const cameras::CameraBase>> & cameraGeometries,
+    const std::vector<std::shared_ptr<okvis::kinematics::Transformation>> & T_SC,
+    const std::vector<std::shared_ptr<cameras::CameraBase>> & cameraGeometries,
     const std::vector<DistortionType>& distortionTypes,
     bool computeOverlaps)
 {
@@ -100,8 +100,8 @@ void NCameraSystem::reset(
 
 // Reset with vector of extrinsics and geometries
 void NCameraSystem::addCamera(
-    std::shared_ptr<const okvis::kinematics::Transformation> T_SC,
-    std::shared_ptr<const cameras::CameraBase> cameraGeometry,
+    std::shared_ptr<okvis::kinematics::Transformation> T_SC,
+    std::shared_ptr<cameras::CameraBase> cameraGeometry,
     DistortionType distortionType,
     std::string proj_opt_rep,
     std::string extrinsic_opt_rep,
@@ -213,5 +213,24 @@ std::string NCameraSystem::projOptRep(size_t cameraIndex) const {
 std::string NCameraSystem::extrinsicOptRep(size_t cameraIndex) const {
   return extrinsic_opt_rep_[cameraIndex];
 }
+
+void NCameraSystem::set_T_SC(
+    size_t camIdx,
+    std::shared_ptr<const okvis::kinematics::Transformation> T_SC) {
+  *T_SC_[camIdx] = *T_SC;
+}
+
+void NCameraSystem::setCameraIntrinsics(int camera_id,
+                                        const Eigen::VectorXd &intrinsic_vec) {
+  cameraGeometries_[camera_id]->setIntrinsics(intrinsic_vec);
+}
+
+void NCameraSystem::setImageDelay(int camera_id, double td) {
+  cameraGeometries_[camera_id]->setImageDelay(td);
+}
+void NCameraSystem::setReadoutTime(int camera_id, double tr) {
+  cameraGeometries_[camera_id]->setReadoutTime(tr);
+}
+
 }  // namespace cameras
 }  // namespace okvis

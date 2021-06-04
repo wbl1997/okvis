@@ -563,7 +563,7 @@ void VioParametersReader::readConfigFile(const std::string& filename) {
 
   size_t camIdx = 0;
   for (size_t i = 0; i < calibrations.size(); ++i) {
-    std::shared_ptr<const okvis::kinematics::Transformation> T_SC_okvis_ptr(
+    std::shared_ptr<okvis::kinematics::Transformation> T_SC_okvis_ptr(
           new okvis::kinematics::Transformation(calibrations[i].T_SC.r(),
                                                 calibrations[i].T_SC.q().normalized()));
     std::string distortionType = calibrations[i].distortionType;
@@ -573,7 +573,7 @@ void VioParametersReader::readConfigFile(const std::string& filename) {
     if (strcmp(distortionType.c_str(), "equidistant") == 0) {
       vioParameters_.nCameraSystem.addCamera(
           T_SC_okvis_ptr,
-          std::shared_ptr<const okvis::cameras::CameraBase>(
+          std::shared_ptr<okvis::cameras::CameraBase>(
               new okvis::cameras::PinholeCamera<
                   okvis::cameras::EquidistantDistortion>(
                   calibrations[i].imageDimension[0],
@@ -600,7 +600,7 @@ void VioParametersReader::readConfigFile(const std::string& filename) {
                || strcmp(distortionType.c_str(), "plumb_bob") == 0) {
       vioParameters_.nCameraSystem.addCamera(
           T_SC_okvis_ptr,
-          std::shared_ptr<const okvis::cameras::CameraBase>(
+          std::shared_ptr<okvis::cameras::CameraBase>(
               new okvis::cameras::PinholeCamera<
                   okvis::cameras::RadialTangentialDistortion>(
                   calibrations[i].imageDimension[0],
@@ -627,7 +627,7 @@ void VioParametersReader::readConfigFile(const std::string& filename) {
                || strcmp(distortionType.c_str(), "plumb_bob8") == 0) {
       vioParameters_.nCameraSystem.addCamera(
           T_SC_okvis_ptr,
-          std::shared_ptr<const okvis::cameras::CameraBase>(
+          std::shared_ptr<okvis::cameras::CameraBase>(
               new okvis::cameras::PinholeCamera<
                   okvis::cameras::RadialTangentialDistortion8>(
                   calibrations[i].imageDimension[0],
