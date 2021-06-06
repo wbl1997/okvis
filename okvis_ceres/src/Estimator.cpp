@@ -142,7 +142,7 @@ bool Estimator::addStates(
     if (initialNavState_.initWithExternalSource)
       T_WS = okvis::kinematics::Transformation(initialNavState_.p_WS, initialNavState_.q_WS);
     else {
-      bool success0 = initPoseFromImu(imuMeasurements, T_WS);
+      bool success0 = swift_vio::initPoseFromImu(imuMeasurements, T_WS);
       OKVIS_ASSERT_TRUE_DBG(
           Exception, success0,
           "pose could not be initialized from imu measurements.");
@@ -878,40 +878,6 @@ std::string Estimator::headerLine(const std::string delimiter) const {
     stream << "std_" << variable << delimiter;
   }
   return stream.str();
-}
-
-// Initialise pose from IMU measurements. For convenience as static.
-// Huai: this can be realized with Quaterniond::FromTwoVectors() c.f.
-// https://github.com/dennisss/mvision
-bool Estimator::initPoseFromImu(
-    const okvis::ImuMeasurementDeque & imuMeasurements,
-    okvis::kinematics::Transformation & T_WS)
-{
-  // set translation to zero, unit rotation
-  T_WS.setIdentity();
-
-  if (imuMeasurements.size() == 0)
-    return false;
-
-  // acceleration vector
-  Eigen::Vector3d acc_B = Eigen::Vector3d::Zero();
-  for (okvis::ImuMeasurementDeque::const_iterator it = imuMeasurements.begin();
-      it < imuMeasurements.end(); ++it) {
-    acc_B += it->measurement.accelerometers;
-  }
-  acc_B /= double(imuMeasurements.size());
-  Eigen::Vector3d e_acc = acc_B.normalized();
-
-  // align with ez_W:  //huai:this is expected direction of applied force, opposite to gravity
-  Eigen::Vector3d ez_W(0.0, 0.0, 1.0);
-  Eigen::Matrix<double, 6, 1> poseIncrement;
-  poseIncrement.head<3>() = Eigen::Vector3d::Zero();
-  poseIncrement.tail<3>() = ez_W.cross(e_acc).normalized();
-  double angle = std::acos(ez_W.transpose() * e_acc);
-  poseIncrement.tail<3>() *= angle;
-  T_WS.oplus(-poseIncrement);
-
-  return true;
 }
 
 // Start ceres optimization.

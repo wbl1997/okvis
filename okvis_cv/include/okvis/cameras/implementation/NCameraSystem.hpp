@@ -228,9 +228,17 @@ void NCameraSystem::setCameraIntrinsics(int camera_id,
 void NCameraSystem::setImageDelay(int camera_id, double td) {
   cameraGeometries_[camera_id]->setImageDelay(td);
 }
+
 void NCameraSystem::setReadoutTime(int camera_id, double tr) {
   cameraGeometries_[camera_id]->setReadoutTime(tr);
 }
 
+void NCameraSystem::setProjectionOptMode(int camera_id, const std::string& opt_mode) {
+  proj_opt_rep_[camera_id] = opt_mode;
+}
+
+void NCameraSystem::setExtrinsicOptMode(int camera_id, const std::string& opt_mode) {
+  extrinsic_opt_rep_[camera_id] = opt_mode;
+}
 }  // namespace cameras
 }  // namespace okvis

@@ -58,4 +58,38 @@ InitialNavState& InitialNavState::operator=(const InitialNavState& other) {
   std_v_WS = other.std_v_WS;
   return *this;
 }
+
+void alignZ(const Eigen::Vector3d& a_S, Eigen::Quaterniond* q_WS) {
+  *q_WS = Eigen::Quaterniond::FromTwoVectors(a_S, Eigen::Vector3d(0, 0, 1));
+}
+
+// Initialise pose from IMU measurements. For convenience as static.
+bool initPoseFromImu(
+    const okvis::ImuMeasurementDeque & imuMeasurements,
+    okvis::kinematics::Transformation & T_WS)
+{
+  // set translation to zero, unit rotation
+  T_WS.setIdentity();
+  if (imuMeasurements.size() == 0)
+    return false;
+
+  // acceleration vector
+  Eigen::Vector3d acc_B = Eigen::Vector3d::Zero();
+  for (okvis::ImuMeasurementDeque::const_iterator it = imuMeasurements.begin();
+      it < imuMeasurements.end(); ++it) {
+    acc_B += it->measurement.accelerometers;
+  }
+  acc_B /= double(imuMeasurements.size());
+  Eigen::Vector3d e_acc = acc_B.normalized();
+
+  // align with ez_W:
+  Eigen::Vector3d ez_W(0.0, 0.0, 1.0);
+  Eigen::Matrix<double, 6, 1> poseIncrement;
+  poseIncrement.head<3>() = Eigen::Vector3d::Zero();
+  poseIncrement.tail<3>() = ez_W.cross(e_acc).normalized();
+  double angle = std::acos(ez_W.transpose() * e_acc);
+  poseIncrement.tail<3>() *= angle;
+  T_WS.oplus(-poseIncrement);
+  return true;
+}
 }  // namespace swift_vio

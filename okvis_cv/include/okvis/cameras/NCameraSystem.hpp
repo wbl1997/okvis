@@ -161,6 +161,10 @@ class NCameraSystem
 
   inline void setReadoutTime(int camera_id, double tr);
 
+  inline void setProjectionOptMode(int camera_id, const std::string& opt_mode);
+
+  inline void setExtrinsicOptMode(int camera_id, const std::string& opt_mode);
+
   std::shared_ptr<NCameraSystem> deepCopy() const;
 
 protected:

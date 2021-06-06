@@ -3,8 +3,10 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <okvis/Time.hpp>
+
+#include <okvis/ImuMeasurements.hpp>
 #include <okvis/kinematics/Transformation.hpp>
+#include <okvis/Time.hpp>
 
 namespace swift_vio {
 struct InitialNavState {
@@ -36,5 +38,21 @@ struct InitialNavState {
 
   InitialNavState& operator=(const InitialNavState& other);
 };
+
+/**
+ * @brief alignZ
+ * @param a_S
+ * @param[out] q_WS q_WS * a_S = [0, 0, s]
+ */
+void alignZ(const Eigen::Vector3d &a_S, Eigen::Quaterniond *q_WS);
+
+/**
+ * @brief Initialise pose from IMU measurements. For convenience as static.
+ * @param[in]  imuMeasurements The IMU measurements to be used for this.
+ * @param[out] T_WS initialised pose.
+ * @return True if successful.
+ */
+bool initPoseFromImu(const okvis::ImuMeasurementDeque &imuMeasurements,
+                     okvis::kinematics::Transformation &T_WS);
 }  // namespace swift_vio
 #endif  // INITIAL_NAV_STATE_HPP

@@ -195,16 +195,6 @@ class Estimator : public VioBackendInterface
   bool applyMarginalizationStrategy(okvis::MapPointVector& removedLandmarks) override;
 
   /**
-   * @brief Initialise pose from IMU measurements. For convenience as static.
-   * @param[in]  imuMeasurements The IMU measurements to be used for this.
-   * @param[out] T_WS initialised pose.
-   * @return True if successful.
-   */
-  static bool initPoseFromImu(
-      const okvis::ImuMeasurementDeque & imuMeasurements,
-      okvis::kinematics::Transformation & T_WS);
-
-  /**
    * @brief Start ceres optimization.
    * @param[in] numIter Maximum number of iterations.
    * @param[in] numThreads Number of threads.

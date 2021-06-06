@@ -461,7 +461,7 @@ void ThreadedKFVio::frameConsumerLoop(size_t cameraIndex) {
     // get T_WC(camIndx) for detectAndDescribe()
     if (estimator_->numFrames() == 0) {
       // first frame ever
-      bool success = okvis::Estimator::initPoseFromImu(imuData, T_WS);
+      bool success = swift_vio::initPoseFromImu(imuData, T_WS);
       {
         std::lock_guard<std::mutex> lock(lastState_mutex_);
         lastOptimized_T_WS_ = T_WS;
