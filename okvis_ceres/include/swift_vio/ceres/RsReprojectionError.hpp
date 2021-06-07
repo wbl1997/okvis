@@ -25,8 +25,15 @@ namespace okvis {
 namespace ceres {
 
 template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL,
-          class LANDMARK_MODEL, class IMU_MODEL>
+          class LANDMARK_MODEL>
 class LocalBearingVector;
+
+// TODO(jhuai): simplify template arguments to CameraModel, ExtrinsicModel,
+// and LandmarkModel.
+
+// The IMU model is assumed to be BG_BA which is accurate enough for predicting
+// poses in a short term, (usually less than t_r/2), also Jacobians in the
+// prediction can be computed as in SimpleImuPropagationJacobian.
 
 /// \brief The 2D keypoint reprojection error accounting for rolling shutter
 ///     skew and time offset and camera intrinsics.
@@ -51,8 +58,7 @@ class LocalBearingVector;
 ///     Its kNumParams should not be zero.
 template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
           class EXTRINSIC_MODEL=swift_vio::Extrinsic_p_BC_q_BC,
-          class LANDMARK_MODEL=swift_vio::HomogeneousPointParameterization,
-          class IMU_MODEL=swift_vio::Imu_BG_BA>
+          class LANDMARK_MODEL=swift_vio::HomogeneousPointParameterization>
 class RsReprojectionError
     : public ::ceres::SizedCostFunction<
           2 /* number of residuals */, 7 /* pose */, 4 /* landmark */,
@@ -255,7 +261,7 @@ class RsReprojectionError
     return "RsReprojectionError";
   }
 
-  friend class LocalBearingVector<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL, IMU_MODEL>;
+  friend class LocalBearingVector<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL>;
  protected:
 //  uint64_t cameraId_; ///< ID of the camera.
   measurement_t measurement_; ///< The (2D) measurement.
@@ -285,11 +291,11 @@ class RsReprojectionError
 // see ceres-solver/include/ceres/internal/variadic_evaluate.h
 // so we have to separate operator() from Evaluate()
 template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-          class EXTRINSIC_MODEL, class LANDMARK_MODEL, class IMU_MODEL>
+          class EXTRINSIC_MODEL, class LANDMARK_MODEL>
 class LocalBearingVector {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  LocalBearingVector(const RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL, IMU_MODEL>& rsre);
+  LocalBearingVector(const RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL>& rsre);
   template <typename Scalar>
   bool operator()(const Scalar* const T_WS, const Scalar* const hp_W,
                   const Scalar* const extrinsic, const Scalar* const t_r,
@@ -298,7 +304,7 @@ class LocalBearingVector {
                   const Scalar* const deltaExtrinsic, Scalar* hp_C) const;
 
  private:
-  const RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL, IMU_MODEL>& rsre_;
+  const RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL>& rsre_;
 };
 
 }  // namespace ceres
