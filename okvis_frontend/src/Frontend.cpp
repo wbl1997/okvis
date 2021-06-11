@@ -82,6 +82,7 @@ Frontend::Frontend(size_t numCameras, const swift_vio::FrontendOptions& frontend
           std::unique_ptr<okvis::DenseMatcher>(new okvis::DenseMatcher(4))),
       keyframeInsertionOverlapThreshold_(0.6),
       keyframeInsertionMatchingRatioThreshold_(0.2),
+      numNFrames_(0), numKeyframes_(0),
       frontendOptions_(frontendOptions) {
   // create mutexes for feature detectors and descriptor extractors
   for (size_t i = 0; i < numCameras_; ++i) {
@@ -255,9 +256,11 @@ bool Frontend::dataAssociationAndInitialization(
   } else
     *asKeyframe = true;  // first frame needs to be keyframe
 
+
   // do stereo match to get new landmarks
   matchStereoSwitch(distortionType, estimator, framesInOut);
-
+  ++numNFrames_;
+  numKeyframes_ += (*asKeyframe ? 1 : 0);
   return true;
 }
 

@@ -189,8 +189,16 @@ class Frontend : public VioFrontendInterface {
   }
 
   /// @brief Returns true if the initialization has been completed (RANSAC with actual translation)
-  bool isInitialized() {
+  bool isInitialized() const {
     return isInitialized_;
+  }
+
+  int numNFrames() const {
+    return numNFrames_;
+  }
+
+  int numKeyframes() const {
+    return numKeyframes_;
   }
 
   virtual bool isDescriptorBasedMatching() const {
@@ -325,6 +333,10 @@ class Frontend : public VioFrontendInterface {
    * @see   doWeNeedANewKeyframe()
    */
   float keyframeInsertionMatchingRatioThreshold_;  //0.2
+
+  int numNFrames_;
+
+  int numKeyframes_;
 
   swift_vio::FrontendOptions frontendOptions_;
 
