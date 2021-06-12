@@ -47,27 +47,18 @@ ImuParameters::ImuParameters()
 }
 
 Optimization::Optimization()
-    : max_iterations(10),
-      min_iterations(3),
-      timeLimitForMatchingAndOptimization(0.035),
-      timeReserve(0.005),
-      detectionThreshold(40),
-      useMedianFilter(false),
-      detectionOctaves(0),
-      maxNoKeypoints(400),
-      numKeyframes(5),
-      numImuFrames(3),
+    : max_iterations(10), min_iterations(3),
+      timeLimitForMatchingAndOptimization(0.035), timeReserve(0.005),
+      detectionThreshold(40), useMedianFilter(false), detectionOctaves(0),
+      maxNoKeypoints(400), numKeyframes(5), numImuFrames(3),
       keyframeInsertionOverlapThreshold(0.6),
       keyframeInsertionMatchingRatioThreshold(0.2),
       algorithm(swift_vio::EstimatorAlgorithm::OKVIS),
-      translationThreshold(0.4),
-      rotationThreshold(0.2618),
-      trackingRateThreshold(0.5),
-      triangulationTranslationThreshold(-1.0),
-      triangulationMaxDepth(1000.0),
-      useEpipolarConstraint(false),
-      cameraObservationModelId(0),
-      computeOkvisNees(false) {}
+      translationThreshold(0.4), rotationThreshold(0.2618),
+      trackingRateThreshold(0.5), triangulationTranslationThreshold(-1.0),
+      triangulationMaxDepth(1000.0), useEpipolarConstraint(false),
+      cameraObservationModelId(0), computeOkvisNees(false),
+      useMahalanobisGating(true), maxProjectionErrorTol(7) {}
 
 std::string Optimization::toString(std::string lead) const {
   std::stringstream ss(lead);
@@ -77,7 +68,9 @@ std::string Optimization::toString(std::string lead) const {
      << triangulationTranslationThreshold << " Max depth in triangulation "
      << triangulationMaxDepth << "\nUse epipolar constraint? "
      << useEpipolarConstraint << " Camera observation model Id "
-     << cameraObservationModelId;
+     << cameraObservationModelId << " compute OKVIS NEES? " << computeOkvisNees
+     << " Mahalanobis gating? " << useMahalanobisGating
+     << " Max projection error " << maxProjectionErrorTol << " (px)";
   return ss.str();
 }
 }  // namespace okvis

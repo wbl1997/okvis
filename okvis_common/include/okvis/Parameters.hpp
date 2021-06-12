@@ -272,6 +272,11 @@ struct Optimization{
   // set false to analyze the accuracy of Estimator.
   bool computeOkvisNees;
 
+  // Malalanobis gating test or a simple reprojection error threshold to remove outliers in filtering.
+  bool useMahalanobisGating;
+  // Max allowed projection error for an image feature to check outliers in the reprojection error scheme.
+  double maxProjectionErrorTol;
+
   Optimization();
 
   std::string toString(std::string lead) const;
