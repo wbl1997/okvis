@@ -468,8 +468,11 @@ void ThreadedKFVio::frameConsumerLoop(size_t cameraIndex) {
         lastOptimizedSpeedAndBiases_.head<3>() = parameters_.initialState.v_WS;
         lastOptimizedSpeedAndBiases_.segment<3>(3) = imu_params_.g0;
         lastOptimizedSpeedAndBiases_.segment<3>(6) = imu_params_.a0;
-        lastOptimizedStateTimestamp_ = multiFrame->timestamp(Estimator::kMainCameraIndex) +
-            okvis::Duration(lastOptimizedCameraSystem_->cameraGeometry(Estimator::kMainCameraIndex)->imageDelay());
+        lastOptimizedStateTimestamp_ =
+            multiFrame->timestamp() +
+            okvis::Duration(lastOptimizedCameraSystem_
+                                ->cameraGeometry(Estimator::kMainCameraIndex)
+                                ->imageDelay());
       }
       OKVIS_ASSERT_TRUE_DBG(Exception, success,
           "pose could not be initialized from imu measurements.");
