@@ -202,6 +202,8 @@ class Estimator : public VioBackendInterface
    */
   void optimize(size_t numIter, size_t numThreads = 1, bool verbose = false) override;
 
+  void updateSensorRigs() override;
+
   /**
    * @brief Set a time limit for the optimization process.
    * @param[in] timeLimit Time limit in seconds. If timeLimit < 0 the time limit is removed.
@@ -388,11 +390,13 @@ class Estimator : public VioBackendInterface
    * @warning This accesses the optimization graph, so not very fast.
    * @param[in]  poseId ID of pose to get camera state for.
    * @param[in]  cameraIdx index of camera to get state for.
-   * @param[out] T_SCi Homogeneous transformation from sensor (IMU) frame to camera frame.
+   * @param[out] T_XCi Homogeneous transformation from a reference sensor frame to camera frame.
+   * For the main camera, T_XC0 is always T_BC0. For other cameras, T_XCi can be T_BCi or T_C0Ci
+   * depending on the camera extrinsic configuration.
    * @return True if successful.
    */
   bool getCameraSensorStates(uint64_t poseId, size_t cameraIdx,
-                              okvis::kinematics::Transformation & T_SCi) const override;
+                             okvis::kinematics::Transformation & T_XCi) const override;
 
   /// @brief Get the number of states/frames in the estimator.
   /// \return The number of frames.
@@ -531,14 +535,8 @@ class Estimator : public VioBackendInterface
           T_CWs,
       std::vector<double>* imageNoiseStd) const;
 
-  int getCameraExtrinsicOptType(size_t cameraIdx) const;
-
   /**
-   * @brief getCameraSensorExtrinsics get extrinsic parameters T_BC for a
-   * camera.
-   * @attention In contrast, getCameraSensorStates get internal extrinsic
-   * parameters T_BC or T_C0C for a camera depending on the extrinsic
-   * representation.
+   * @brief getCameraSensorExtrinsics get extrinsic parameters T_BC for a camera.
    * @param poseId
    * @param cameraIdx
    * @param T_BCi
@@ -549,15 +547,25 @@ class Estimator : public VioBackendInterface
       okvis::kinematics::Transformation& T_BCi) const;
 
   /**
-   * @brief getEstimatedCameraIntrinsics get the estimate of OPTIMIZED
-   * intrinsic parameters of camIdx.
-   * @param cameraParams[out] including projection and distortion intrinsic
-   * parameters and time delay and readout time.
+   * @brief get variable extrinsic parameters of camIdx.
+   * @param[out] extrinsicParams variable extrinsic parameters refined by the estimator.
    * @param camIdx
    * @return
    */
-  virtual void getEstimatedCameraIntrinsics(
-      Eigen::Matrix<double, Eigen::Dynamic, 1>* cameraParams, size_t camIdx) const;
+  void getVariableCameraExtrinsics(
+      Eigen::Matrix<double, Eigen::Dynamic, 1> *extrinsicParams,
+      size_t camIdx) const;
+
+  /**
+   * @brief get variable intrinsic parameters of camIdx.
+   * @param cameraParams[out] variable intrinsic parameters refined by the
+   * estimator, may include time offset and readout time.
+   * @param camIdx
+   * @return
+   */
+  virtual void getVariableCameraIntrinsics(
+      Eigen::Matrix<double, Eigen::Dynamic, 1> *cameraParams,
+      size_t camIdx) const;
 
   /**
    * @brief getImuAugmentedStatesEstimate get the lastest estimate of IMU augmented params.
@@ -595,17 +603,6 @@ class Estimator : public VioBackendInterface
    * @return True if successful.
    */
   bool setSpeedAndBias(uint64_t poseId, size_t imuIdx, const okvis::SpeedAndBias & speedAndBias) override;
-
-  /**
-   * @brief Set the transformation from sensor to camera frame for a given pose ID.
-   * @warning This accesses the optimization graph, so not very fast.
-   * @param[in] poseId ID of the pose to change corresponding camera states for.
-   * @param[in] cameraIdx Index of camera to set state for.
-   * @param[in] T_SCi new homogeneous transformation from sensor (IMU) to camera frame.
-   * @return True if successful.
-   */
-  bool setCameraSensorStates(uint64_t poseId, size_t cameraIdx,
-                              const okvis::kinematics::Transformation & T_SCi) override;
 
 
   /// @brief Set whether a frame is a keyframe or not.
@@ -674,7 +671,7 @@ class Estimator : public VioBackendInterface
   /// \brief CameraSensorStates The camera-internal states enumerated
   enum CameraSensorStates
   {
-    T_SCi = 0, ///< Extrinsics as T_SC
+    T_XCi = 0, ///< Extrinsics as T_SCi or T_C0Ci
     Intrinsics = 1, ///< Intrinsics, eg., for pinhole camera, fx ,fy, cx, cy
     Distortion = 2,  ///< Distortion coefficients, eg., for radial tangential distoriton
                  /// of pinhole cameras, k1, k2, p1, p2, [k3], this ordering is

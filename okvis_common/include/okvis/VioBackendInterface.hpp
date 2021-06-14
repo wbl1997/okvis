@@ -166,6 +166,8 @@ class VioBackendInterface {
   virtual bool
   applyMarginalizationStrategy(okvis::MapPointVector &removedLandmarks) = 0;
 
+  virtual void updateSensorRigs() = 0;
+
   /**
    * @brief Checks whether the landmark is added to the estimator.
    * @param landmarkId The ID.
@@ -240,11 +242,13 @@ class VioBackendInterface {
    * @brief Get camera states for a given pose ID.
    * @param[in]  poseId ID of pose to get camera state for.
    * @param[in]  cameraIdx index of camera to get state for.
-   * @param[out] T_SCi Homogeneous transformation from sensor (IMU) frame to camera frame.
+   * @param[out] T_XCi Homogeneous transformation from a reference sensor frame
+   * to camera frame.
    * @return True if successful.
    */
-  virtual bool getCameraSensorStates(uint64_t poseId, size_t cameraIdx,
-                              okvis::kinematics::Transformation & T_SCi) const = 0;
+  virtual bool
+  getCameraSensorStates(uint64_t poseId, size_t cameraIdx,
+                        okvis::kinematics::Transformation &T_XCi) const = 0;
 
   /// @brief Get the number of states/frames in the estimator.
   /// \return The number of frames.
@@ -320,16 +324,6 @@ class VioBackendInterface {
    * @return True if successful.
    */
   virtual bool setSpeedAndBias(uint64_t poseId, size_t imuIdx, const okvis::SpeedAndBias & speedAndBias) = 0;
-
-  /**
-   * @brief Set the transformation from sensor to camera frame for a given pose ID
-   * @param[in] poseId ID of the pose to change corresponding camera states for.
-   * @param[in] cameraIdx Index of camera to set state for.
-   * @param[in] T_SCi new homogeneous transformation from sensor (IMU) to camera frame.
-   * @return True if successful.
-   */
-  virtual bool setCameraSensorStates(uint64_t poseId, size_t cameraIdx,
-                              const okvis::kinematics::Transformation & T_SCi) = 0;
 
   /// @brief Set the homogeneous coordinates for a landmark
   /// @param[in] landmarkId The landmark ID.

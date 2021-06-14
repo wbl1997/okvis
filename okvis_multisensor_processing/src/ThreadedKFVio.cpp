@@ -929,17 +929,15 @@ void ThreadedKFVio::dumpCalibrationParameters(uint64_t latestNFrameId, Optimizat
   result->vector_of_T_SCi.clear();
   result->variableCameraParams_.resize(parameters_.nCameraSystem.numCameras());
   for (size_t i = 0u; i < parameters_.nCameraSystem.numCameras(); ++i) {
-    okvis::kinematics::Transformation T_XC;
-    estimator_->getCameraSensorStates(latestNFrameId, i, T_XC);
-    result->vector_of_T_SCi.emplace_back(T_XC);
+    okvis::kinematics::Transformation T_SC;
+    estimator_->getCameraSensorExtrinsics(latestNFrameId, i, T_SC);
+    result->vector_of_T_SCi.emplace_back(T_SC);
 
-    int extrinsic_opt_type = estimator_->getCameraExtrinsicOptType(i);
     Eigen::VectorXd optimizedExtrinsicCoeffs;
-    swift_vio::ExtrinsicModelToParamValues(extrinsic_opt_type, T_XC,
-                                           &optimizedExtrinsicCoeffs);
+    estimator_->getVariableCameraExtrinsics(&optimizedExtrinsicCoeffs, i);
 
     Eigen::VectorXd optimizedIntrinsics;
-    estimator_->getEstimatedCameraIntrinsics(&optimizedIntrinsics, i);
+    estimator_->getVariableCameraIntrinsics(&optimizedIntrinsics, i);
 
     result->variableCameraParams_.at(i).resize(
         optimizedExtrinsicCoeffs.size() + optimizedIntrinsics.size(), 1);

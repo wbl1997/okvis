@@ -52,6 +52,7 @@
 #include <swift_vio/ceres/CameraTimeParamBlock.hpp>
 #include <swift_vio/ceres/EuclideanParamBlock.hpp>
 #include <swift_vio/ceres/EuclideanParamBlockSized.hpp>
+#include <swift_vio/ExtrinsicModels.hpp>
 #include <swift_vio/IoUtil.hpp>
 #include <swift_vio/VectorOperations.hpp>
 
@@ -222,14 +223,14 @@ bool Estimator::addStates(
   for (size_t i = 0; i < extrinsicsEstimationParametersVec_.size(); ++i) {
 
     SpecificSensorStatesContainer cameraInfos(2);
-    cameraInfos.at(CameraSensorStates::T_SCi).exists=true;
+    cameraInfos.at(CameraSensorStates::T_XCi).exists=true;
     cameraInfos.at(CameraSensorStates::Intrinsics).exists=false;
     if(((extrinsicsEstimationParametersVec_.at(i).sigma_c_relative_translation<1e-12)||
         (extrinsicsEstimationParametersVec_.at(i).sigma_c_relative_orientation<1e-12))&&
         (statesMap_.size() > 1)){
       // use the same block...
-      cameraInfos.at(CameraSensorStates::T_SCi).id =
-          lastElementIterator->second.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::T_SCi).id;
+      cameraInfos.at(CameraSensorStates::T_XCi).id =
+          lastElementIterator->second.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::T_XCi).id;
     } else {
       const okvis::kinematics::Transformation T_SC = *multiFrame->T_SC(i);
       uint64_t id = IdProvider::instance().newId();
@@ -239,7 +240,7 @@ bool Estimator::addStates(
       if(!mapPtr_->addParameterBlock(extrinsicsParameterBlockPtr,ceres::Map::Pose6d)){
         return false;
       }
-      cameraInfos.at(CameraSensorStates::T_SCi).id = id;
+      cameraInfos.at(CameraSensorStates::T_XCi).id = id;
     }
     // update the states info
     statesMap_.rbegin()->second.sensors.at(SensorStates::Camera).push_back(cameraInfos);
@@ -286,12 +287,12 @@ bool Estimator::addStates(
             cameraPoseError,
             NULL,
             mapPtr_->parameterBlockPtr(
-                states.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::T_SCi).id));
+                states.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::T_XCi).id));
         //mapPtr_->isJacobianCorrect(id,1.0e-6);
       }
       else {
         mapPtr_->setParameterBlockConstant(
-            states.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::T_SCi).id);
+            states.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::T_XCi).id);
       }
     }
     for (size_t i = 0; i < imuParametersVec_.size(); ++i) {
@@ -337,8 +338,8 @@ bool Estimator::addStates(
 
     // add relative sensor state errors
     for (size_t i = 0; i < extrinsicsEstimationParametersVec_.size(); ++i) {
-      if(lastElementIterator->second.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::T_SCi).id !=
-          states.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::T_SCi).id){
+      if(lastElementIterator->second.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::T_XCi).id !=
+          states.sensors.at(SensorStates::Camera).at(i).at(CameraSensorStates::T_XCi).id){
         // i.e. they are different estimated variables, so link them with a temporal error term
         double dt = (states.timestamp - lastElementIterator->second.timestamp)
             .toSec();
@@ -356,10 +357,10 @@ bool Estimator::addStates(
             NULL,
             mapPtr_->parameterBlockPtr(
                 lastElementIterator->second.sensors.at(SensorStates::Camera).at(
-                    i).at(CameraSensorStates::T_SCi).id),
+                    i).at(CameraSensorStates::T_XCi).id),
             mapPtr_->parameterBlockPtr(
                 states.sensors.at(SensorStates::Camera).at(i).at(
-                    CameraSensorStates::T_SCi).id));
+                    CameraSensorStates::T_XCi).id));
         //mapPtr_->isJacobianCorrect(id,1.0e-6);
       }
     }
@@ -533,7 +534,7 @@ bool Estimator::applyMarginalizationStrategy(okvis::MapPointVector& removedLandm
     for (size_t i = 0; i < it->second.sensors.size(); ++i) {
       for (size_t j = 0; j < it->second.sensors[i].size(); ++j) {
         for (size_t k = 0; k < it->second.sensors[i][j].size(); ++k) {
-          if (i == SensorStates::Camera && k == CameraSensorStates::T_SCi) {
+          if (i == SensorStates::Camera && k == CameraSensorStates::T_XCi) {
             continue; // we do not remove the extrinsics pose here.
           }
           if (!it->second.sensors[i][j][k].exists) {
@@ -603,7 +604,7 @@ bool Estimator::applyMarginalizationStrategy(okvis::MapPointVector& removedLandm
     // add remaining error terms of the sensor states.
     size_t i = SensorStates::Camera;
     for (size_t j = 0; j < it->second.sensors[i].size(); ++j) {
-      size_t k = CameraSensorStates::T_SCi;
+      size_t k = CameraSensorStates::T_XCi;
       if (!it->second.sensors[i][j][k].exists) {
         continue;
       }
@@ -856,6 +857,12 @@ bool Estimator::printStatesAndStdevs(std::ostream& stream) const {
   uint64_t poseId = statesMap_.rbegin()->first;
   printNavStateAndBiases(stream, poseId);
 
+  size_t numCameras = extrinsicsEstimationParametersVec_.size();
+  for (size_t camIdx = 0u; camIdx < numCameras; ++camIdx) {
+    Eigen::VectorXd extrinsicValues;
+    getVariableCameraExtrinsics(&extrinsicValues, camIdx);
+    stream << " " << extrinsicValues.transpose().format(swift_vio::kSpaceInitFmt);
+  }
   Eigen::MatrixXd covariance;
   computeCovariance(&covariance);
   Eigen::VectorXd stateStd = covariance.diagonal().cwiseSqrt();
@@ -865,14 +872,26 @@ bool Estimator::printStatesAndStdevs(std::ostream& stream) const {
 
 std::string Estimator::headerLine(const std::string delimiter) const {
   std::stringstream stream;
+  stream << "timestamp(sec)" << delimiter << "frameId" << delimiter;
   std::vector<std::string> variableList{
-      "timestamp(sec)", "frameId",       "p_WB_W_x(m)",   "p_WB_W_y(m)",
-      "p_WB_W_z(m)",    "q_WB_x",        "q_WB_y",        "q_WB_z",
-      "q_WB_w",         "v_WB_W_x(m/s)", "v_WB_W_y(m/s)", "v_WB_W_z(m/s)",
-      "b_g_x(rad/s)",   "b_g_y(rad/s)",  "b_g_z(rad/s)",  "b_a_x(m/s^2)",
-      "b_a_y(m/s^2)",   "b_a_z(m/s^2)"};
+      "p_WB_W_x(m)",   "p_WB_W_y(m)",   "p_WB_W_z(m)",  "q_WB_x",
+      "q_WB_y",        "q_WB_z",        "q_WB_w",       "v_WB_W_x(m/s)",
+      "v_WB_W_y(m/s)", "v_WB_W_z(m/s)", "b_g_x(rad/s)", "b_g_y(rad/s)",
+      "b_g_z(rad/s)",  "b_a_x(m/s^2)",  "b_a_y(m/s^2)", "b_a_z(m/s^2)"};
   for (auto variable : variableList) {
     stream << variable << delimiter;
+  }
+  std::vector<std::string> cameraParamLabels;
+  size_t numCameras = extrinsicsEstimationParametersVec_.size();
+  for (size_t j = 0u; j < numCameras; ++j) {
+    if (!fixCameraExtrinsicParams_[j]) {
+      std::vector<std::string> camExtrinsicLabels;
+      swift_vio::ExtrinsicModelToDimensionLabels(
+          cameraRig_.getExtrinsicOptMode(j), &camExtrinsicLabels);
+      cameraParamLabels.insert(cameraParamLabels.end(),
+                               camExtrinsicLabels.begin(),
+                               camExtrinsicLabels.end());
+    }
   }
   for (auto variable : variableList) {
     stream << "std_" << variable << delimiter;
@@ -944,6 +963,9 @@ void Estimator::optimize(size_t numIter, size_t /*numThreads*/,
       }
     }
   }
+
+  updateSensorRigs();
+
 
   // summary output
   if (verbose) {
@@ -1047,10 +1069,10 @@ bool Estimator::getSpeedAndBias(uint64_t poseId, uint64_t imuIdx,
 // Get camera states for a given pose ID.
 bool Estimator::getCameraSensorStates(
     uint64_t poseId, size_t cameraIdx,
-    okvis::kinematics::Transformation & T_SCi) const
+    okvis::kinematics::Transformation & T_XCi) const
 {
   return getSensorStateEstimateAs<ceres::PoseParameterBlock>(
-      poseId, cameraIdx, SensorStates::Camera, CameraSensorStates::T_SCi, T_SCi);
+      poseId, cameraIdx, SensorStates::Camera, CameraSensorStates::T_XCi, T_XCi);
 }
 
 // Get the ID of the current keyframe.
@@ -1127,15 +1149,6 @@ bool Estimator::setSpeedAndBias(uint64_t poseId, size_t imuIdx, const okvis::Spe
 {
   return setSensorStateEstimateAs<ceres::SpeedAndBiasParameterBlock>(
       poseId, imuIdx, SensorStates::Imu, ImuSensorStates::SpeedAndBias, speedAndBias);
-}
-
-// Set the transformation from sensor to camera frame for a given pose ID.
-bool Estimator::setCameraSensorStates(
-    uint64_t poseId, size_t cameraIdx,
-    const okvis::kinematics::Transformation & T_SCi)
-{
-  return setSensorStateEstimateAs<ceres::PoseParameterBlock>(
-      poseId, cameraIdx, SensorStates::Camera, CameraSensorStates::T_SCi, T_SCi);
 }
 
 // Set the homogeneous coordinates for a landmark.
@@ -1658,38 +1671,36 @@ size_t Estimator::gatherMapPointObservations(
   return obsDirections->size();
 }
 
-int Estimator::getCameraExtrinsicOptType(size_t cameraIdx) const {
-  return cameraRig_.getExtrinsicOptMode(cameraIdx);
+bool Estimator::getCameraSensorExtrinsics(
+    uint64_t /*poseId*/, size_t cameraIdx,
+    okvis::kinematics::Transformation& T_BCi) const {
+  T_BCi = cameraRig_.getCameraExtrinsic(cameraIdx);
+  return true;
 }
 
-bool Estimator::getCameraSensorExtrinsics(
-    uint64_t poseId, size_t cameraIdx,
-    okvis::kinematics::Transformation& T_BCi) const {
-  if (cameraRig_.getExtrinsicOptMode(cameraIdx) ==
-      swift_vio::Extrinsic_p_C0C_q_C0C::kModelId) {
-    OKVIS_ASSERT_NE_DBG(
-        Exception, kMainCameraIndex, cameraIdx,
-        "Extrinsic_p_C0C_q_C0C should not happen with the main camera.");
-    okvis::kinematics::Transformation T_BC0;
-    bool status = getSensorStateEstimateAs<ceres::PoseParameterBlock>(
-        poseId, kMainCameraIndex, SensorStates::Camera,
-        CameraSensorStates::T_SCi, T_BC0);
-    okvis::kinematics::Transformation T_C0Ci;
-    status &= getSensorStateEstimateAs<ceres::PoseParameterBlock>(
-        poseId, cameraIdx, SensorStates::Camera, CameraSensorStates::T_SCi,
-        T_C0Ci);
-    T_BCi = T_BC0 * T_C0Ci;
-    return status;
+void Estimator::getVariableCameraExtrinsics(
+    Eigen::Matrix<double, Eigen::Dynamic, 1> *extrinsicParams,
+    size_t camIdx) const {
+  const States &stateInQuestion = statesMap_.rbegin()->second;
+  if (!fixCameraExtrinsicParams_[camIdx]) {
+    uint64_t extrinsicId = stateInQuestion.sensors.at(SensorStates::Camera)
+                               .at(camIdx)
+                               .at(okvis::Estimator::CameraSensorStates::T_XCi)
+                               .id;
+    std::shared_ptr<okvis::ceres::PoseParameterBlock> extrinsicParamBlockPtr =
+        std::static_pointer_cast<okvis::ceres::PoseParameterBlock>(
+            mapPtr_->parameterBlockPtr(extrinsicId));
+    okvis::kinematics::Transformation T_XC = extrinsicParamBlockPtr->estimate();
+    swift_vio::ExtrinsicModelToParamValues(
+        cameraRig_.getExtrinsicOptMode(camIdx), T_XC, extrinsicParams);
   } else {
-    return getSensorStateEstimateAs<ceres::PoseParameterBlock>(
-        poseId, cameraIdx, SensorStates::Camera, CameraSensorStates::T_SCi,
-        T_BCi);
+    extrinsicParams->resize(0);
   }
 }
 
-void Estimator::getEstimatedCameraIntrinsics(
-    Eigen::Matrix<double, Eigen::Dynamic, 1>* cameraParams, size_t /*camIdx*/) const {
-  cameraParams->resize(0);
+void Estimator::getVariableCameraIntrinsics(
+    Eigen::Matrix<double, Eigen::Dynamic, 1>* intrinsicParams, size_t /*camIdx*/) const {
+  intrinsicParams->resize(0);
 }
 
 void Estimator::getImuAugmentedStatesEstimate(
@@ -1699,6 +1710,29 @@ void Estimator::getImuAugmentedStatesEstimate(
 
 void Estimator::getEstimatedCameraSystem(std::shared_ptr<okvis::cameras::NCameraSystem> cameraSystem) const {
   cameraRig_.assign(cameraSystem);
+}
+
+void Estimator::updateSensorRigs() {
+  size_t numCameras = cameraRig_.numberCameras();
+  const uint64_t currFrameId = currentFrameId();
+  okvis::kinematics::Transformation T_BC0;
+  getCameraSensorStates(currFrameId, kMainCameraIndex, T_BC0);
+
+  for (size_t camIdx = 0u; camIdx < numCameras; ++camIdx) {
+    int extrinsicModelId = cameraRig_.getExtrinsicOptMode(camIdx);
+    okvis::kinematics::Transformation T_XCi;
+    switch (extrinsicModelId) {
+    case swift_vio::Extrinsic_p_CB::kModelId:
+    case swift_vio::Extrinsic_p_BC_q_BC::kModelId:
+      getCameraSensorStates(currFrameId, camIdx, T_XCi);
+      cameraRig_.setCameraExtrinsic(camIdx, T_XCi);
+      break;
+    case swift_vio::Extrinsic_p_C0C_q_C0C::kModelId:
+      getCameraSensorStates(currFrameId, camIdx, T_XCi);
+      cameraRig_.setCameraExtrinsic(camIdx, T_BC0 * T_XCi);
+      break;
+    }
+  }
 }
 
 const okvis::Duration Estimator::half_window_(2, 0);

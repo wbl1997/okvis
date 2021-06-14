@@ -67,6 +67,7 @@ class MockVioBackendInterface : public VioBackendInterface {
   MOCK_METHOD1(applyMarginalizationStrategy, bool(okvis::MapPointVector& removedLandmarks));
   MOCK_METHOD3(optimize,
       void(size_t, size_t, bool));
+  MOCK_METHOD0(updateSensorRigs, void());
   MOCK_METHOD2(setOptimizationTimeLimit,
       bool(double timeLimit, int minIterations));
   MOCK_CONST_METHOD1(isLandmarkAdded,
@@ -86,7 +87,7 @@ class MockVioBackendInterface : public VioBackendInterface {
   MOCK_CONST_METHOD3(getSpeedAndBias,
       bool(uint64_t poseId, uint64_t imuIdx, okvis::SpeedAndBias & speedAndBias));
   MOCK_CONST_METHOD3(getCameraSensorStates,
-      bool(uint64_t poseId, size_t cameraIdx, okvis::kinematics::Transformation & T_SCi));
+      bool(uint64_t poseId, size_t cameraIdx, okvis::kinematics::Transformation & T_XCi));
   MOCK_CONST_METHOD0(numFrames,
                      size_t());
   MOCK_CONST_METHOD0(numLandmarks,
@@ -107,8 +108,6 @@ class MockVioBackendInterface : public VioBackendInterface {
       bool(uint64_t poseId, const okvis::kinematics::Transformation & T_WS));
   MOCK_METHOD3(setSpeedAndBias,
       bool(uint64_t poseId, size_t imuIdx, const okvis::SpeedAndBias & speedAndBias));
-  MOCK_METHOD3(setCameraSensorStates,
-      bool(uint64_t poseId, size_t cameraIdx, const okvis::kinematics::Transformation & T_SCi));
   MOCK_METHOD2(setLandmark,
       bool(uint64_t landmarkId, const Eigen::Vector4d & landmark));
   MOCK_METHOD2(setLandmarkInitialized,

@@ -37,7 +37,7 @@ template <class GEOMETRY_TYPE>
       mapPtr_->parameterBlockPtr(statesMap_.at(kpi.frameId)
                                      .sensors.at(SensorStates::Camera)
                                      .at(kpi.cameraIndex)
-                                     .at(CameraSensorStates::T_SCi)
+                                     .at(CameraSensorStates::T_XCi)
                                      .id));
   return retVal;
 }
@@ -199,7 +199,7 @@ bool Estimator::addEpipolarConstraint(uint64_t landmarkId, uint64_t poseId,
       mapPtr_->parameterBlockPtr(poseId),
       mapPtr_->parameterBlockPtr(stateRight.sensors.at(SensorStates::Camera)
                                      .at(camIdx)
-                                     .at(CameraSensorStates::T_SCi)
+                                     .at(CameraSensorStates::T_XCi)
                                      .id),
       mapPtr_->parameterBlockPtr(stateRight.sensors.at(SensorStates::Camera)
                                      .at(camIdx)

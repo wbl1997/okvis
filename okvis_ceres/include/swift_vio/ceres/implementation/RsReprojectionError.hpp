@@ -425,7 +425,7 @@ void RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, L
     Eigen::Matrix<double, EXTRINSIC_MODEL::kNumParams, 7, Eigen::RowMajor> J_lift;
     if (EXTRINSIC_MODEL::kNumParams == 6) {
       // Warn: This relates to the parameterization of
-      // CameraSensorStates::T_SCi in addStates, and ReprojectionError liftJacobian
+      // CameraSensorStates::T_XCi in addStates, and ReprojectionError liftJacobian
       PoseLocalParameterization::liftJacobian(parameters[2], J_lift.data());
       J2 = J2_minimal * J_lift;
     } else {
