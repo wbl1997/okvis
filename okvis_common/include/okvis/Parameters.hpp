@@ -126,6 +126,8 @@ struct ImuParameters{
   Eigen::Matrix<double, 9, 1> Ts0;
   Eigen::Matrix<double, 9, 1> Ta0;
   std::string model_type; // 0 bg_ba, 1 bg_ba_Tg_Ts_Ta, 2, scaledmisaligned
+  Eigen::Vector3d normalGravity;
+  bool estimateGravityDirection;
   ImuParameters();
 };
 

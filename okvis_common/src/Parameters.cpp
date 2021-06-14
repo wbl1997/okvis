@@ -38,7 +38,9 @@ ImuParameters::ImuParameters()
       sigma_TGElement(5e-3),
       sigma_TSElement(1e-3),
       sigma_TAElement(5e-3),
-      model_type("BG_BA_TG_TS_TA") {
+      model_type("BG_BA_TG_TS_TA"),
+      normalGravity(0, 0, -1),
+      estimateGravityDirection(false) {
   Eigen::Matrix<double, 9, 1> eye;
   eye << 1, 0, 0, 0, 1, 0, 0, 0, 1;
   Tg0 = eye;

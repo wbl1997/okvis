@@ -3,35 +3,22 @@
 namespace swift_vio {
 int ImuRig::addImu(const okvis::ImuParameters& imuParams) {
   int modelId = ImuModelNameToId(imuParams.model_type);
-  Eigen::Matrix<double, Eigen::Dynamic, 1> euclideanParams;
-  Eigen::Quaterniond q_gyro_i = Eigen::Quaterniond::Identity();
-  int augmentedEuclideanDim = ImuModelGetAugmentedEuclideanDim(modelId);
-  Eigen::Matrix<double, Eigen::Dynamic, 1> nominalAugmentedParams =
-      ImuModelNominalAugmentedParams(modelId);
+  Eigen::Matrix<double, Eigen::Dynamic, 1> extraParams;
   switch (modelId) {
     case Imu_BG_BA_TG_TS_TA::kModelId:
-      euclideanParams.resize(Imu_BG_BA_TG_TS_TA::kGlobalDim, 1);
-      euclideanParams.head<3>() = imuParams.g0;
-      euclideanParams.segment<3>(3) = imuParams.a0;
-      euclideanParams.segment<9>(6) = imuParams.Tg0;
-      euclideanParams.segment<9>(15) = imuParams.Ts0;
-      euclideanParams.segment<9>(24) = imuParams.Ta0;
+      extraParams.resize(Imu_BG_BA_TG_TS_TA::kAugmentedDim, 1);
+      extraParams.head<9>() = imuParams.Tg0;
+      extraParams.segment<9>(9) = imuParams.Ts0;
+      extraParams.segment<9>(18) = imuParams.Ta0;
       break;
     case ScaledMisalignedImu::kModelId:
-      euclideanParams.resize(ScaledMisalignedImu::kGlobalDim - 4, 1);
-      euclideanParams.head<3>() = imuParams.g0;
-      euclideanParams.segment<3>(3) = imuParams.a0;
-      euclideanParams.tail(augmentedEuclideanDim) =
-          nominalAugmentedParams.head(augmentedEuclideanDim);
-      q_gyro_i.coeffs() = nominalAugmentedParams.tail<4>();
+      extraParams = ScaledMisalignedImu::getNominalAugmentedParams<double>();
       break;
     default:
-      euclideanParams.resize(Imu_BG_BA::kGlobalDim, 1);
-      euclideanParams.head<3>() = imuParams.g0;
-      euclideanParams.segment<3>(3) = imuParams.a0;
+      extraParams.resize(0);
       break;
   }
-  imus_.emplace_back(modelId, euclideanParams, q_gyro_i);
+  imus_.emplace_back(modelId, imuParams.g0, imuParams.a0, extraParams);
   return static_cast<int>(imus_.size()) - 1;
 }
 

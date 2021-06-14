@@ -177,6 +177,8 @@ class VioParametersReader{
  *         been changed.
  */
 bool parseBoolean(cv::FileNode node, bool& val);
+
+void parseImuParameters(cv::FileNode node, ImuParameters *imuParams);
 }
 
 #endif /* INCLUDE_OKVIS_VIOPARAMETERSREADER_HPP_ */

@@ -106,11 +106,6 @@ class Imu_BG_BA {
    */
   static inline int getAugmentedMinimalDim() { return kAugmentedDim; }
   /**
-   * @brief getAugmentedEuclideanDim
-   * @return dim of Euclidean part of all augmented params.
-   */
-  static inline int getAugmentedEuclideanDim() { return kAugmentedDim; }
-  /**
    * get nominal values for augmented params.
    */
   template <typename T>
@@ -122,13 +117,13 @@ class Imu_BG_BA {
    * This function is used for testing purposes.
    */
   template <typename T>
-  static void predict(const Eigen::Matrix<T, Eigen::Dynamic, 1>& params, const Eigen::Quaternion<T>& /*q_gyro_i*/,
-                      const Eigen::Matrix<T, 3, 1>& w_b, const Eigen::Matrix<T, 3, 1>& a_b,
-                      Eigen::Matrix<T, 3, 1>* w, Eigen::Matrix<T, 3, 1>* a) {
-    Eigen::Matrix<T, 3, 1> ba_i = params.template segment<3>(3);
-    *a = a_b + ba_i;
-    Eigen::Matrix<T, 3, 1> bg_i = params.template head<3>();
-    *w = w_b + bg_i;
+  static void
+  predict(const Eigen::Matrix<T, 3, 1> &bg, const Eigen::Matrix<T, 3, 1> &ba,
+          const Eigen::Matrix<T, Eigen::Dynamic, 1> & /*extraParams*/,
+          const Eigen::Matrix<T, 3, 1> &w_b, const Eigen::Matrix<T, 3, 1> &a_b,
+          Eigen::Matrix<T, 3, 1> *w, Eigen::Matrix<T, 3, 1> *a) {
+    *a = a_b + ba;
+    *w = w_b + bg;
   }
   /**
    * correct IMU measurement to the body frame.
@@ -140,18 +135,17 @@ class Imu_BG_BA {
    * @param[out] w_b, a_b angular velocity and linear acceleration in the body frame.
    */
   template <typename T>
-  static void correct(const Eigen::Matrix<T, Eigen::Dynamic, 1>& params, const Eigen::Quaternion<T>& /*q_gyro_i*/,
-                      const Eigen::Matrix<T, 3, 1>& w, const Eigen::Matrix<T, 3, 1>& a,
-                      Eigen::Matrix<T, 3, 1>* w_b, Eigen::Matrix<T, 3, 1>* a_b) {
-    Eigen::Matrix<T, 3, 1> ba_i = params.template segment<3>(3);
-    *a_b = a - ba_i;
-    Eigen::Matrix<T, 3, 1> bg_i = params.template head<3>();
-    *w_b = w - bg_i;
+  static void
+  correct(const Eigen::Matrix<T, 3, 1> &bg, const Eigen::Matrix<T, 3, 1> &ba,
+          const Eigen::Matrix<T, Eigen::Dynamic, 1> & /*params*/,
+          const Eigen::Matrix<T, 3, 1> &w, const Eigen::Matrix<T, 3, 1> &a,
+          Eigen::Matrix<T, 3, 1> *w_b, Eigen::Matrix<T, 3, 1> *a_b) {
+    *a_b = a - ba;
+    *w_b = w - bg;
   }
 
   static Eigen::VectorXd computeAugmentedParamsError(
-      const Eigen::VectorXd& /*euclideanParams*/,
-      const Eigen::Quaternion<double>& /*rotationParams*/) {
+      const Eigen::VectorXd& /*params*/) {
       return Eigen::VectorXd(0);
   }
 };
@@ -185,7 +179,6 @@ class Imu_BG_BA_TG_TS_TA {
   static inline int getAugmentedDim() { return kAugmentedDim; }
   static inline int getMinimalDim() { return kGlobalDim; }
   static inline int getAugmentedMinimalDim() { return kAugmentedDim; }
-  static inline int getAugmentedEuclideanDim() { return kAugmentedDim; }
   template <typename T>
   static Eigen::Matrix<T, kAugmentedDim, 1> getNominalAugmentedParams() {
     Eigen::Matrix<T, 9, 1> eye;
@@ -197,45 +190,42 @@ class Imu_BG_BA_TG_TS_TA {
   }
 
   template <typename T>
-  static void predict(const Eigen::Matrix<T, Eigen::Dynamic, 1>& params, const Eigen::Quaternion<T>& /*q_gyro_i*/,
-                      const Eigen::Matrix<T, 3, 1>& w_b, const Eigen::Matrix<T, 3, 1>& a_b,
-                      Eigen::Matrix<T, 3, 1>* w, Eigen::Matrix<T, 3, 1>* a) {
-      Eigen::Matrix<T, 3, 1> bg_i = params.template head<3>();
-      Eigen::Matrix<T, 3, 1> ba_i = params.template segment<3>(3);
-
-      Eigen::Matrix<T, 3, 3> T_g;
-      vectorToMatrix<T>(params.data(), kBgBaDim, &T_g);
-      Eigen::Matrix<T, 3, 3> T_s;
-      vectorToMatrix<T>(params.data(), kBgBaDim + 9, &T_s);
-      Eigen::Matrix<T, 3, 3> T_a;
-      vectorToMatrix<T>(params.data(), kBgBaDim + 18, &T_a);
-      *a = T_a * a_b + ba_i;
-      *w = T_g * w_b + T_s * a_b + bg_i;
+  static void
+  predict(const Eigen::Matrix<T, 3, 1> &bg, const Eigen::Matrix<T, 3, 1> &ba,
+          const Eigen::Matrix<T, Eigen::Dynamic, 1> &params,
+          const Eigen::Matrix<T, 3, 1> &w_b, const Eigen::Matrix<T, 3, 1> &a_b,
+          Eigen::Matrix<T, 3, 1> *w, Eigen::Matrix<T, 3, 1> *a) {
+    Eigen::Matrix<T, 3, 3> T_g;
+    vectorToMatrix<T>(params.data(), 0, &T_g);
+    Eigen::Matrix<T, 3, 3> T_s;
+    vectorToMatrix<T>(params.data(), 9, &T_s);
+    Eigen::Matrix<T, 3, 3> T_a;
+    vectorToMatrix<T>(params.data(), 18, &T_a);
+    *a = T_a * a_b + ba;
+    *w = T_g * w_b + T_s * a_b + bg;
   }
 
   template <typename T>
-  static void correct(const Eigen::Matrix<T, Eigen::Dynamic, 1>& params, const Eigen::Quaternion<T>& /*q_gyro_i*/,
-                      const Eigen::Matrix<T, 3, 1>& w, const Eigen::Matrix<T, 3, 1>& a,
-                      Eigen::Matrix<T, 3, 1>* w_b, Eigen::Matrix<T, 3, 1>* a_b) {
-    Eigen::Matrix<T, 3, 1> bg_i = params.template head<3>();
-    Eigen::Matrix<T, 3, 1> ba_i = params.template segment<3>(3);
-
+  static void
+  correct(const Eigen::Matrix<T, 3, 1> &bg, const Eigen::Matrix<T, 3, 1> &ba,
+          const Eigen::Matrix<T, Eigen::Dynamic, 1> &params,
+          const Eigen::Matrix<T, 3, 1> &w, const Eigen::Matrix<T, 3, 1> &a,
+          Eigen::Matrix<T, 3, 1> *w_b, Eigen::Matrix<T, 3, 1> *a_b) {
     Eigen::Matrix<T, 3, 3> T_g;
-    vectorToMatrix<T>(params.data(), kBgBaDim, &T_g);
+    vectorToMatrix<T>(params.data(), 0, &T_g);
     Eigen::Matrix<T, 3, 3> T_s;
-    vectorToMatrix<T>(params.data(), kBgBaDim + 9, &T_s);
+    vectorToMatrix<T>(params.data(), 9, &T_s);
     Eigen::Matrix<T, 3, 3> T_a;
-    vectorToMatrix<T>(params.data(), kBgBaDim + 18, &T_a);
+    vectorToMatrix<T>(params.data(), 18, &T_a);
     Eigen::Matrix<T, 3, 3> inv_T_g = T_g.inverse();
     Eigen::Matrix<T, 3, 3> inv_T_a = T_a.inverse();
-    *a_b = inv_T_a *(a - ba_i);
-    *w_b = inv_T_g * (w - bg_i - T_s * (*a_b));
+    *a_b = inv_T_a * (a - ba);
+    *w_b = inv_T_g * (w - bg - T_s * (*a_b));
   }
 
   static Eigen::VectorXd computeAugmentedParamsError(
-      const Eigen::VectorXd& euclideanParams,
-      const Eigen::Quaternion<double>& /*rotationParams*/) {
-      Eigen::VectorXd residual = euclideanParams.tail<kAugmentedDim>();
+      const Eigen::VectorXd& params) {
+      Eigen::VectorXd residual = params;
       Eigen::Matrix<double, 9, 1> eye;
       eye << 1, 0, 0, 0, 1, 0, 0, 0, 1;
       residual.head<9>() -= eye;
@@ -263,7 +253,6 @@ class ScaledMisalignedImu {
   static inline int getAugmentedDim() { return kAugmentedDim; }
   static inline int getMinimalDim() { return kGlobalDim - 1; }
   static inline int getAugmentedMinimalDim() { return kAugmentedDim - 1; }
-  static inline int getAugmentedEuclideanDim() { return kAugmentedDim - 4; }
   template <typename T>
   static Eigen::Matrix<T, kAugmentedDim, 1> getNominalAugmentedParams() {
     Eigen::Matrix<T, kAugmentedDim, 1> nominalValues = Eigen::Matrix<T, kAugmentedDim, 1>::Zero();
@@ -273,7 +262,7 @@ class ScaledMisalignedImu {
     nominalValues[6 + 9] = T(1.0);
     nominalValues[6 + 9 + 2] = T(1.0);
     nominalValues[6 + 9 + 5] = T(1.0);
-    nominalValues[kAugmentedDim - 1] = T(1.0);
+    nominalValues[kAugmentedDim - 1] = T(1.0);  // quaternion in xyzw format for R_gyro_i.
     return nominalValues;
   }
 
@@ -288,30 +277,34 @@ class ScaledMisalignedImu {
    * C_gyro_i the relative orientation from the accelerometer triad frame, i.e., the IMU sensor frame to the gyro triad frame.
    */
   template <typename T>
-  static void predictAngularVelocity(const Eigen::Matrix<T, Eigen::Dynamic, 1>& params,
-                                     const Eigen::Quaternion<T>& q_gyro_i,
-                                     const Eigen::Quaternion<T>& q_w_b,
-                                     const Eigen::Matrix<T, 3, 1>& w_b,
-                                     const Eigen::Matrix<T, 3, 1>& a_w,
-                                     const Eigen::Matrix<T, 3, 1>& g_w,
-                                     Eigen::Matrix<T, 3, 1>* w) {
+  static void predictAngularVelocity(
+      const Eigen::Matrix<T, 3, 1> &bg, const Eigen::Matrix<T, 3, 1> & /*ba*/,
+      const Eigen::Matrix<T, Eigen::Dynamic, 1> &params,
+      const Eigen::Quaternion<T> &q_w_b, const Eigen::Matrix<T, 3, 1> &w_b,
+      const Eigen::Matrix<T, 3, 1> &a_w, const Eigen::Matrix<T, 3, 1> &g_w,
+      Eigen::Matrix<T, 3, 1> *w) {
     Eigen::Matrix<T, 3, 1> w_dot_b = Eigen::Matrix<T, 3, 1>::Zero();
-    Eigen::Matrix<T, 3, 1> b_i = params.template head<3>();
+    Eigen::Matrix<T, 3, 3> C_b_w =
+        q_w_b.template toRotationMatrix().transpose();
+    Eigen::Matrix<T, 3, 1> r_b =
+        Eigen::Matrix<T, 3, 1>::Zero(); // Assume the 3 accelerometers are at
+                                        // the origin of the body frame.
+    Eigen::Matrix<T, 3, 1> a_b =
+        C_b_w * (a_w - g_w) + w_dot_b.cross(r_b) + w_b.cross(w_b.cross(r_b));
 
-    Eigen::Matrix<T, 3, 3> C_b_w = q_w_b.template toRotationMatrix().transpose();
-    Eigen::Matrix<T, 3, 1> r_b = Eigen::Matrix<T, 3, 1>::Zero(); // Assume the 3 accelerometers are at the origin of the body frame.
-    Eigen::Matrix<T, 3, 1> a_b = C_b_w * (a_w - g_w) + w_dot_b.cross(r_b) + w_b.cross(w_b.cross(r_b));
-
-    Eigen::Matrix<T, 3, 3> C_i_b = Eigen::Matrix<T, 3, 3>::Identity(); // The IMU sensor frame coincides the accelerometer triad frame.
+    Eigen::Matrix<T, 3, 3> C_i_b =
+        Eigen::Matrix<T, 3, 3>::Identity(); // The IMU sensor frame coincides
+                                            // the accelerometer triad frame.
+    Eigen::Map<const Eigen::Quaternion<T>> q_gyro_i(params.data() +
+                                                    kAugmentedDim - 4);
     Eigen::Matrix<T, 3, 3> C_gyro_i = q_gyro_i.template toRotationMatrix();
     Eigen::Matrix<T, 3, 3> C_gyro_b = C_gyro_i * C_i_b;
 
     Eigen::Matrix<T, 3, 3> M_gyro;
-    vectorToLowerTriangularMatrix<T>(params.data(), kBgBaDim, &M_gyro);
+    vectorToLowerTriangularMatrix<T>(params.data(), 0, &M_gyro);
     Eigen::Matrix<T, 3, 3> M_accel_gyro;
-    vectorToMatrix<T>(params.data(), kBgBaDim + kSMDim, &M_accel_gyro);
-
-    *w = M_gyro * (C_gyro_b * w_b) + M_accel_gyro * (C_gyro_b * a_b) + b_i;
+    vectorToMatrix<T>(params.data(), kSMDim, &M_accel_gyro);
+    *w = M_gyro * (C_gyro_b * w_b) + M_accel_gyro * (C_gyro_b * a_b) + bg;
   }
 
   /**
@@ -319,88 +312,106 @@ class ScaledMisalignedImu {
    * https://github.com/ethz-asl/kalibr/blob/master/aslam_offline_calibration/kalibr/python/kalibr_imu_camera_calibration/IccSensors.py#L989-L1000
    */
   template <typename T>
-  static void predictLinearAcceleration(const Eigen::Matrix<T, Eigen::Dynamic, 1>& params,
-                                        const Eigen::Quaternion<T>& /*q_gyro_i*/,
-                                        const Eigen::Quaternion<T>& q_w_b,
-                                        const Eigen::Matrix<T, 3, 1>& w_b,
-                                        const Eigen::Matrix<T, 3, 1>& a_w,
-                                        const Eigen::Matrix<T, 3, 1>& g_w,
-                                        Eigen::Matrix<T, 3, 1>* a) {
+  static void predictLinearAcceleration(
+      const Eigen::Matrix<T, 3, 1> &/*bg*/, const Eigen::Matrix<T, 3, 1> &ba,
+      const Eigen::Matrix<T, Eigen::Dynamic, 1> &params,
+      const Eigen::Quaternion<T> &q_w_b, const Eigen::Matrix<T, 3, 1> &w_b,
+      const Eigen::Matrix<T, 3, 1> &a_w, const Eigen::Matrix<T, 3, 1> &g_w,
+      Eigen::Matrix<T, 3, 1> *a) {
     Eigen::Matrix<T, 3, 1> w_dot_b = Eigen::Matrix<T, 3, 1>::Zero();
-    Eigen::Matrix<T, 3, 1> b_i = params.template segment<3>(3);
-
-    Eigen::Matrix<T, 3, 3> C_b_w = q_w_b.template toRotationMatrix().transpose();
+    Eigen::Matrix<T, 3, 3> C_b_w =
+        q_w_b.template toRotationMatrix().transpose();
 
     Eigen::Matrix<T, 3, 3> M_accel;
-    vectorToLowerTriangularMatrix<T>(params.data(), kBgBaDim + kSMDim + kSensitivityDim, &M_accel);
+    vectorToLowerTriangularMatrix<T>(params.data(), kSMDim + kSensitivityDim,
+                                     &M_accel);
 
-    Eigen::Matrix<T, 3, 1> r_b = Eigen::Matrix<T, 3, 1>::Zero(); // Assume the 3 accelerometers are at the origin of the body frame.
-    Eigen::Matrix<T, 3, 1> a_b = C_b_w * (a_w - g_w) + w_dot_b.cross(r_b) + w_b.cross(w_b.cross(r_b));
+    Eigen::Matrix<T, 3, 1> r_b =
+        Eigen::Matrix<T, 3, 1>::Zero(); // Assume the 3 accelerometers are at
+                                        // the origin of the body frame.
+    Eigen::Matrix<T, 3, 1> a_b =
+        C_b_w * (a_w - g_w) + w_dot_b.cross(r_b) + w_b.cross(w_b.cross(r_b));
 
-    Eigen::Matrix<T, 3, 3> C_i_b = Eigen::Matrix<T, 3, 3>::Identity(); // The IMU sensor frame coincides the accelerometer triad frame.
-    *a = M_accel * (C_i_b * a_b) + b_i;
+    Eigen::Matrix<T, 3, 3> C_i_b =
+        Eigen::Matrix<T, 3, 3>::Identity(); // The IMU sensor frame coincides
+                                            // the accelerometer triad frame.
+    *a = M_accel * (C_i_b * a_b) + ba;
   }
 
   template <typename T>
-  static void predict(const Eigen::Matrix<T, Eigen::Dynamic, 1>& params, const Eigen::Quaternion<T>& q_gyro_i,
-                      const Eigen::Matrix<T, 3, 1>& w_b, const Eigen::Matrix<T, 3, 1>& a_b,
-                      Eigen::Matrix<T, 3, 1>* w, Eigen::Matrix<T, 3, 1>* a) {
+  static void
+  predict(const Eigen::Matrix<T, 3, 1> &bg, const Eigen::Matrix<T, 3, 1> &ba,
+          const Eigen::Matrix<T, Eigen::Dynamic, 1> &params,
+          const Eigen::Matrix<T, 3, 1> &w_b, const Eigen::Matrix<T, 3, 1> &a_b,
+          Eigen::Matrix<T, 3, 1> *w, Eigen::Matrix<T, 3, 1> *a) {
     Eigen::Matrix<T, 3, 3> M_accel;
-    vectorToLowerTriangularMatrix<T>(params.data(), kBgBaDim + kSMDim + kSensitivityDim, &M_accel);
-    Eigen::Matrix<T, 3, 3> C_i_b = Eigen::Matrix<T, 3, 3>::Identity(); // The IMU sensor frame coincides the accelerometer triad frame.
-    Eigen::Matrix<T, 3, 1> ba_i = params.template segment<3>(3);
-    *a = M_accel * (C_i_b * a_b) + ba_i;
+    vectorToLowerTriangularMatrix<T>(params.data(), kSMDim + kSensitivityDim,
+                                     &M_accel);
+    Eigen::Matrix<T, 3, 3> C_i_b =
+        Eigen::Matrix<T, 3, 3>::Identity(); // The IMU sensor frame coincides
+                                            // the accelerometer triad frame.
+    *a = M_accel * (C_i_b * a_b) + ba;
 
-    Eigen::Matrix<T, 3, 1> bg_i = params.template head<3>();
+    Eigen::Map<const Eigen::Quaternion<T>> q_gyro_i(params.data() +
+                                                    kAugmentedDim - 4);
     Eigen::Matrix<T, 3, 3> C_gyro_i = q_gyro_i.toRotationMatrix();
     Eigen::Matrix<T, 3, 3> C_gyro_b = C_gyro_i * C_i_b;
 
     Eigen::Matrix<T, 3, 3> M_gyro;
-    vectorToLowerTriangularMatrix<T>(params.data(), kBgBaDim, &M_gyro);
+    vectorToLowerTriangularMatrix<T>(params.data(), 0, &M_gyro);
     Eigen::Matrix<T, 3, 3> M_accel_gyro;
-    vectorToMatrix<T>(params.data(), kBgBaDim + kSMDim, &M_accel_gyro);
-    *w = M_gyro * (C_gyro_b * w_b) + M_accel_gyro * (C_gyro_b * a_b) + bg_i;
+    vectorToMatrix<T>(params.data(), kSMDim, &M_accel_gyro);
+    *w = M_gyro * (C_gyro_b * w_b) + M_accel_gyro * (C_gyro_b * a_b) + bg;
   }
 
   template <typename T>
-  static void correct(const Eigen::Matrix<T, Eigen::Dynamic, 1>& params, const Eigen::Quaternion<T>& q_gyro_i,
-                      const Eigen::Matrix<T, 3, 1>& w, const Eigen::Matrix<T, 3, 1>& a,
-                      Eigen::Matrix<T, 3, 1>* w_b, Eigen::Matrix<T, 3, 1>* a_b) {
+  static void
+  correct(const Eigen::Matrix<T, 3, 1> &bg, const Eigen::Matrix<T, 3, 1> &ba,
+          const Eigen::Matrix<T, Eigen::Dynamic, 1> &params,
+          const Eigen::Matrix<T, 3, 1> &w, const Eigen::Matrix<T, 3, 1> &a,
+          Eigen::Matrix<T, 3, 1> *w_b, Eigen::Matrix<T, 3, 1> *a_b) {
     Eigen::Matrix<T, 3, 3> M_accel_inv;
-    invertLowerTriangularMatrix<T>(params.data(), kBgBaDim + kSMDim + kSensitivityDim, &M_accel_inv);
-    Eigen::Matrix<T, 3, 3> C_b_i = Eigen::Matrix<T, 3, 3>::Identity(); // The IMU sensor frame coincides the accelerometer triad frame.
-    Eigen::Matrix<T, 3, 1> ba_i = params.template segment<3>(3);
-    *a_b = C_b_i * M_accel_inv * (a - ba_i);
+    invertLowerTriangularMatrix<T>(params.data(), kSMDim + kSensitivityDim,
+                                   &M_accel_inv);
+    Eigen::Matrix<T, 3, 3> C_b_i =
+        Eigen::Matrix<T, 3, 3>::Identity(); // The IMU sensor frame coincides
+                                            // the accelerometer triad frame.
+    *a_b = C_b_i * M_accel_inv * (a - ba);
 
-    Eigen::Matrix<T, 3, 1> bg_i = params.template head<3>();
     Eigen::Matrix<T, 3, 3> C_i_b = C_b_i.transpose();
+    Eigen::Map<const Eigen::Quaternion<T>> q_gyro_i(params.data() +
+                                                    kAugmentedDim - 4);
     Eigen::Matrix<T, 3, 3> C_gyro_i = q_gyro_i.toRotationMatrix();
     Eigen::Matrix<T, 3, 3> C_gyro_b = C_gyro_i * C_i_b;
 
     Eigen::Matrix<T, 3, 3> M_gyro_inv;
-    invertLowerTriangularMatrix<T>(params.data(), kBgBaDim, &M_gyro_inv);
+    invertLowerTriangularMatrix<T>(params.data(), 0, &M_gyro_inv);
     Eigen::Matrix<T, 3, 3> M_accel_gyro;
-    vectorToMatrix<T>(params.data(), kBgBaDim + kSMDim, &M_accel_gyro);
-    *w_b = C_gyro_b.transpose() * (M_gyro_inv * (w - bg_i - M_accel_gyro * (C_gyro_b * (*a_b))));
+    vectorToMatrix<T>(params.data(), kSMDim, &M_accel_gyro);
+    *w_b = C_gyro_b.transpose() *
+           (M_gyro_inv * (w - bg - M_accel_gyro * (C_gyro_b * (*a_b))));
   }
 
-  static Eigen::VectorXd computeAugmentedParamsError(
-      const Eigen::VectorXd& euclideanParams,
-      const Eigen::Quaternion<double>& q_g_i_hat) {
-      Eigen::VectorXd residual(getAugmentedMinimalDim());
-      Eigen::VectorXd nominalValues = getNominalAugmentedParams<double>();
-      Eigen::Quaterniond q_g_i(nominalValues.tail<4>());
-      int euclideanDim = getAugmentedEuclideanDim();
-      residual.head(euclideanDim) = euclideanParams.tail(euclideanDim) - nominalValues.head(euclideanDim);
-      residual.tail<3>() = (q_g_i * q_g_i_hat.conjugate()).coeffs().head<3>() * 2;
-      return residual;
+  static Eigen::VectorXd
+  computeAugmentedParamsError(const Eigen::VectorXd &params) {
+    Eigen::VectorXd residual(getAugmentedMinimalDim());
+    Eigen::VectorXd nominalValues = getNominalAugmentedParams<double>();
+    constexpr int kAugmentedEuclideanDim = kAugmentedDim - 4;
+    Eigen::Map<const Eigen::Quaterniond> q_g_i(nominalValues.data() +
+                                               kAugmentedEuclideanDim);
+    residual.head<kAugmentedEuclideanDim>() =
+        params.head<kAugmentedEuclideanDim>() -
+        nominalValues.head<kAugmentedEuclideanDim>();
+    Eigen::Map<const Eigen::Quaterniond> q_g_i_hat(params.data() + kAugmentedEuclideanDim);
+    residual.tail<3>() = (q_g_i * q_g_i_hat.conjugate()).coeffs().head<3>() * 2;
+    return residual;
   }
 };
 
 #ifndef IMU_ERROR_MODEL_CASES
-#define IMU_ERROR_MODEL_CASES          \
-  IMU_ERROR_MODEL_CASE(Imu_BG_BA) \
-  IMU_ERROR_MODEL_CASE(Imu_BG_BA_TG_TS_TA) \
+#define IMU_ERROR_MODEL_CASES                                                  \
+  IMU_ERROR_MODEL_CASE(Imu_BG_BA)                                              \
+  IMU_ERROR_MODEL_CASE(Imu_BG_BA_TG_TS_TA)                                     \
   IMU_ERROR_MODEL_CASE(ScaledMisalignedImu)
 #endif
 
@@ -440,21 +451,6 @@ inline int ImuModelGetAugmentedMinimalDim(int model_id) {
 #define IMU_ERROR_MODEL_CASE(ImuModel) \
   case ImuModel::kModelId:             \
     return ImuModel::getAugmentedMinimalDim();
-
-    MODEL_SWITCH_CASES
-
-#undef IMU_ERROR_MODEL_CASE
-#undef MODEL_CASES
-  }
-  return 0;
-}
-
-inline int ImuModelGetAugmentedEuclideanDim(int model_id) {
-  switch (model_id) {
-#define MODEL_CASES IMU_ERROR_MODEL_CASES
-#define IMU_ERROR_MODEL_CASE(ImuModel) \
-  case ImuModel::kModelId:             \
-    return ImuModel::getAugmentedEuclideanDim();
 
     MODEL_SWITCH_CASES
 
@@ -596,16 +592,15 @@ inline Eigen::Matrix<double, Eigen::Dynamic, 1> ImuModelNominalAugmentedParams(i
     }
 }
 
-inline void ImuModelPredict(int model_id,
+inline void ImuModelPredict(int model_id, const Eigen::Vector3d& bg, const Eigen::Vector3d& ba,
                             const Eigen::Matrix<double, Eigen::Dynamic, 1>& params,
-                            const Eigen::Quaternion<double>& q_gyro_i,
                             const Eigen::Matrix<double, 3, 1>& w_b, const Eigen::Matrix<double, 3, 1>& a_b,
                             Eigen::Matrix<double, 3, 1>* w, Eigen::Matrix<double, 3, 1>* a) {
   switch (model_id) {
 #define MODEL_CASES IMU_ERROR_MODEL_CASES
 #define IMU_ERROR_MODEL_CASE(ImuModel) \
     case ImuModel::kModelId:             \
-  return ImuModel::predict<double>(params, q_gyro_i, w_b, a_b, w, a);
+  return ImuModel::predict<double>(bg, ba, params, w_b, a_b, w, a);
 
     MODEL_SWITCH_CASES
 
@@ -615,15 +610,15 @@ inline void ImuModelPredict(int model_id,
 }
 
 inline void ImuModelCorrect(int model_id,
+                            const Eigen::Vector3d& bg, const Eigen::Vector3d& ba,
                             const Eigen::Matrix<double, Eigen::Dynamic, 1>& params,
-                            const Eigen::Quaternion<double>& q_gyro_i,
                             const Eigen::Matrix<double, 3, 1>& w, const Eigen::Matrix<double, 3, 1>& a,
                             Eigen::Matrix<double, 3, 1>* w_b, Eigen::Matrix<double, 3, 1>* a_b) {
   switch (model_id) {
 #define MODEL_CASES IMU_ERROR_MODEL_CASES
 #define IMU_ERROR_MODEL_CASE(ImuModel) \
     case ImuModel::kModelId:             \
-  return ImuModel::correct<double>(params, q_gyro_i, w, a, w_b, a_b);
+  return ImuModel::correct<double>(bg, ba, params, w, a, w_b, a_b);
 
     MODEL_SWITCH_CASES
 
@@ -633,13 +628,12 @@ inline void ImuModelCorrect(int model_id,
 }
 
 inline Eigen::VectorXd ImuModelComputeAugmentedParamsError(
-    int model_id, const Eigen::VectorXd& euclideanParams,
-    const Eigen::Quaternion<double>& rotationParams) {
+    int model_id, const Eigen::VectorXd& parameters) {
   switch (model_id) {
 #define MODEL_CASES IMU_ERROR_MODEL_CASES
 #define IMU_ERROR_MODEL_CASE(ImuModel) \
     case ImuModel::kModelId:             \
-  return ImuModel::computeAugmentedParamsError(euclideanParams, rotationParams);
+  return ImuModel::computeAugmentedParamsError(parameters);
 
     MODEL_SWITCH_CASES
 

@@ -122,7 +122,7 @@ class Estimator : public VioBackendInterface
    * @param imuParameters The IMU parameters.
    * @return index of IMU.
    */
-  int addImu(const okvis::ImuParameters & imuParameters) override;
+  int addImu(const okvis::ImuParameters &imuParameters) override;
 
   /**
    * @brief Remove all cameras from the configuration

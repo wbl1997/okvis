@@ -18,28 +18,17 @@ public:
   /**
    * @brief ImuModel
    * @param modelId
-   * @param euclideanParams
-   * @param q_gyro_i quaternion from the accelerometer triad frame to the gyro triad frame
+   * @param bg
+   * @param ba
+   * @param extraParams
    */
-  ImuModel(int modelId, const Eigen::VectorXd& euclideanParams, const Eigen::Quaterniond& q_gyro_i) :
-    modelId_(modelId), euclideanParams_(euclideanParams), rotationParams_(q_gyro_i) {
+  ImuModel(int modelId, const Eigen::Vector3d bg, Eigen::Vector3d ba,
+           const Eigen::VectorXd &extraParams)
+      : modelId_(modelId), gyroBias_(bg), accelerometerBias_(ba),
+        extraParams_(extraParams) {}
 
-  }
-
-  inline Eigen::VectorXd getImuAugmentedEuclideanParams() const {
-    return euclideanParams_.tail(ImuModelGetAugmentedEuclideanDim(modelId_));
-  }
-
-  inline void correct() {
-
-  }
-
-  inline int augmentedParamDim() const {
-      return 0;
-  }
-
-  inline int paramDim() const {
-      return 0;
+  inline Eigen::VectorXd getImuAugmentedParams() const {
+    return extraParams_;
   }
 
   inline int modelId() const {
@@ -47,17 +36,18 @@ public:
   }
 
   Eigen::VectorXd computeImuAugmentedParamsError() const {
-    return ImuModelComputeAugmentedParamsError(modelId_, euclideanParams_, rotationParams_);
+    return ImuModelComputeAugmentedParamsError(modelId_, extraParams_);
   }
 
-  inline void setImuAugmentedEuclideanParams(const Eigen::VectorXd& euclideanParams) {
-    euclideanParams_.tail(ImuModelGetAugmentedEuclideanDim(modelId_)) = euclideanParams;
+  inline void setImuAugmentedParams(const Eigen::VectorXd& extraParams) {
+    extraParams_ = extraParams;
   }
 
 private:
   int modelId_;
-  Eigen::VectorXd euclideanParams_; // bg ba and extra Euclidean params
-  Eigen::Quaterniond rotationParams_; // usually q_gyro_accelerometer
+  Eigen::Vector3d gyroBias_;
+  Eigen::Vector3d accelerometerBias_;
+  Eigen::VectorXd extraParams_;
 };
 
 class ImuRig {
@@ -78,16 +68,16 @@ class ImuRig {
     return ImuModelGetMinimalDim(imus_[imu_id].modelId());
   }
 
-  inline Eigen::VectorXd getImuAugmentedEuclideanParams(int imu_id=0) const {
-    return imus_.at(imu_id).getImuAugmentedEuclideanParams();
+  inline Eigen::VectorXd getImuAugmentedParams(int imu_id=0) const {
+    return imus_.at(imu_id).getImuAugmentedParams();
   }
 
   inline Eigen::VectorXd computeImuAugmentedParamsError(int imu_id=0) const {
     return imus_.at(imu_id).computeImuAugmentedParamsError();
   }
 
-  inline void setImuAugmentedEuclideanParams(int imu_id, const Eigen::VectorXd& euclideanParams) {
-    imus_.at(imu_id).setImuAugmentedEuclideanParams(euclideanParams);
+  inline void setImuAugmentedParams(int imu_id, const Eigen::VectorXd& euclideanParams) {
+    imus_.at(imu_id).setImuAugmentedParams(euclideanParams);
   }
 
   inline int getAugmentedMinimalDim(int imu_id) const {

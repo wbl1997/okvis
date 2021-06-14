@@ -878,7 +878,7 @@ std::string Estimator::headerLine(const std::string delimiter) const {
       "q_WB_y",        "q_WB_z",        "q_WB_w",       "v_WB_W_x(m/s)",
       "v_WB_W_y(m/s)", "v_WB_W_z(m/s)", "b_g_x(rad/s)", "b_g_y(rad/s)",
       "b_g_z(rad/s)",  "b_a_x(m/s^2)",  "b_a_y(m/s^2)", "b_a_z(m/s^2)"};
-  for (auto variable : variableList) {
+  for (const auto& variable : variableList) {
     stream << variable << delimiter;
   }
   std::vector<std::string> cameraParamLabels;
@@ -893,7 +893,15 @@ std::string Estimator::headerLine(const std::string delimiter) const {
                                camExtrinsicLabels.end());
     }
   }
-  for (auto variable : variableList) {
+  for (const auto& label : cameraParamLabels) {
+    stream << label << delimiter;
+  }
+  std::vector<std::string> minVarList{
+      "p_WB_W_x(m)",   "p_WB_W_y(m)",  "p_WB_W_z(m)",   "theta_WB_x",
+      "theta_WB_y",    "theta_WB_z",   "v_WB_W_x(m/s)", "v_WB_W_y(m/s)",
+      "v_WB_W_z(m/s)", "b_g_x(rad/s)", "b_g_y(rad/s)",  "b_g_z(rad/s)",
+      "b_a_x(m/s^2)",  "b_a_y(m/s^2)", "b_a_z(m/s^2)"};
+  for (const auto &variable : minVarList) {
     stream << "std_" << variable << delimiter;
   }
   return stream.str();

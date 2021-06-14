@@ -693,142 +693,153 @@ void VioParametersReader::readConfigFile(const std::string& filename) {
 
   vioParameters_.sensors_information.imuIdx = 0;
 
-  cv::FileNode T_BS_ = file["imu_params"]["T_BS"];
+  cv::FileNode imu_params = file["imu_params"];
+  parseImuParameters(imu_params, &vioParameters_.imu);
+  readConfigFile_ = true;
+}
+
+void parseImuParameters(cv::FileNode node, ImuParameters *imuParams) {
+  cv::FileNode T_BS_ = node["T_BS"];
   OKVIS_ASSERT_TRUE(
-      Exception,
+      VioParametersReader::Exception,
       T_BS_.isSeq(),
       "'T_BS' parameter missing in the configuration file or in the wrong format.")
 
   Eigen::Matrix4d T_BS_e;
-  T_BS_e << T_BS_[0], T_BS_[1], T_BS_[2], T_BS_[3], T_BS_[4], T_BS_[5], T_BS_[6], T_BS_[7], T_BS_[8], T_BS_[9], T_BS_[10], T_BS_[11], T_BS_[12], T_BS_[13], T_BS_[14], T_BS_[15];
+  T_BS_e << T_BS_[0], T_BS_[1], T_BS_[2], T_BS_[3], T_BS_[4], T_BS_[5],
+      T_BS_[6], T_BS_[7], T_BS_[8], T_BS_[9], T_BS_[10], T_BS_[11], T_BS_[12],
+      T_BS_[13], T_BS_[14], T_BS_[15];
 
-  vioParameters_.imu.T_BS = okvis::kinematics::Transformation(T_BS_e);
+  imuParams->T_BS = okvis::kinematics::Transformation(T_BS_e);
   std::stringstream s;
-  s << vioParameters_.imu.T_BS.T();
+  s << imuParams->T_BS.T();
   LOG(INFO) << "IMU with transformation T_BS=\n" << s.str();
 
-  // the IMU parameters
-  cv::FileNode imu_params = file["imu_params"];
   OKVIS_ASSERT_TRUE(
-      Exception, imu_params["a_max"].isReal(),
+      VioParametersReader::Exception, node["a_max"].isReal(),
       "'imu_params: a_max' parameter missing in configuration file.");
   OKVIS_ASSERT_TRUE(
-      Exception, imu_params["g_max"].isReal(),
+      VioParametersReader::Exception, node["g_max"].isReal(),
       "'imu_params: g_max' parameter missing in configuration file.");
   OKVIS_ASSERT_TRUE(
-      Exception, imu_params["sigma_g_c"].isReal(),
+      VioParametersReader::Exception, node["sigma_g_c"].isReal(),
       "'imu_params: sigma_g_c' parameter missing in configuration file.");
   OKVIS_ASSERT_TRUE(
-      Exception, imu_params["sigma_a_c"].isReal(),
+      VioParametersReader::Exception, node["sigma_a_c"].isReal(),
       "'imu_params: sigma_a_c' parameter missing in configuration file.");
   OKVIS_ASSERT_TRUE(
-       Exception, imu_params["sigma_bg"].isReal(),
+       VioParametersReader::Exception, node["sigma_bg"].isReal(),
        "'imu_params: sigma_bg' parameter missing in configuration file.");
   OKVIS_ASSERT_TRUE(
-       Exception, imu_params["sigma_ba"].isReal(),
+       VioParametersReader::Exception, node["sigma_ba"].isReal(),
        "'imu_params: sigma_ba' parameter missing in configuration file.");
   OKVIS_ASSERT_TRUE(
-      Exception, imu_params["sigma_gw_c"].isReal(),
+      VioParametersReader::Exception, node["sigma_gw_c"].isReal(),
       "'imu_params: sigma_gw_c' parameter missing in configuration file.");
   OKVIS_ASSERT_TRUE(
-      Exception, imu_params["sigma_g_c"].isReal(),
+      VioParametersReader::Exception, node["sigma_g_c"].isReal(),
       "'imu_params: sigma_g_c' parameter missing in configuration file.");
   OKVIS_ASSERT_TRUE(
-      Exception, imu_params["tau"].isReal(),
+      VioParametersReader::Exception, node["tau"].isReal(),
       "'imu_params: tau' parameter missing in configuration file.");
-  OKVIS_ASSERT_TRUE(Exception, imu_params["g"].isReal(),
+  OKVIS_ASSERT_TRUE(VioParametersReader::Exception, node["g"].isReal(),
                     "'imu_params: g' parameter missing in configuration file.");
-  OKVIS_ASSERT_TRUE(Exception, imu_params["a0"].isSeq(),
+  OKVIS_ASSERT_TRUE(VioParametersReader::Exception, node["a0"].isSeq(),
                     "'imu_params: a0' parameter missing in configuration file.");
   OKVIS_ASSERT_TRUE(
-      Exception, imu_params["imu_rate"].isInt(),
+      VioParametersReader::Exception, node["imu_rate"].isInt(),
       "'imu_params: imu_rate' parameter missing in configuration file.");
-  imu_params["a_max"] >> vioParameters_.imu.a_max;
-  imu_params["g_max"] >> vioParameters_.imu.g_max;
-  imu_params["sigma_g_c"] >> vioParameters_.imu.sigma_g_c;
-  imu_params["sigma_a_c"] >> vioParameters_.imu.sigma_a_c;
-  imu_params["sigma_bg"] >> vioParameters_.imu.sigma_bg;
-  imu_params["sigma_ba"] >> vioParameters_.imu.sigma_ba;
-  imu_params["sigma_gw_c"] >> vioParameters_.imu.sigma_gw_c;
-  imu_params["sigma_aw_c"] >> vioParameters_.imu.sigma_aw_c;
-  imu_params["imu_rate"] >> vioParameters_.imu.rate;
-  imu_params["tau"] >> vioParameters_.imu.tau;
-  imu_params["g"] >> vioParameters_.imu.g;
+  node["a_max"] >> imuParams->a_max;
+  node["g_max"] >> imuParams->g_max;
+  node["sigma_g_c"] >> imuParams->sigma_g_c;
+  node["sigma_a_c"] >> imuParams->sigma_a_c;
+  node["sigma_bg"] >> imuParams->sigma_bg;
+  node["sigma_ba"] >> imuParams->sigma_ba;
+  node["sigma_gw_c"] >> imuParams->sigma_gw_c;
+  node["sigma_aw_c"] >> imuParams->sigma_aw_c;
+  node["imu_rate"] >> imuParams->rate;
+  node["tau"] >> imuParams->tau;
+  node["g"] >> imuParams->g;
 
-  vioParameters_.imu.a0 = Eigen::Vector3d((double) (imu_params["a0"][0]),
-                                          (double) (imu_params["a0"][1]),
-                                          (double) (imu_params["a0"][2]));
+  cv::FileNode gravityDirection = node["gravityDirection"];
+  if (gravityDirection.isSeq()) {
+    imuParams->normalGravity << gravityDirection[0], gravityDirection[1], gravityDirection[2];
+  }
+  parseBoolean(node["estimateGravityDirection"], imuParams->estimateGravityDirection);
 
-  cv::FileNode initGyroBias = file["imu_params"]["g0"];
+  imuParams->a0 = Eigen::Vector3d((double) (node["a0"][0]),
+                                          (double) (node["a0"][1]),
+                                          (double) (node["a0"][2]));
+
+  cv::FileNode initGyroBias = node["g0"];
   if (initGyroBias.isSeq()) {
     Eigen::Vector3d g0;
     g0 << initGyroBias[0], initGyroBias[1], initGyroBias[2];
-    vioParameters_.imu.g0 = g0;
+    imuParams->g0 = g0;
   } else {
-    vioParameters_.imu.g0 = Eigen::Vector3d::Zero();
+    imuParams->g0 = Eigen::Vector3d::Zero();
   }
 
-  if (imu_params["model_type"].isString()) {
-    imu_params["model_type"] >> vioParameters_.imu.model_type;
+  if (node["model_type"].isString()) {
+    node["model_type"] >> imuParams->model_type;
   } else {
-    vioParameters_.imu.model_type = "BG_BA_TG_TS_TA";
+    imuParams->model_type = "BG_BA_TG_TS_TA";
     LOG(WARNING) << "'imu_params: model_type' parameter missing in "
                     "configuration file. Setting to "
-                 << vioParameters_.imu.model_type;
+                 << imuParams->model_type;
   }
 
-  if (imu_params["sigma_TGElement"].isReal()) {
-    imu_params["sigma_TGElement"] >> vioParameters_.imu.sigma_TGElement;
+  if (node["sigma_TGElement"].isReal()) {
+    node["sigma_TGElement"] >> imuParams->sigma_TGElement;
   } else {
-    vioParameters_.imu.sigma_TGElement = 0.0;
+    imuParams->sigma_TGElement = 0.0;
     LOG(WARNING) << "'imu_params: sigma_TGElement' parameter missing in "
                     "configuration file. Setting to "
-                 << vioParameters_.imu.sigma_TGElement;
+                 << imuParams->sigma_TGElement;
   }
-  if (imu_params["sigma_TSElement"].isReal()) {
-    imu_params["sigma_TSElement"] >> vioParameters_.imu.sigma_TSElement;
+  if (node["sigma_TSElement"].isReal()) {
+    node["sigma_TSElement"] >> imuParams->sigma_TSElement;
   } else {
-    vioParameters_.imu.sigma_TSElement = 0.0;
+    imuParams->sigma_TSElement = 0.0;
     LOG(WARNING) << "'imu_params: sigma_TSElement' parameter missing in "
                     "configuration file. Setting to "
-                 << vioParameters_.imu.sigma_TSElement;
+                 << imuParams->sigma_TSElement;
   }
-  if (imu_params["sigma_TAElement"].isReal()) {
-    imu_params["sigma_TAElement"] >> vioParameters_.imu.sigma_TAElement;
+  if (node["sigma_TAElement"].isReal()) {
+    node["sigma_TAElement"] >> imuParams->sigma_TAElement;
   } else {
-    vioParameters_.imu.sigma_TAElement = 0.0;
+    imuParams->sigma_TAElement = 0.0;
     LOG(WARNING) << "'imu_params: sigma_TAElement' parameter missing in "
                     "configuration file. Setting to "
-                 << vioParameters_.imu.sigma_TAElement;
+                 << imuParams->sigma_TAElement;
   }
 
-  cv::FileNode initTg = file["imu_params"]["Tg0"];
+  cv::FileNode initTg = node["Tg0"];
   if (initTg.isSeq()) {
     Eigen::Matrix<double, 9, 1> Tg;
     Tg << initTg[0], initTg[1], initTg[2], initTg[3], initTg[4], initTg[5],
         initTg[6], initTg[7], initTg[8];
-    vioParameters_.imu.Tg0 = Tg;
+    imuParams->Tg0 = Tg;
   }
 
-  cv::FileNode initTs = file["imu_params"]["Ts0"];
+  cv::FileNode initTs = node["Ts0"];
   if (initTs.isSeq()) {
     Eigen::Matrix<double, 9, 1> Ts;
     Ts << initTs[0], initTs[1], initTs[2], initTs[3], initTs[4], initTs[5],
         initTs[6], initTs[7], initTs[8];
-    vioParameters_.imu.Ts0 = Ts;
+    imuParams->Ts0 = Ts;
   }
 
-  cv::FileNode initTa = file["imu_params"]["Ta0"];
+  cv::FileNode initTa = node["Ta0"];
   if (initTa.isSeq()) {
     Eigen::Matrix<double, 9, 1> Ta;
     Ta << initTa[0], initTa[1], initTa[2], initTa[3], initTa[4], initTa[5],
         initTa[6], initTa[7], initTa[8];
-    vioParameters_.imu.Ta0 = Ta;
+    imuParams->Ta0 = Ta;
   }
   s.str(std::string());
-  s << vioParameters_.imu.Ta0.transpose();
+  s << imuParams->Ta0.transpose();
   LOG(INFO) << "IMU with Ta0=" << s.str();
-  readConfigFile_ = true;
 }
 
 // Parses booleans from a cv::FileNode. OpenCV sadly has no implementation like this.
