@@ -142,8 +142,9 @@ void ThreadedKFVio::init() {
       parameters_.optimization.keyframeInsertionOverlapThreshold);
   frontend_->setKeyframeInsertionMatchingRatioThreshold(
       parameters_.optimization.keyframeInsertionMatchingRatioThreshold);
-  LOG(INFO) << "Resetting overlap and matching ratio threshold "
-            << frontend_->getKeyframeInsertionOverlapThershold() << " "
+  VLOG(2) << "Keyframe insertion overlap threshold "
+            << frontend_->getKeyframeInsertionOverlapThershold()
+            << " matching ratio threshold "
             << frontend_->getKeyframeInsertionMatchingRatioThreshold()
             << std::endl;
 

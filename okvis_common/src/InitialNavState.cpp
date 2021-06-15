@@ -2,7 +2,7 @@
 
 namespace swift_vio {
 InitialNavState::InitialNavState()
-    : initWithExternalSource(false),
+    : initializeToCustomPose(false),
       stateTime(),
       p_WS(0, 0, 0),
       q_WS(1, 0, 0, 0),
@@ -14,7 +14,7 @@ InitialNavState::InitialNavState()
 // v_WS, and std_v_WS are to be recalculated later according to updated p_WS and
 // q_ws
 InitialNavState::InitialNavState(const InitialNavState& rhs)
-    : initWithExternalSource(rhs.initWithExternalSource),
+    : initializeToCustomPose(rhs.initializeToCustomPose),
       stateTime(rhs.stateTime),
       p_WS(rhs.p_WS),
       q_WS(rhs.q_WS),
@@ -48,7 +48,7 @@ void InitialNavState::toCovariance(
 
 InitialNavState& InitialNavState::operator=(const InitialNavState& other) {
   if (&other == this) return *this;
-  initWithExternalSource = other.initWithExternalSource;
+  initializeToCustomPose = other.initializeToCustomPose;
   stateTime = other.stateTime;
   p_WS = other.p_WS;
   q_WS = other.q_WS;
@@ -57,6 +57,21 @@ InitialNavState& InitialNavState::operator=(const InitialNavState& other) {
   std_q_WS = other.std_q_WS;
   std_v_WS = other.std_v_WS;
   return *this;
+}
+
+std::string InitialNavState::toString() const {
+  std::stringstream ss;
+  if (initializeToCustomPose) {
+    ss << "initializeToCustomPose p_WS " << p_WS.transpose() << " "
+       << q_WS.coeffs().transpose() << " at time " << stateTime;
+  } else {
+    ss << "Not initializeToCustomPose";
+  }
+  ss << " v_WS " << v_WS.transpose() << ", std " << std_v_WS.transpose()
+     << "\n";
+  ss << " p_WS std " << std_p_WS.transpose() << " q_WS std "
+     << std_q_WS.transpose();
+  return ss.str();
 }
 
 void alignZ(const Eigen::Vector3d& a_S, Eigen::Quaterniond* q_WS) {

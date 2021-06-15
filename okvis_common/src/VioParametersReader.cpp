@@ -122,14 +122,14 @@ static void parseExpandedCameraParamSigmas(
 
 void parseInitialState(cv::FileNode initialStateNode,
                        swift_vio::InitialNavState* initialState) {
-  bool initWithExternalSource = true;
+  bool initializeToCustomPose = true;
   cv::FileNode timeNode = initialStateNode["state_time"];
   if (timeNode.isReal()) {
     double time;
     timeNode >> time;
     initialState->stateTime = okvis::Time(time);
   } else {
-    initWithExternalSource = false;
+    initializeToCustomPose = false;
   }
 
   cv::FileNode vsNode = initialStateNode["v_WS"];
@@ -138,7 +138,7 @@ void parseInitialState(cv::FileNode initialStateNode,
     vs << vsNode[0], vsNode[1], vsNode[2];
     initialState->v_WS = vs;
   } else {
-    initWithExternalSource = false;
+    initializeToCustomPose = false;
   }
 
   cv::FileNode stdvsNode = initialStateNode["std_v_WS"];
@@ -169,17 +169,9 @@ void parseInitialState(cv::FileNode initialStateNode,
     initialState->std_q_WS = stdqs;
   }
 
-  initialState->initWithExternalSource = initWithExternalSource;
-  LOG(INFO) << "initial velocity in the global frame z pointing neg gravity "
-            << initialState->v_WS.transpose() << std::endl
-            << " and its std " << initialState->std_v_WS.transpose()
-            << std::endl
-            << "the std of the initial position in that frame "
-            << initialState->std_p_WS.transpose();
-  LOG(INFO) << "initial quaternion from body/IMU frame to the global frame "
-            << initialState->q_WS.coeffs().transpose() << std::endl
-            << " and its std " << initialState->std_q_WS.transpose()
-            << std::endl;
+  initialState->initializeToCustomPose = initializeToCustomPose;
+  VLOG(2) << initialState->toString();
+
 }
 
 void parseOptimizationOptions(cv::FileNode optNode, Optimization *optParams) {
@@ -416,7 +408,7 @@ void VioParametersReader::readConfigFile(const std::string& filename) {
   OKVIS_ASSERT_TRUE(Exception, success,
                     "'imageDelay' parameter missing in configuration file.");
   file["imageDelay"] >> vioParameters_.sensors_information.imageDelay;
-  LOG(INFO) << "imageDelay=" << std::setprecision(15)
+  VLOG(2) << "imageDelay = " << std::setprecision(15)
             << vioParameters_.sensors_information.imageDelay;
 
   // camera rate
@@ -521,7 +513,7 @@ void VioParametersReader::readConfigFile(const std::string& filename) {
     vioParameters_.publishing.T_Wc_W = okvis::kinematics::Transformation(T_Wc_W_e);
     std::stringstream s;
     s << vioParameters_.publishing.T_Wc_W.T();
-    LOG(INFO) << "Custom World frame provided T_Wc_W=\n" << s.str();
+    VLOG(2) << "Custom World frame provided T_Wc_W=\n" << s.str();
   }
  
   if (file["publishing_options"]["trackedBodyFrame"].isString()) {
@@ -713,7 +705,7 @@ void parseImuParameters(cv::FileNode node, ImuParameters *imuParams) {
   imuParams->T_BS = okvis::kinematics::Transformation(T_BS_e);
   std::stringstream s;
   s << imuParams->T_BS.T();
-  LOG(INFO) << "IMU with transformation T_BS=\n" << s.str();
+  VLOG(2) << "IMU with transformation T_BS = \n" << s.str();
 
   OKVIS_ASSERT_TRUE(
       VioParametersReader::Exception, node["a_max"].isReal(),
@@ -839,7 +831,6 @@ void parseImuParameters(cv::FileNode node, ImuParameters *imuParams) {
   }
   s.str(std::string());
   s << imuParams->Ta0.transpose();
-  LOG(INFO) << "IMU with Ta0=" << s.str();
 }
 
 // Parses booleans from a cv::FileNode. OpenCV sadly has no implementation like this.
@@ -886,7 +877,7 @@ bool VioParametersReader::getCameraCalibration(
   if (parseOk && monocularInput) {
     calibrations.resize(1);
   }
-  LOG(INFO) << "Use images from " << calibrations.size() << " cameras.";
+  LOG(INFO) << "Images from " << calibrations.size() << " cameras will be used.";
 #ifdef HAVE_LIBVISENSOR
   if (useDriver && !success) {
     // start up sensor
@@ -905,11 +896,6 @@ bool VioParametersReader::getCameraCalibration(
 #endif
 
   return success;
-}
-
-void VioParametersReader::print(
-    const VioParametersReader::CameraCalibration& cc) const {
-  LOG(INFO) << cc.toString();
 }
 
 // Get the camera calibration via the configuration file.
@@ -1016,7 +1002,6 @@ bool VioParametersReader::getCalibrationViaConfig(
             static_cast<std::string>((*it)["projection_opt_mode"]);
       }
       calibrations.push_back(calib);
-      print(calib);
     }
   }
   return gotCalibration;

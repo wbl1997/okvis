@@ -11,11 +11,8 @@
 namespace swift_vio {
 struct InitialNavState {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  // S represents the nominal IMU sensor frame realized with the camera frame
-  // and the intersection of three accelerometers W represents the world frame
-  // with z along the negative gravity direction and has minimal rotation
-  // relative to the S frame at the initialization epoch
-  bool initWithExternalSource;
+
+  bool initializeToCustomPose;
   okvis::Time stateTime;  // epoch for the initialization values
   Eigen::Vector3d p_WS;
   Eigen::Quaterniond q_WS;
@@ -37,6 +34,8 @@ struct InitialNavState {
   void toCovariance(Eigen::Matrix<double, 6, 6>* covariance) const;
 
   InitialNavState& operator=(const InitialNavState& other);
+
+  std::string toString() const;
 };
 
 /**

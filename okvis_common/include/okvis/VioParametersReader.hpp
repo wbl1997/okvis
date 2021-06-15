@@ -116,16 +116,15 @@ class VioParametersReader{
     CameraCalibration() {}
     std::string toString() const {
       std::stringstream ss;
-      ss << "T_SC\n" << T_SC.T3x4()
-         << "\nimage dimension "
-         << imageDimension.transpose() << " distortion type "
-         << distortionType.c_str()
-         << "\ndistortion " << distortionCoefficients.transpose()
-         << "\nfocal " << focalLength.transpose()
-         << " principalpoint " << principalPoint.transpose()
-         << "\nimageDelay " << imageDelaySecs << " secs readoutTime "
-         << readoutTimeSecs << " secs\n" << "projectionIntrinsicOptMode "
-         << projOptMode << " extrinsicOptMode " << extrinsicOptMode;
+      ss << "T_SC\n"
+         << T_SC.T3x4() << "\nimage dimension " << imageDimension.transpose()
+         << " distortion type " << distortionType.c_str() << " ["
+         << distortionCoefficients.transpose() << "]\n(fx, fy) "
+         << focalLength.transpose() << ", (cx, cy) "
+         << principalPoint.transpose() << " imageDelay " << imageDelaySecs
+         << " secs, readoutTime " << readoutTimeSecs << " secs\n"
+         << "projectionIntrinsicOptMode " << projOptMode << " extrinsicOptMode "
+         << extrinsicOptMode;
       return ss.str();
     }
   };
@@ -165,8 +164,6 @@ class VioParametersReader{
    */
   bool getCalibrationViaVisensorAPI(
       std::vector<CameraCalibration,Eigen::aligned_allocator<CameraCalibration>> & calibrations) const;
-
-  void print(const CameraCalibration& cc) const;
 };
 
 /**

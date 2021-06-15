@@ -140,7 +140,7 @@ bool Estimator::addStates(
   okvis::SpeedAndBias speedAndBias;
   if (statesMap_.empty()) {
     // in case this is the first frame ever, let's initialize the pose:
-    if (initialNavState_.initWithExternalSource)
+    if (initialNavState_.initializeToCustomPose)
       T_WS = okvis::kinematics::Transformation(initialNavState_.p_WS, initialNavState_.q_WS);
     else {
       bool success0 = swift_vio::initPoseFromImu(imuMeasurements, T_WS);
