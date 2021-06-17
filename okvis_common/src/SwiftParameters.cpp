@@ -14,6 +14,7 @@ EstimatorAlgorithm EstimatorAlgorithmNameToId(std::string description) {
       {"SLIDINGWINDOWSMOOTHER", EstimatorAlgorithm::SlidingWindowSmoother},
       {"RISLIDINGWINDOWSMOOTHER", EstimatorAlgorithm::RiSlidingWindowSmoother},
       {"HYBRIDFILTER", EstimatorAlgorithm::HybridFilter},
+      {"CALIBRATIONFILTER", EstimatorAlgorithm::CalibrationFilter},
   };
 
   auto iter = descriptionToId.find(description);
@@ -40,8 +41,9 @@ std::string EstimatorAlgorithmIdToName(EstimatorAlgorithm id) {
           {EstimatorAlgorithm::SlidingWindowSmoother, "SlidingWindowSmoother"},
           {EstimatorAlgorithm::RiSlidingWindowSmoother,
            "RiSlidingWindowSmoother"},
-          {EstimatorAlgorithm::HybridFilter,
-           "HybridFilter"}};
+          {EstimatorAlgorithm::HybridFilter, "HybridFilter"},
+          {EstimatorAlgorithm::CalibrationFilter, "CalibrationFilter"},
+      };
   auto iter = idToDescription.find(id);
   if (iter == idToDescription.end()) {
     return "OKVIS";

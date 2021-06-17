@@ -16,6 +16,7 @@ enum class EstimatorAlgorithm {
   SlidingWindowSmoother, ///< Gtsam::FixedLagSmoother.
   RiSlidingWindowSmoother, ///< Gtsam::FixedLagSmoother with right invariant errors.
   HybridFilter, ///< MSCKF + EKF-SLAM with keyframe-based marginalization.
+  CalibrationFilter, ///< EKF for RS camera-IMU calibration.
   MSCKF,  ///< MSCKF with keyframe-based marginalization.
   TFVIO  ///< Triangulate-free VIO with only epipolar constraints.
 };
