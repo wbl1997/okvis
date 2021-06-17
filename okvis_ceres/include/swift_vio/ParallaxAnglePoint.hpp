@@ -181,6 +181,7 @@ class NormalVectorElement
   const mtGet& get(unsigned int /*i*/ = 0) const {
     return *this;
   }
+  // return dVec/dmininalRep
   Eigen::Matrix<double, 3, 2> getM() const {
     Eigen::Matrix<double, 3, 2> M;
     M.col(0) = -getPerp2();

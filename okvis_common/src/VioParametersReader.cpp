@@ -755,7 +755,9 @@ void parseImuParameters(cv::FileNode node, ImuParameters *imuParams) {
 
   cv::FileNode gravityDirection = node["gravityDirection"];
   if (gravityDirection.isSeq()) {
-    imuParams->normalGravity << gravityDirection[0], gravityDirection[1], gravityDirection[2];
+    Eigen::Vector3d direction;
+    direction << gravityDirection[0], gravityDirection[1], gravityDirection[2];
+    imuParams->setGravityDirection(direction.normalized());
   }
   parseBoolean(node["estimateGravityDirection"], imuParams->estimateGravityDirection);
 

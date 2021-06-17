@@ -3,6 +3,7 @@
 #include <swift_vio/imu/ImuOdometry.h>
 #include <swift_vio/imu/ImuErrorModel.h>
 #include <swift_vio/imu/ImuModels.hpp>
+#include <swift_vio/ParallaxAnglePoint.hpp>
 
 #include <okvis/Parameters.hpp>
 #include <okvis/assert_macros.hpp>
@@ -44,8 +45,7 @@ int ImuOdometry::propagation(
   const Eigen::Vector3d r_0 = T_WS.r();
   const Eigen::Quaterniond q_WS_0 = T_WS.q();
   const Eigen::Matrix3d C_WS_0 = T_WS.C();
-  const Eigen::Vector3d g_W =
-      imuParams.g * Eigen::Vector3d(0, 0, 6371009).normalized();
+  const Eigen::Vector3d g_W = imuParams.g * imuParams.gravityDirection();
 
   // record the linearization point for position p_WS, and v_WS at two
   // subsequent steps
@@ -75,10 +75,6 @@ int ImuOdometry::propagation(
   Eigen::Vector3d acc_doubleintegral =
       Eigen::Vector3d::Zero();  // double integrated acceleration up to Si
                                 // expressed in S0 frame
-#define USE_INTEGRAL_JACOBIAN
-// empirically, use integrals to compute Jacobians performs much better than use
-// product approach
-#ifdef USE_INTEGRAL_JACOBIAN
   // sub-Jacobians
   // $R_{S_0}^W \frac{d^{S_0}\alpha_{l+1}}{d b_g_{l}} = \frac{d^W\alpha_{l+1}}{d
   // b_g_{l}} $ for ease of implementation, we compute all the Jacobians with
@@ -111,7 +107,6 @@ int ImuOdometry::propagation(
   Eigen::Matrix<double, 3, 9> dv_dT_g_1;
   Eigen::Matrix<double, 3, 9> dv_dT_s_1;
   Eigen::Matrix<double, 3, 9> dv_dT_a_1;
-#endif
 
   Eigen::MatrixXd P_delta;
   Eigen::MatrixXd T;
@@ -126,6 +121,9 @@ int ImuOdometry::propagation(
     P_delta = T * (*covariance) * T.transpose();
     jacobian->setIdentity();
   }
+  int gravityErrorStartIndex = covRows - 2;
+  NormalVectorElement normalGravity(imuParams.gravityDirection());
+
   double Delta_t = 0;  // integrated time up to Si since S0 frame
   bool hasStarted = false;
   int i = 0;
@@ -225,8 +223,6 @@ int ImuOdometry::propagation(
         0.5 * (acc_integral + acc_integral_1) *
         dt;  //==acc_integral*dt + 0.25*(C + C_1)*acc_S_true*dt*dt;
 
-#ifdef USE_INTEGRAL_JACOBIAN
-    // Jacobian parts
     if (jacobian) {
       dalpha_dT_g_1 =
           dalpha_dT_g +
@@ -244,16 +240,6 @@ int ImuOdometry::propagation(
               (C * invTgsa * iem.dmatrix3_dvector9_multiply(acc_est) +
                C_1 * invTgsa * iem.dmatrix3_dvector9_multiply(acc_est_1));
 
-      // S Leutenegger's appraoch to update dv_db_g
-      //        const Eigen::Matrix3d cross_1 =
-      //        dq.inverse().toRotationMatrix()*cross +
-      //                okvis::kinematics::rightJacobian(omega_S_true*dt)*dt;
-      //        const Eigen::Matrix3d acc_S_x =
-      //        okvis::kinematics::crossMx(acc_S_true); Eigen::Matrix3d
-      //        dv_db_g_1 = dv_db_g + 0.5*dt*(C*acc_S_x*cross +
-      //        C_1*acc_S_x*cross_1);
-
-      // M A Shelley's approach to udpate dv_db_g
       dv_db_g_1 =
           dv_db_g +
           0.5 * dt *
@@ -286,15 +272,14 @@ int ImuOdometry::propagation(
       dp_dT_s += 0.5 * dt * (dv_dT_s + dv_dT_s_1);
       dp_dT_a += 0.5 * dt * (dv_dT_a + dv_dT_a_1);
     }
-#endif
 
-    // covariance propagation of \delta[p^W, \alpha, v^W, b_g, b_a, \vec[S_g,
-    // T_s, S_a]
+    // covariance propagation of \delta[p^W, \alpha, v^W, b_g, b_a, \vec[T_g,
+    // T_s, T_a], \delta g^W.
     if (covariance) {
       linPoint_1.head<3>() =
           r_0 + v_WS * Delta_t +
-          C_WS_0 * (acc_doubleintegral)-0.5 * g_W * Delta_t * Delta_t;
-      linPoint_1.tail<3>() = v_WS + C_WS_0 * (acc_integral_1)-g_W * Delta_t;
+          C_WS_0 * (acc_doubleintegral) + 0.5 * g_W * Delta_t * Delta_t;
+      linPoint_1.tail<3>() = v_WS + C_WS_0 * (acc_integral_1) + g_W * Delta_t;
 
       Eigen::MatrixXd
           F_delta = Eigen::MatrixXd::Identity(covRows, covRows);
@@ -313,10 +298,10 @@ int ImuOdometry::propagation(
       if (use_first_estimate) {
         F_delta.block<3, 3>(6, 3) = okvis::kinematics::crossMx(
             -C_WS_0.transpose() *
-            (linPoint_1.tail<3>() - linPoint.tail<3>() + g_W * dt));  // vq
+            (linPoint_1.tail<3>() - linPoint.tail<3>() - g_W * dt));  // vq
         F_delta.block<3, 3>(0, 3) = okvis::kinematics::crossMx(
             -C_WS_0.transpose() *
-            (linPoint_1.head<3>() - linPoint.head<3>() - linPoint.tail<3>() * dt +
+            (linPoint_1.head<3>() - linPoint.head<3>() - linPoint.tail<3>() * dt -
              0.5 * g_W * dt * dt));  // pq
       } else {
         F_delta.block<3, 3>(6, 3) = -okvis::kinematics::crossMx(
@@ -328,7 +313,7 @@ int ImuOdometry::propagation(
       F_delta.block<3, 3>(0, 9) = 0.5 * dt * F_delta.block<3, 3>(6, 9);
       F_delta.block<3, 3>(0, 12) = 0.5 * dt * F_delta.block<3, 3>(6, 12);
 
-      if (covRows == Imu_BG_BA_TG_TS_TA::getMinimalDim() + ode::kNavErrorStateDim) {
+      if (covRows >= Imu_BG_BA_TG_TS_TA::getMinimalDim() + ode::kNavErrorStateDim) {
         F_delta.block<3, 9>(3, 15) =
             -0.5 * dt *
             (C * iem.invT_g * iem.dmatrix3_dvector9_multiply(omega_est) +
@@ -358,6 +343,11 @@ int ImuOdometry::propagation(
         F_delta.block<3, 9>(0, 15) = 0.5 * dt * F_delta.block<3, 9>(6, 15);
         F_delta.block<3, 9>(0, 24) = 0.5 * dt * F_delta.block<3, 9>(6, 24);
         F_delta.block<3, 9>(0, 33) = 0.5 * dt * F_delta.block<3, 9>(6, 33);
+      }
+      if (imuParams.estimateGravityDirection) {
+        Eigen::Matrix<double, 3, 2> dgS0_dgW = C_WS_0.transpose() * normalGravity.getM();
+        F_delta.block<3, 2>(0, gravityErrorStartIndex) = 0.5 * dt * dt * dgS0_dgW;
+        F_delta.block<3, 2>(6, gravityErrorStartIndex) = dt * dgS0_dgW;
       }
       P_delta = F_delta * P_delta * F_delta.transpose();
       // add noise. note the scaling effect of T_g and T_a
@@ -404,14 +394,7 @@ int ImuOdometry::propagation(
           (F_delta.topLeftCorner<15, 15>() * GQG *
                F_delta.topLeftCorner<15, 15>().transpose() +
            GQG_1);
-#ifndef USE_INTEGRAL_JACOBIAN
-      jacobian->topLeftCorner<9, 9>() =
-          F_delta.topLeftCorner<9, 9>() * jacobian->topLeftCorner<9, 9>();
-      jacobian->topRightCorner(9, covRows - 9) =
-          F_delta.topLeftCorner<9, 9>() * jacobian->topRightCorner(9, covRows - 9) +
-          F_delta.topRightCorner(9, covRows - 9);
 
-#endif
       linPoint = linPoint_1;
     }
 
@@ -420,7 +403,6 @@ int ImuOdometry::propagation(
     C_integral = C_integral_1;
     acc_integral = acc_integral_1;
 
-#ifdef USE_INTEGRAL_JACOBIAN
     if (jacobian) {
       dalpha_dT_g = dalpha_dT_g_1;
       dalpha_dT_s = dalpha_dT_s_1;
@@ -431,7 +413,6 @@ int ImuOdometry::propagation(
       dv_dT_s = dv_dT_s_1;
       dv_dT_a = dv_dT_a_1;
     }
-#endif
 
     time = nexttime;
     ++i;
@@ -440,14 +421,12 @@ int ImuOdometry::propagation(
 
   // actual propagation output:
   T_WS.set(r_0 + v_WS * Delta_t +
-               C_WS_0 * (acc_doubleintegral)-0.5 * g_W * Delta_t * Delta_t,
+               C_WS_0 * (acc_doubleintegral) + 0.5 * g_W * Delta_t * Delta_t,
            q_WS_0 * Delta_q);
-  v_WS += C_WS_0 * (acc_integral)-g_W * Delta_t;
+  v_WS += C_WS_0 * (acc_integral) + g_W * Delta_t;
 
   // assign Jacobian, if requested
   if (jacobian) {
-#ifdef USE_INTEGRAL_JACOBIAN
-
     Eigen::MatrixXd& F = *jacobian;
     F.setIdentity();  // holds for all states, including d/dalpha, d/db_g,
                       // d/db_a
@@ -465,10 +444,10 @@ int ImuOdometry::propagation(
     if (use_first_estimate) {
       linPoint = *linearizationPointAtTStart;
       F.block<3, 3>(0, 3) = okvis::kinematics::crossMx(
-          -(linPoint_1.head<3>() - linPoint.head<3>() - linPoint.tail<3>() * Delta_t +
+          -(linPoint_1.head<3>() - linPoint.head<3>() - linPoint.tail<3>() * Delta_t -
             0.5 * g_W * Delta_t * Delta_t));  // pq
       F.block<3, 3>(6, 3) = okvis::kinematics::crossMx(
-          -(linPoint_1.tail<3>() - linPoint.tail<3>() + g_W * Delta_t));  // vq
+          -(linPoint_1.tail<3>() - linPoint.tail<3>() - g_W * Delta_t));  // vq
     } else {
       F.block<3, 3>(0, 3) =
           -okvis::kinematics::crossMx(C_WS_0 * acc_doubleintegral);
@@ -478,7 +457,7 @@ int ImuOdometry::propagation(
     dv_db_a = C_integral * iem.invT_a + dv_db_g * iem.T_s * iem.invT_a;
     F.block<3, 3>(6, 12) = -C_WS_0 * dv_db_a;
 
-    if (covRows ==
+    if (covRows >=
         Imu_BG_BA_TG_TS_TA::getMinimalDim() + ode::kNavErrorStateDim) {
       F.block<3, 9>(0, 15) = C_WS_0 * dp_dT_g;
       F.block<3, 9>(0, 24) = C_WS_0 * dp_dT_s;
@@ -490,17 +469,10 @@ int ImuOdometry::propagation(
       F.block<3, 9>(6, 24) = C_WS_0 * dv_dT_s;
       F.block<3, 9>(6, 33) = -C_WS_0 * dv_dT_a;
     }
-
-#else
-    Eigen::MatrixXd F(9, covRows);
-    F.topLeftCorner(3, covRows) =
-        C_WS_0 * jacobian->topLeftCorner(3, covRows);
-    F.block(3, 0, 3, covRows) =
-        C_WS_0 * jacobian->block(3, 0, 3, covRows);
-    F.block(6, 0, 3, covRows) =
-        C_WS_0 * jacobian->block(6, 0, 3, covRows);
-    jacobian->topLeftCorner(9, covRows) = F;
-#endif
+    if (imuParams.estimateGravityDirection) {
+      F.block<3, 2>(0, gravityErrorStartIndex) = 0.5 * Delta_t * Delta_t * normalGravity.getM();
+      F.block<3, 2>(6, gravityErrorStartIndex) = Delta_t * normalGravity.getM();
+    }
   }
   // overall covariance, if requested
   if (covariance) {
