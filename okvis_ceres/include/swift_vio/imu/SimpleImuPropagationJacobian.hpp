@@ -23,26 +23,13 @@ public:
                   const okvis::Time endEpoch,
                   const okvis::kinematics::Transformation& endT_WB,
                   const Eigen::Matrix<double, 3, 1>& endV_W,
-                  const Eigen::Matrix<double, 3, 1>& endOmega_B) {
-    startEpoch_ = startEpoch;
-    endEpoch_ = endEpoch;
-    endp_WB_B_ = endT_WB.r();
-    endq_WB_ = endT_WB.q();
-    endV_WB_W_ = endV_W;
-    endOmega_WB_B_ = endOmega_B;
-  }
+                  const Eigen::Matrix<double, 3, 1>& endOmega_B);
 
   SimpleImuPropagationJacobian(const okvis::Time startEpoch,
                                const okvis::Time endEpoch,
                                const okvis::kinematics::Transformation& endT_WB,
                                const Eigen::Matrix<double, 3, 1>& endV_W,
-                               const Eigen::Matrix<double, 3, 1>& endOmega_B) :
-    startEpoch_(startEpoch), endEpoch_(endEpoch),
-    endp_WB_B_(endT_WB.r()),
-    endq_WB_(endT_WB.q()),
-    endV_WB_W_(endV_W),
-    endOmega_WB_B_(endOmega_B)
-  {}
+                               const Eigen::Matrix<double, 3, 1>& endOmega_B);
 
   inline void dp_dt_WB(Eigen::Matrix3d* j) {
     j->setIdentity();
@@ -89,13 +76,15 @@ public:
     return endq_WB * endOmega_WB_B;
   }
 
-  static Eigen::Matrix3d dp_dv_WB(double deltaTime) {
-    Eigen::Matrix3d j = Eigen::Matrix3d::Identity();
-    j(0, 0) = deltaTime;
-    j(1, 1) = deltaTime;
-    j(2, 2) = deltaTime;
-    return j;
-  }
+  static Eigen::Matrix3d dp_dv_WB(double deltaTime);
+
+  static Eigen::Matrix<double, 3, 2>
+  dp_dunitgW(double deltaTime, const Eigen::Vector3d &gravityDirection,
+             double gravityMagnitude);
+
+  static Eigen::Matrix<double, 3, 2>
+  dtheta_dunitgW(double deltaTime, const Eigen::Vector3d &gravityDirection,
+                 double gravityMagnitude);
 
 private:
   okvis::Time startEpoch_;

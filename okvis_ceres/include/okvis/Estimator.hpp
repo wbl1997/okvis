@@ -746,9 +746,10 @@ class Estimator : public VioBackendInterface
   enum GlobalStates
   {
     T_WS = 0, ///< Pose.
-    MagneticZBias = 1, ///< Magnetometer z-bias, currently unused
-    Qff = 2, ///< QFF (pressure at sea level), currently unused
-    T_GW = 3, ///< Alignment of global frame, currently unused
+    GravityDirection,
+    MagneticZBias, ///< Magnetometer z-bias, currently unused
+    Qff, ///< QFF (pressure at sea level), currently unused
+    T_GW, ///< Alignment of global frame, currently unused
   };
 
   /// \brief PositionSensorStates, currently unused

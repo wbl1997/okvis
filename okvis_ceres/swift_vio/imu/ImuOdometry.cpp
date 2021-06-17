@@ -345,9 +345,11 @@ int ImuOdometry::propagation(
         F_delta.block<3, 9>(0, 33) = 0.5 * dt * F_delta.block<3, 9>(6, 33);
       }
       if (imuParams.estimateGravityDirection) {
-        Eigen::Matrix<double, 3, 2> dgS0_dgW = C_WS_0.transpose() * normalGravity.getM();
-        F_delta.block<3, 2>(0, gravityErrorStartIndex) = 0.5 * dt * dt * dgS0_dgW;
-        F_delta.block<3, 2>(6, gravityErrorStartIndex) = dt * dgS0_dgW;
+        Eigen::Matrix<double, 3, 2> dgS0_dunitgW =
+            imuParams.g * C_WS_0.transpose() * normalGravity.getM();
+        F_delta.block<3, 2>(0, gravityErrorStartIndex) =
+            0.5 * dt * dt * dgS0_dunitgW;
+        F_delta.block<3, 2>(6, gravityErrorStartIndex) = dt * dgS0_dunitgW;
       }
       P_delta = F_delta * P_delta * F_delta.transpose();
       // add noise. note the scaling effect of T_g and T_a
@@ -470,8 +472,10 @@ int ImuOdometry::propagation(
       F.block<3, 9>(6, 33) = -C_WS_0 * dv_dT_a;
     }
     if (imuParams.estimateGravityDirection) {
-      F.block<3, 2>(0, gravityErrorStartIndex) = 0.5 * Delta_t * Delta_t * normalGravity.getM();
-      F.block<3, 2>(6, gravityErrorStartIndex) = Delta_t * normalGravity.getM();
+      F.block<3, 2>(0, gravityErrorStartIndex) =
+          0.5 * Delta_t * Delta_t * imuParams.g * normalGravity.getM();
+      F.block<3, 2>(6, gravityErrorStartIndex) =
+          Delta_t * imuParams.g * normalGravity.getM();
     }
   }
   // overall covariance, if requested
