@@ -432,7 +432,7 @@ class Estimator : public VioBackendInterface
   virtual bool computeErrors(
       const okvis::kinematics::Transformation &ref_T_WS,
       const Eigen::Vector3d &ref_v_WS,
-      const okvis::ImuSensorReadings &refBiases,
+      const okvis::ImuParameters &refImuParams,
       std::shared_ptr<const okvis::cameras::NCameraSystem> refCameraSystem,
       Eigen::VectorXd *errors) const;
 
@@ -459,7 +459,13 @@ class Estimator : public VioBackendInterface
 
   bool printStatesAndStdevs(std::ostream& stream) const override;
 
-  std::string headerLine(const std::string delimiter=" ") const override;
+  std::vector<std::string> variableLabels() const override;
+
+  std::vector<std::string> perturbationLabels() const override;
+
+  std::string headerLine(const std::string delimiter=" ") const final;
+
+  std::string rmseHeaderLine(const std::string delimiter=" ") const final;
 
   void printNavStateAndBiases(std::ostream& stream, uint64_t poseId) const;
 
@@ -499,7 +505,7 @@ class Estimator : public VioBackendInterface
    */
   virtual bool getStateStd(Eigen::Matrix<double, Eigen::Dynamic, 1>* stateStd) const;
 
-  virtual bool getDesiredStdevs(Eigen::VectorXd* desiredStdevs, std::vector<std::string>* dimensionLabels) const;
+  virtual bool getDesiredStdevs(Eigen::VectorXd *desiredStdevs) const;
 
   bool getFrameId(uint64_t poseId, int & frameIdInSource, bool & isKF) const;
 

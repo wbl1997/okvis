@@ -870,41 +870,58 @@ bool Estimator::printStatesAndStdevs(std::ostream& stream) const {
   return true;
 }
 
-std::string Estimator::headerLine(const std::string delimiter) const {
-  std::stringstream stream;
-  stream << "timestamp(sec)" << delimiter << "frameId" << delimiter;
-  std::vector<std::string> variableList{
+std::vector<std::string> Estimator::variableLabels() const {
+  std::vector<std::string> varList{
       "p_WB_W_x(m)",   "p_WB_W_y(m)",   "p_WB_W_z(m)",  "q_WB_x",
       "q_WB_y",        "q_WB_z",        "q_WB_w",       "v_WB_W_x(m/s)",
       "v_WB_W_y(m/s)", "v_WB_W_z(m/s)", "b_g_x(rad/s)", "b_g_y(rad/s)",
       "b_g_z(rad/s)",  "b_a_x(m/s^2)",  "b_a_y(m/s^2)", "b_a_z(m/s^2)"};
-  for (const auto& variable : variableList) {
-    stream << variable << delimiter;
-  }
-  std::vector<std::string> cameraParamLabels;
+
   size_t numCameras = extrinsicsEstimationParametersVec_.size();
   for (size_t j = 0u; j < numCameras; ++j) {
     if (!fixCameraExtrinsicParams_[j]) {
       std::vector<std::string> camExtrinsicLabels;
       swift_vio::ExtrinsicModelToDimensionLabels(
           cameraRig_.getExtrinsicOptMode(j), &camExtrinsicLabels);
-      cameraParamLabels.insert(cameraParamLabels.end(),
-                               camExtrinsicLabels.begin(),
-                               camExtrinsicLabels.end());
+      varList.insert(varList.end(), camExtrinsicLabels.begin(),
+                     camExtrinsicLabels.end());
     }
   }
-  for (const auto& label : cameraParamLabels) {
-    stream << label << delimiter;
-  }
-  std::vector<std::string> minVarList{
+  return varList;
+}
+
+std::vector<std::string> Estimator::perturbationLabels() const {
+  return std::vector<std::string>{
       "p_WB_W_x(m)",   "p_WB_W_y(m)",  "p_WB_W_z(m)",   "theta_WB_x",
       "theta_WB_y",    "theta_WB_z",   "v_WB_W_x(m/s)", "v_WB_W_y(m/s)",
       "v_WB_W_z(m/s)", "b_g_x(rad/s)", "b_g_y(rad/s)",  "b_g_z(rad/s)",
       "b_a_x(m/s^2)",  "b_a_y(m/s^2)", "b_a_z(m/s^2)"};
+  // The camera extrinsic parameters are not appended as computing their
+  // covariance has not been implemented.
+}
+
+std::string Estimator::headerLine(const std::string delimiter) const {
+  std::stringstream stream;
+  stream << "timestamp(sec)" << delimiter << "frameId" << delimiter;
+  std::vector<std::string> variableList = variableLabels();
+  for (const auto& variable : variableList) {
+    stream << variable << delimiter;
+  }
+  std::vector<std::string> minVarList = perturbationLabels();
   for (const auto &variable : minVarList) {
     stream << "std_" << variable << delimiter;
   }
   return stream.str();
+}
+
+std::string Estimator::rmseHeaderLine(const std::string delimiter) const {
+  std::stringstream ss;
+  std::vector<std::string> minVarList = perturbationLabels();
+  ss << "timestamp(sec)" << delimiter;
+  for (const auto &variable : minVarList) {
+    ss << variable << delimiter;
+  }
+  return ss.str();
 }
 
 // Start ceres optimization.
@@ -1533,7 +1550,7 @@ okvis::Time Estimator::removeState(uint64_t stateId) {
 
 bool Estimator::computeErrors(
     const okvis::kinematics::Transformation &ref_T_WS,
-    const Eigen::Vector3d &ref_v_WS, const okvis::ImuSensorReadings &refBiases,
+    const Eigen::Vector3d &ref_v_WS, const okvis::ImuParameters &refImuParams,
     std::shared_ptr<const okvis::cameras::NCameraSystem> /*refCameraSystem*/,
     Eigen::VectorXd *errors) const {
   errors->resize(15);
@@ -1547,8 +1564,8 @@ bool Estimator::computeErrors(
   okvis::SpeedAndBias speedAndBiasEstimate;
   getSpeedAndBias(currFrameId, 0, speedAndBiasEstimate);
   errors->segment<3>(6) = speedAndBiasEstimate.head<3>() - ref_v_WS;
-  errors->segment<3>(9) = speedAndBiasEstimate.segment<3>(3) - refBiases.gyroscopes;
-  errors->segment<3>(12) = speedAndBiasEstimate.tail<3>() - refBiases.accelerometers;
+  errors->segment<3>(9) = speedAndBiasEstimate.segment<3>(3) - refImuParams.g0;
+  errors->segment<3>(12) = speedAndBiasEstimate.tail<3>() - refImuParams.a0;
   return true;
 }
 
@@ -1604,17 +1621,10 @@ bool Estimator::getStateStd(
   return true;
 }
 
-bool Estimator::getDesiredStdevs(
-    Eigen::VectorXd *desiredStdevs,
-    std::vector<std::string> *dimensionLabels) const {
+bool Estimator::getDesiredStdevs(Eigen::VectorXd *desiredStdevs) const {
   desiredStdevs->resize(15, 1);
-
   (*desiredStdevs) << 0.3, 0.3, 0.3, 0.08, 0.08, 0.08, 0.1, 0.1, 0.1, 0.002,
       0.002, 0.002, 0.02, 0.02, 0.02;
-  dimensionLabels->resize(15);
-  *dimensionLabels = {"Position x", "Position y", "Position z", "Roll", "Pitch", "Yaw",
-                      "Velocity x", "Velocity y", "Velocity z", "Bg x", "Bg y", "Bg z",
-                     "Ba x", "Ba y", "Ba z"};
   return true;
 }
 

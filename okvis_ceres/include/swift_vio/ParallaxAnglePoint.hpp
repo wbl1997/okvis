@@ -162,6 +162,16 @@ class NormalVectorElement
     matOut = -stateIn.getN().transpose() *
              getRotationFromTwoNormalsJac(*this, stateIn) * this->getM();
   }
+  static mtDifVec boxMinus(const Eigen::Vector3d &l, const Eigen::Vector3d &r) {
+    mtDifVec delta;
+    NormalVectorElement(l).boxMinus(NormalVectorElement(r), delta);
+    return delta;
+  }
+  static Eigen::Vector3d boxPlus(const Eigen::Vector3d &l, const mtDifVec &r) {
+    NormalVectorElement s;
+    NormalVectorElement(l).boxPlus(r, s);
+    return s.getVec();
+  }
   void print() const { std::cout << getVec().transpose() << std::endl; }
   void setIdentity() { q_.setIdentity(); }
   void setRandom(unsigned int& s) {

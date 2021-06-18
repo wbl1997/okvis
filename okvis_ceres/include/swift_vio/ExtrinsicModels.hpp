@@ -84,6 +84,10 @@ class Extrinsic_p_CB final : public ::ceres::LocalParameterization {
     *extrinsicLabels = {"p_CS_C_x[m]", "p_CS_C_y", "p_CS_C_z"};
   }
 
+  static void toMinDimensionLabels(std::vector<std::string>* extrinsicLabels) {
+    *extrinsicLabels = {"p_CS_C_x[m]", "p_CS_C_y", "p_CS_C_z"};
+  }
+
   static void toDesiredStdevs(Eigen::VectorXd* desiredStdevs) {
     desiredStdevs->resize(3);
     desiredStdevs->setConstant(0.04);
@@ -263,6 +267,10 @@ public:
     *extrinsicLabels = {"p_SC_S_x[m]", "p_SC_S_y", "p_SC_S_z", "q_SC_x", "q_SC_y", "q_SC_z", "q_SC_w"};
   }
 
+  static void toMinDimensionLabels(std::vector<std::string>* extrinsicLabels) {
+    *extrinsicLabels = {"p_SC_S_x[m]", "p_SC_S_y", "p_SC_S_z", "theta_SC_x", "theta_SC_y", "theta_SC_z"};
+  }
+
   static void toDesiredStdevs(Eigen::VectorXd* desiredStdevs) {
     desiredStdevs->resize(6);
     desiredStdevs->head<3>().setConstant(0.04);
@@ -342,6 +350,10 @@ public:
 
   static void toDimensionLabels(std::vector<std::string>* extrinsicLabels) {
     *extrinsicLabels = {"p_C0C_C0_x[m]", "p_C0C_C0_y", "p_C0C_C0_z", "q_C0C_x", "q_C0C_y", "q_C0C_z", "q_C0C_w"};
+  }
+
+  static void toMinDimensionLabels(std::vector<std::string>* extrinsicLabels) {
+    *extrinsicLabels = {"p_C0C_C0_x[m]", "p_C0C_C0_y", "p_C0C_C0_z", "theta_C0C_x", "theta_C0C_y", "theta_C0C_z"};
   }
 
   static void toDesiredStdevs(Eigen::VectorXd* desiredStdevs) {
@@ -529,6 +541,21 @@ inline void ExtrinsicModelToDimensionLabels(
   #define EXTRINSIC_MODEL_CASE(ExtrinsicModel) \
     case ExtrinsicModel::kModelId:             \
       return ExtrinsicModel::toDimensionLabels(dimensionLabels);
+
+      MODEL_SWITCH_CASES
+
+  #undef EXTRINSIC_MODEL_CASE
+  #undef MODEL_CASES
+    }
+}
+
+inline void ExtrinsicModelToMinDimensionLabels(
+    int model_id, std::vector<std::string>* dimensionLabels) {
+    switch (model_id) {
+  #define MODEL_CASES EXTRINSIC_MODEL_CASES
+  #define EXTRINSIC_MODEL_CASE(ExtrinsicModel) \
+    case ExtrinsicModel::kModelId:             \
+      return ExtrinsicModel::toMinDimensionLabels(dimensionLabels);
 
       MODEL_SWITCH_CASES
 

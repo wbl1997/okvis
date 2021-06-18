@@ -193,9 +193,13 @@ class VioBackendInterface {
     return false;
   }
 
-  virtual std::string headerLine(const std::string /*delimiter*/=" ") const {
-    return "";
-  }
+  virtual std::vector<std::string> variableLabels() const = 0;
+
+  virtual std::vector<std::string> perturbationLabels() const = 0;
+
+  virtual std::string headerLine(const std::string delimiter=" ") const = 0;
+
+  virtual std::string rmseHeaderLine(const std::string delimiter=" ") const = 0;
 
   /// @name Getters
   ///\{
