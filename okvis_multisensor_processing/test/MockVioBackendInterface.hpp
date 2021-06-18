@@ -74,6 +74,10 @@ class MockVioBackendInterface : public VioBackendInterface {
       bool(uint64_t landmarkId));
   MOCK_CONST_METHOD1(isLandmarkInitialized,
       bool(uint64_t landmarkId));
+  MOCK_CONST_METHOD0(variableLabels, std::vector<std::string>());
+  MOCK_CONST_METHOD0(perturbationLabels, std::vector<std::string>());
+  MOCK_CONST_METHOD1(headerLine, std::string(const std::string delimiter));
+  MOCK_CONST_METHOD1(rmseHeaderLine, std::string(const std::string delimiter));
   MOCK_CONST_METHOD2(getLandmark,
       bool(uint64_t landmarkId, MapPoint& mapPoint));
   MOCK_CONST_METHOD1(getLandmarks,
