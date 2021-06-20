@@ -225,8 +225,12 @@ void parseOptimizationOptions(cv::FileNode optNode, Optimization *optParams) {
   if (optNode["cameraObservationModelId"].isInt()) {
     optParams->cameraObservationModelId =
         static_cast<int>(optNode["cameraObservationModelId"]);
-  } else {
-    optParams->cameraObservationModelId = 0;
+  }
+  parseBoolean(optNode["computeOkvisNees"], optParams->computeOkvisNees);
+  parseBoolean(optNode["useMahalanobisGating"],
+               optParams->useMahalanobisGating);
+  if (optNode["maxProjectionErrorTol"].isInt()) {
+    optNode["maxProjectionErrorTol"] >> optParams->maxProjectionErrorTol;
   }
   LOG(INFO) << optParams->toString("Optimization parameters: ");
 }
