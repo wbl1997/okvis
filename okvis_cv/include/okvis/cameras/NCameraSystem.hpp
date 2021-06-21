@@ -71,6 +71,7 @@ class NCameraSystem
     NoDistortion = 2,
     RadialTangential8 = 3, ///< Use with okvis::cameras::RadialTangentialDistortion.
     FOV,
+    EUCM
   };
 
   /// \brief Default constructor

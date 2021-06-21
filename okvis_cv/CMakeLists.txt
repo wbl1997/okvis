@@ -13,6 +13,7 @@ include_directories(BEFORE ${OpenCV_INCLUDE_DIRS})
 # build the library
 add_library(${PROJECT_NAME} STATIC 
   src/CameraBase.cpp
+  src/EUCM.cpp
   src/NCameraSystem.cpp
 )
 
@@ -48,6 +49,7 @@ if(BUILD_TESTS)
     test/TestNCameraSystem.cpp
     test/TestMultiFrame.cpp
     test/TestFovDistortion.cpp
+    test/TestEUCM.cpp
   )
   target_link_libraries(${PROJECT_TEST_NAME} 
     ${PROJECT_NAME} 
