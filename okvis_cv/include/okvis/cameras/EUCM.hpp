@@ -107,7 +107,7 @@ public:
   CameraBase::ProjectionStatus
   project(const Eigen::Vector3d &point, Eigen::Vector2d *imagePoint,
           Eigen::Matrix<double, 2, 3> *pointJacobian,
-          Eigen::Matrix2Xd *intrinsicsJacobian) const;
+          Eigen::Matrix2Xd *intrinsicsJacobian = NULL) const;
 
   /// \brief Projects a Euclidean point to a 2d image point (projection).
   /// @param[in]  point              The point in Euclidean coordinates.
@@ -133,8 +133,8 @@ public:
   /// projections. See
   ///                         \ref ProjectionStatus for more information.
   inline void
-  projectBatch(const Eigen::Matrix3Xd &points, Eigen::Matrix2Xd *imagePoints,
-               std::vector<CameraBase::ProjectionStatus> *stati) const {
+  projectBatch(const Eigen::Matrix3Xd &/*points*/, Eigen::Matrix2Xd */*imagePoints*/,
+               std::vector<CameraBase::ProjectionStatus> */*stati*/) const {
     OKVIS_THROW(std::runtime_error, "Not implemented.");
   }
 
@@ -144,12 +144,8 @@ public:
   /// @param[out] imagePoint The image point.
   /// @return     Get information about the success of the projection. See
   ///             \ref ProjectionStatus for more information.
-  inline CameraBase::ProjectionStatus
-  projectHomogeneous(const Eigen::Vector4d &point,
-                     Eigen::Vector2d *imagePoint) const {
-    OKVIS_THROW(std::runtime_error, "Not implemented.");
-    return CameraBase::ProjectionStatus::Invalid;
-  }
+  CameraBase::ProjectionStatus
+  projectHomogeneous(const Eigen::Vector4d &point, Eigen::Vector2d *imagePoint) const;
 
   /// \brief Projects a point in homogenous coordinates to a 2d image point
   /// (projection).
@@ -161,13 +157,10 @@ public:
   /// w.r.t. the intrinsics.
   /// @return     Get information about the success of the projection. See
   ///             \ref ProjectionStatus for more information.
-  inline CameraBase::ProjectionStatus
+  CameraBase::ProjectionStatus
   projectHomogeneous(const Eigen::Vector4d &point, Eigen::Vector2d *imagePoint,
                      Eigen::Matrix<double, 2, 4> *pointJacobian,
-                     Eigen::Matrix2Xd *intrinsicsJacobian = NULL) const {
-    OKVIS_THROW(std::runtime_error, "Not implemented.");
-    return CameraBase::ProjectionStatus::Invalid;
-  }
+                     Eigen::Matrix2Xd *intrinsicsJacobian = NULL) const;
 
   /// \brief Projects a point in homogenous coordinates to a 2d image point
   /// (projection).
@@ -181,10 +174,10 @@ public:
   /// @return     Get information about the success of the projection. See
   ///             \ref ProjectionStatus for more information.
   inline CameraBase::ProjectionStatus projectHomogeneousWithExternalParameters(
-      const Eigen::Vector4d &point, const Eigen::VectorXd &parameters,
-      Eigen::Vector2d *imagePoint,
-      Eigen::Matrix<double, 2, 4> *pointJacobian = NULL,
-      Eigen::Matrix2Xd *intrinsicsJacobian = NULL) const {
+      const Eigen::Vector4d &/*point*/, const Eigen::VectorXd &/*parameters*/,
+      Eigen::Vector2d */*imagePoint*/,
+      Eigen::Matrix<double, 2, 4> */*pointJacobian = NULL*/,
+      Eigen::Matrix2Xd */*intrinsicsJacobian = NULL*/) const {
     OKVIS_THROW(std::runtime_error, "Not implemented.");
     return CameraBase::ProjectionStatus::Invalid;
   }
@@ -198,8 +191,8 @@ public:
   /// projections. See
   ///                         \ref ProjectionStatus for more information.
   inline void projectHomogeneousBatch(
-      const Eigen::Matrix4Xd &points, Eigen::Matrix2Xd *imagePoints,
-      std::vector<CameraBase::ProjectionStatus> *stati) const {
+      const Eigen::Matrix4Xd &/*points*/, Eigen::Matrix2Xd */*imagePoints*/,
+      std::vector<CameraBase::ProjectionStatus> */*stati*/) const {
     OKVIS_THROW(std::runtime_error, "Not implemented.");
   }
 
@@ -224,9 +217,9 @@ public:
   /// @param[out] pointJacobian      Jacobian of the back-projection function
   /// w.r.t. the point.
   /// @return     true on success.
-  inline bool backProject(const Eigen::Vector2d &imagePoint,
-                          Eigen::Vector3d *direction,
-                          Eigen::Matrix<double, 3, 2> *pointJacobian) const {
+  inline bool backProject(const Eigen::Vector2d &/*imagePoint*/,
+                          Eigen::Vector3d */*direction*/,
+                          Eigen::Matrix<double, 3, 2> */*pointJacobian*/) const {
     OKVIS_THROW(std::runtime_error, "Not implemented.");
     return false;
   }
@@ -237,9 +230,9 @@ public:
   /// @param[out] directions  The Euclidean direction vectors (one point per
   /// column).
   /// @param[out] success     Success of each of the back-projection
-  inline bool backProjectBatch(const Eigen::Matrix2Xd &imagePoints,
-                               Eigen::Matrix3Xd *directions,
-                               std::vector<bool> *success) const {
+  inline bool backProjectBatch(const Eigen::Matrix2Xd &/*imagePoints*/,
+                               Eigen::Matrix3Xd */*directions*/,
+                               std::vector<bool> */*success*/) const {
     OKVIS_THROW(std::runtime_error, "Not implemented.");
     return false;
   }
@@ -249,8 +242,8 @@ public:
   /// @param[in]  imagePoint The image point.
   /// @param[out] direction  The homogeneous point as direction vector.
   /// @return     true on success.
-  inline bool backProjectHomogeneous(const Eigen::Vector2d &imagePoint,
-                                     Eigen::Vector4d *direction) const {
+  inline bool backProjectHomogeneous(const Eigen::Vector2d &/*imagePoint*/,
+                                     Eigen::Vector4d */*direction*/) const {
     OKVIS_THROW(std::runtime_error, "Not implemented.");
     return false;
   }
@@ -262,9 +255,9 @@ public:
   /// @param[out] pointJacobian      Jacobian of the back-projection function.
   /// @return     true on success.
   inline bool
-  backProjectHomogeneous(const Eigen::Vector2d &imagePoint,
-                         Eigen::Vector4d *direction,
-                         Eigen::Matrix<double, 4, 2> *pointJacobian) const {
+  backProjectHomogeneous(const Eigen::Vector2d &/*imagePoint*/,
+                         Eigen::Vector4d */*direction*/,
+                         Eigen::Matrix<double, 4, 2> */*pointJacobian*/) const {
     OKVIS_THROW(std::runtime_error, "Not implemented.");
     return false;
   }
@@ -275,9 +268,9 @@ public:
   /// @param[out] directions  The homogeneous points as direction vectors (one
   /// point per column).
   /// @param[out] success     Success of each of the back-projection
-  inline bool backProjectHomogeneousBatch(const Eigen::Matrix2Xd &imagePoints,
-                                          Eigen::Matrix4Xd *directions,
-                                          std::vector<bool> *success) const {
+  inline bool backProjectHomogeneousBatch(const Eigen::Matrix2Xd &/*imagePoints*/,
+                                          Eigen::Matrix4Xd */*directions*/,
+                                          std::vector<bool> */*success*/) const {
     OKVIS_THROW(std::runtime_error, "Not implemented.");
     return false;
   }
@@ -299,10 +292,10 @@ public:
   }
 
   /// \brief Obtain the projection type
-  std::string type() const { return "eucm"; }
+  std::string type() const { return "EUCM"; }
 
   /// \brief Obtain the projection type
-  const std::string distortionType() const { return "eucm"; }
+  const std::string distortionType() const { return "EUCM"; }
 
 protected:
 

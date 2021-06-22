@@ -161,7 +161,7 @@ bool Frontend::dataAssociationAndInitialization(
           estimator, params, framesInOut->id(), rotationOnly, false,           \
           &uncertainMatchFraction);
 
-    switch (distortionType) { DISTORTION_MODEL_SWITCH_CASES }
+    switch (distortionType) { DISTORTION_MODEL_NO_NODISTORTION_SWITCH_CASES }
 
 #undef DISTORTION_MODEL_CASE
 
@@ -187,7 +187,7 @@ bool Frontend::dataAssociationAndInitialization(
   matchToLastFrame<VioKeyframeWindowMatchingAlgorithm<camera_geometry_t>>(     \
       estimator, params, framesInOut->id(), false);
 
-    switch (distortionType) { DISTORTION_MODEL_SWITCH_CASES }
+    switch (distortionType) { DISTORTION_MODEL_NO_NODISTORTION_SWITCH_CASES }
 
 #undef DISTORTION_MODEL_CASE
 
@@ -213,7 +213,7 @@ void Frontend::matchStereoSwitch(
   matchStereo<VioKeyframeWindowMatchingAlgorithm<camera_geometry_t>>(          \
       estimator, framesInOut);
 
-  switch (distortionType) { DISTORTION_MODEL_SWITCH_CASES }
+  switch (distortionType) { DISTORTION_MODEL_NO_NODISTORTION_SWITCH_CASES }
 
 #undef DISTORTION_MODEL_CASE
 
@@ -842,7 +842,7 @@ void Frontend::matchStereoWithEpipolarCheckSwitch(
   matchStereoWithEpipolarCheck<StereoMatchingAlgorithm<camera_geometry_t>>(    \
       estimator, framesInOut);
 
-  switch (distortionType) { DISTORTION_MODEL_SWITCH_CASES }
+  switch (distortionType) { DISTORTION_MODEL_NO_NODISTORTION_SWITCH_CASES }
 
 #undef DISTORTION_MODEL_CASE
 

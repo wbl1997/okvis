@@ -224,7 +224,7 @@ std::shared_ptr<okvis::cameras::CameraBase> cloneCameraGeometry(
     } else {
       std::cerr << "unrecognized distortion type " << distortionType << ".\n";
     }
-  } else if (strcmp(geometryType.c_str(), "eucm") == 0) {
+  } else if (strcmp(geometryType.c_str(), "EUCM") == 0 || strcmp(geometryType.c_str(), "eucm") == 0) {
     return std::shared_ptr<okvis::cameras::CameraBase>(new okvis::cameras::EUCM(
         cameraGeometry->imageWidth(), cameraGeometry->imageHeight(),
         intrinsic_vec[0], intrinsic_vec[1], intrinsic_vec[2], intrinsic_vec[3],

@@ -682,7 +682,7 @@ void VioParametersReader::readConfigFile(const std::string& filename) {
       LOG(INFO) << "FOV pinhole camera " << camIdx << " with Omega "
 	            << calibrations[i].distortionCoefficients[0]
                 << " with T_SC=\n" << s.str();
-    } else if (strcmp(distortionType.c_str(), "eucm") == 0) {
+    } else if (strcmp(distortionType.c_str(), "EUCM") == 0 || strcmp(distortionType.c_str(), "eucm") == 0) {
       std::shared_ptr<okvis::cameras::CameraBase> camPtr(
           new okvis::cameras::EUCM(
               calibrations[i].imageDimension[0],

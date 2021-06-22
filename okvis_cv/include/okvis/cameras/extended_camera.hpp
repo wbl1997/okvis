@@ -113,7 +113,7 @@ class ExtendedUnifiedCamera {
   /// @brief Camera model name
   ///
   /// @return "eucm"
-  static std::string getName() { return "eucm"; }
+  static std::string getName() { return "EUCM"; }
 
   /// @brief Project the point and optionally compute Jacobians
   ///

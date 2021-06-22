@@ -64,13 +64,48 @@ CameraBase::ProjectionStatus
 EUCM::project(const Eigen::Vector3d &point, Eigen::Vector2d *imagePoint,
               Eigen::Matrix<double, 2, 3> *pointJacobian,
               Eigen::Matrix2Xd *intrinsicsJacobian) const {
-  intrinsicsJacobian->resize(2, NumIntrinsics);
-  bool status =
-      eucm_.project(point, *imagePoint, pointJacobian, intrinsicsJacobian);
+  bool status;
+  if (intrinsicsJacobian) {
+    intrinsicsJacobian->resize(2, NumIntrinsics);
+    status =
+        eucm_.project(point, *imagePoint, pointJacobian, intrinsicsJacobian);
+  } else {
+    status = eucm_.project(point, *imagePoint, pointJacobian);
+  }
   if (status) {
     return okvis::cameras::CameraBase::ProjectionStatus::Successful;
   }
   return okvis::cameras::CameraBase::ProjectionStatus::Invalid;
+}
+
+CameraBase::ProjectionStatus
+EUCM::projectHomogeneous(const Eigen::Vector4d &point,
+                         Eigen::Vector2d *imagePoint) const {
+  Eigen::Vector3d head = point.head<3>();
+  okvis::cameras::CameraBase::ProjectionStatus status;
+  if (point[3] < 0) {
+    status = project(-head, imagePoint);
+  } else {
+    status = project(head, imagePoint);
+  }
+  return status;
+}
+
+CameraBase::ProjectionStatus
+EUCM::projectHomogeneous(const Eigen::Vector4d &point, Eigen::Vector2d *imagePoint,
+                   Eigen::Matrix<double, 2, 4> *pointJacobian,
+                   Eigen::Matrix2Xd *intrinsicsJacobian) const {
+  Eigen::Vector3d head = point.head<3>();
+  Eigen::Matrix<double, 2, 3> pointJacobian3;
+  okvis::cameras::CameraBase::ProjectionStatus status;
+  if (point[3] < 0) {
+    status = project(-head, imagePoint, &pointJacobian3, intrinsicsJacobian);
+  } else {
+    status = project(head, imagePoint, &pointJacobian3, intrinsicsJacobian);
+  }
+  pointJacobian->template bottomRightCorner<2, 1>() = Eigen::Vector2d::Zero();
+  pointJacobian->template topLeftCorner<2, 3>() = pointJacobian3;
+  return status;
 }
 
 CameraBase::ProjectionStatus EUCM::projectWithExternalParameters(
