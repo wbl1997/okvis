@@ -49,6 +49,8 @@
 #include "okvis/VioVisualizer.hpp"
 
 // cameras and distortions
+#include <okvis/CameraModelSwitch.hpp>
+#include <okvis/cameras/EUCM.hpp>
 #include <okvis/cameras/PinholeCamera.hpp>
 #include <okvis/cameras/EquidistantDistortion.hpp>
 #include <okvis/cameras/RadialTangentialDistortion.hpp>
@@ -136,51 +138,17 @@ cv::Mat VioVisualizer::drawMatches(VisualizationData::Ptr& data,
       Eigen::Vector2d keyframePt;
       bool isVisibleInKeyframe = false;
       Eigen::Vector4d hP_C = lastKeyframeT_CW * hPoint;
-      switch (distortionType) {
-        case okvis::cameras::NCameraSystem::RadialTangential: {
-          if (frame
-              ->geometryAs<
-                  okvis::cameras::PinholeCamera<
-                      okvis::cameras::RadialTangentialDistortion>>(image_number)
-              ->projectHomogeneous(hP_C, &keyframePt)
-              == okvis::cameras::CameraBase::ProjectionStatus::Successful)
-            isVisibleInKeyframe = true;
-          break;
-        }
-        case okvis::cameras::NCameraSystem::Equidistant: {
-          if (frame
-              ->geometryAs<
-                  okvis::cameras::PinholeCamera<
-                      okvis::cameras::EquidistantDistortion>>(image_number)
-              ->projectHomogeneous(hP_C, &keyframePt)
-              == okvis::cameras::CameraBase::ProjectionStatus::Successful)
-            isVisibleInKeyframe = true;
-          break;
-        }
-        case okvis::cameras::NCameraSystem::RadialTangential8: {
-          if (frame
-              ->geometryAs<
-                  okvis::cameras::PinholeCamera<
-                      okvis::cameras::RadialTangentialDistortion8>>(
-              image_number)->projectHomogeneous(hP_C, &keyframePt)
-              == okvis::cameras::CameraBase::ProjectionStatus::Successful)
-            isVisibleInKeyframe = true;
-          break;
-        }
-        case okvis::cameras::NCameraSystem::FOV: {
-          if (frame
-		      ->geometryAs<
-                  okvis::cameras::PinholeCamera<
-                      okvis::cameras::FovDistortion> >(
-              image_number)->projectHomogeneous(hP_C, &keyframePt)
-              == okvis::cameras::CameraBase::ProjectionStatus::Successful)
-            isVisibleInKeyframe = true;
-          break;
-        }
-        default:
-          OKVIS_THROW(Exception, "Unsupported distortion type.")
-          break;
-      }
+
+#define DISTORTION_MODEL_CASE(camera_geometry_t)                               \
+  if (frame->geometryAs<camera_geometry_t>(image_number)                       \
+          ->projectHomogeneous(hP_C, &keyframePt) ==                           \
+      okvis::cameras::CameraBase::ProjectionStatus::Successful)                \
+      isVisibleInKeyframe = true;
+
+      switch (distortionType) { DISTORTION_MODEL_NO_NODISTORTION_SWITCH_CASES }
+
+#undef DISTORTION_MODEL_CASE
+
       if (fabs(hP_C[3]) > 1.0e-8) {
         if (hP_C[2] / hP_C[3] < 0.4) {
           isVisibleInKeyframe = false;

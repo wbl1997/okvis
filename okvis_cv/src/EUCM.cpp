@@ -13,6 +13,17 @@ namespace okvis {
 /// \brief cameras Namespace for camera-related functionality.
 namespace cameras {
 
+EUCM::EUCM() : CameraBase(752, 480, 0.1, 0.02, 0) {
+  Eigen::Matrix<double, NumIntrinsics, 1> intrinsics;
+  intrinsics[0] = 460; //< focalLengthU
+  intrinsics[1] = 460; //< focalLengthV
+  intrinsics[2] = 376; //< imageCenterU
+  intrinsics[3] = 240; //< imageCenterV
+  intrinsics[4] = 0.6;
+  intrinsics[5] = 1.0;
+  eucm_ = ExtendedUnifiedCamera<double>(intrinsics);
+}
+
 EUCM::EUCM(int imageWidth, int imageHeight, double focalLengthU,
            double focalLengthV, double imageCenterU, double imageCenterV,
            double alpha, double beta, double delayTime, double readoutTime,

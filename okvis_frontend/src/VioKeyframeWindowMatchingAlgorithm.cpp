@@ -536,4 +536,5 @@ template class VioKeyframeWindowMatchingAlgorithm<
 template class VioKeyframeWindowMatchingAlgorithm<
     okvis::cameras::PinholeCamera<okvis::cameras::FovDistortion> > ;
 
+template class VioKeyframeWindowMatchingAlgorithm<okvis::cameras::EUCM>;
 }

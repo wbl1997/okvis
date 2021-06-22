@@ -29,6 +29,10 @@ class EUCM : public CameraBase {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+  typedef EUCM distortion_t; ///< To be compatible with other distortion models.
+
+  EUCM();
+
   /// \brief Constructor
   /// @param[in] imageWidth The width in pixels.
   /// @param[in] imageHeight The height in pixels.
@@ -48,6 +52,7 @@ public:
   static const int NumProjectionIntrinsics =
       4;                              ///< optimisable projection intrinsics
   static const int NumIntrinsics = 6; ///< total number of intrinsics
+  static const int NumDistortionIntrinsics = 2; ///< To be compatible with other distortion models.
 
   /// \brief Get the focal length along the u-dimension.
   /// \return The horizontal focal length in pixels.
@@ -283,14 +288,14 @@ public:
   static std::shared_ptr<CameraBase> createTestObject() {
     return std::shared_ptr<CameraBase>(new EUCM(
         752, 480, 460.76484651566468, 459.4051018049483, 365.8937161309615,
-        249.33499869752445, 0.5903365915227143, 1.127468196965374, 0.1, 0.1));
+        249.33499869752445, 0.5903365915227143, 1.127468196965374, 0.1, 0.02));
   }
 
   /// \brief get a test instance
   static EUCM testObject() {
     return EUCM(752, 480, 460.76484651566468, 459.4051018049483,
                 365.8937161309615, 249.33499869752445, 0.5903365915227143,
-                1.127468196965374, 0.1, 0.1);
+                1.127468196965374, 0.1, 0.02);
   }
 
   /// \brief Obtain the projection type
@@ -300,8 +305,6 @@ public:
   const std::string distortionType() const { return "eucm"; }
 
 protected:
-  /// \brief No default constructor.
-  EUCM() = delete;
 
   ExtendedUnifiedCamera<double> eucm_;
 };

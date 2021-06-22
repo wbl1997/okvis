@@ -1,7 +1,6 @@
-#ifndef INCLUDE_SWIFT_VIO_MODEL_SWITCH_HPP_
-#define INCLUDE_SWIFT_VIO_MODEL_SWITCH_HPP_
+#ifndef INCLUDE_OKVIS_MODEL_SWITCH_HPP_
+#define INCLUDE_OKVIS_MODEL_SWITCH_HPP_
 
-namespace swift_vio {
 #ifndef MODEL_SWITCH_CASES
 #define MODEL_SWITCH_CASES         \
   MODEL_CASES                      \
@@ -16,5 +15,4 @@ namespace swift_vio {
 #define MODEL_DOES_NOT_APPLY_EXCEPTION \
   throw std::domain_error("Model does not apply or exist");
 
-} // namespace swift_vio
-#endif  // INCLUDE_SWIFT_VIO_MODEL_SWITCH_HPP_
+#endif  // INCLUDE_OKVIS_MODEL_SWITCH_HPP_

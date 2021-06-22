@@ -46,6 +46,7 @@
 #include <okvis/ceres/HomogeneousPointParameterBlock.hpp>
 
 // cameras and distortions
+#include <okvis/cameras/EUCM.hpp>
 #include <okvis/cameras/PinholeCamera.hpp>
 #include <okvis/cameras/EquidistantDistortion.hpp>
 #include <okvis/cameras/RadialTangentialDistortion.hpp>
@@ -413,6 +414,7 @@ template class ProbabilisticStereoTriangulator<
     okvis::cameras::PinholeCamera<okvis::cameras::RadialTangentialDistortion8> > ;
 template class ProbabilisticStereoTriangulator<
     okvis::cameras::PinholeCamera<okvis::cameras::FovDistortion> > ;
+template class ProbabilisticStereoTriangulator<okvis::cameras::EUCM>;
 
 }  // namespace triangulation
 }  // namespace okvis

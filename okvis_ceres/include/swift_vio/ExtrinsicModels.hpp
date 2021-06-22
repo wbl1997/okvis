@@ -6,7 +6,7 @@
 #include <ceres/local_parameterization.h>
 
 #include <swift_vio/ceres/JacobianHelpers.hpp>
-#include <swift_vio/ModelSwitch.hpp>
+#include <okvis/ModelSwitch.hpp>
 
 #include <okvis/ceres/PoseLocalParameterization.hpp>
 #include <okvis/kinematics/Transformation.hpp>

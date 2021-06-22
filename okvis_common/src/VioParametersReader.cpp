@@ -48,6 +48,7 @@
 #include <okvis/cameras/RadialTangentialDistortion.hpp>
 #include <okvis/cameras/RadialTangentialDistortion8.hpp>
 #include <okvis/cameras/FovDistortion.hpp>
+#include <okvis/cameras/EUCM.hpp>
 
 #include <opencv2/core/core.hpp>
 
@@ -681,6 +682,27 @@ void VioParametersReader::readConfigFile(const std::string& filename) {
       LOG(INFO) << "FOV pinhole camera " << camIdx << " with Omega "
 	            << calibrations[i].distortionCoefficients[0]
                 << " with T_SC=\n" << s.str();
+    } else if (strcmp(distortionType.c_str(), "eucm") == 0) {
+      std::shared_ptr<okvis::cameras::CameraBase> camPtr(
+          new okvis::cameras::EUCM(
+              calibrations[i].imageDimension[0],
+              calibrations[i].imageDimension[1], calibrations[i].focalLength[0],
+              calibrations[i].focalLength[1], calibrations[i].principalPoint[0],
+              calibrations[i].principalPoint[1],
+              calibrations[i].distortionCoefficients[0],
+              calibrations[i].distortionCoefficients[1],
+              calibrations[i].imageDelaySecs, calibrations[i].readoutTimeSecs
+              /*, id ?*/));
+      vioParameters_.nCameraSystem.addCamera(
+          T_SC_okvis_ptr, camPtr, okvis::cameras::NCameraSystem::EUCM,
+          calibrations[i].projOptMode, calibrations[i].extrinsicOptMode
+          /*, computeOverlaps ?*/);
+      std::stringstream s;
+      s << calibrations[i].T_SC.T();
+      LOG(INFO) << "Extended Unified camera model " << camIdx << " with alpha "
+                << calibrations[i].distortionCoefficients[0] << " beta "
+                << calibrations[i].distortionCoefficients[1] << " with T_SC=\n"
+                << s.str();
     } else {
       LOG(ERROR) << "unrecognized distortion type " << calibrations[i].distortionType;
     }

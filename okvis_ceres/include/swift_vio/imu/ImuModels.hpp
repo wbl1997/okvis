@@ -22,7 +22,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include <swift_vio/ModelSwitch.hpp>
+#include <okvis/ModelSwitch.hpp>
 
 namespace swift_vio {
 static const int kBgBaDim = 6; // bg ba

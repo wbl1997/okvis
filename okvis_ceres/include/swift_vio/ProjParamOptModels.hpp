@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <Eigen/Core>
-#include <swift_vio/ModelSwitch.hpp>
+#include <okvis/ModelSwitch.hpp>
 
 namespace swift_vio {
 class ProjectionOptFXY_CXY {

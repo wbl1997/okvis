@@ -40,6 +40,7 @@
 
 #include <glog/logging.h>
 #include <okvis/Estimator.hpp>
+#include <okvis/CameraModelSwitch.hpp>
 #include <okvis/ceres/PoseParameterBlock.hpp>
 #include <okvis/ceres/ImuError.hpp>
 #include <okvis/ceres/PoseError.hpp>

@@ -46,6 +46,7 @@
 
 #include <swift_vio/TwoViewGeometry.hpp>
 // cameras and distortions
+#include <okvis/cameras/EUCM.hpp>
 #include <okvis/cameras/PinholeCamera.hpp>
 #include <okvis/cameras/EquidistantDistortion.hpp>
 #include <okvis/cameras/RadialTangentialDistortion.hpp>
@@ -534,4 +535,5 @@ template class StereoMatchingAlgorithm<
 template class StereoMatchingAlgorithm<
     okvis::cameras::PinholeCamera<okvis::cameras::FovDistortion> > ;
 
+template class StereoMatchingAlgorithm<okvis::cameras::EUCM>;
 }

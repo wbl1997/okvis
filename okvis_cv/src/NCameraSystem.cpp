@@ -41,6 +41,7 @@
 #include "okvis/cameras/NCameraSystem.hpp"
 
 #include <okvis/cameras/EquidistantDistortion.hpp>
+#include <okvis/cameras/EUCM.hpp>
 #include <okvis/cameras/NoDistortion.hpp>
 #include <okvis/cameras/PinholeCamera.hpp>
 #include <okvis/cameras/RadialTangentialDistortion.hpp>
@@ -223,7 +224,13 @@ std::shared_ptr<okvis::cameras::CameraBase> cloneCameraGeometry(
     } else {
       std::cerr << "unrecognized distortion type " << distortionType << ".\n";
     }
-  } else {
+  } else if (strcmp(geometryType.c_str(), "eucm") == 0) {
+    return std::shared_ptr<okvis::cameras::CameraBase>(new okvis::cameras::EUCM(
+        cameraGeometry->imageWidth(), cameraGeometry->imageHeight(),
+        intrinsic_vec[0], intrinsic_vec[1], intrinsic_vec[2], intrinsic_vec[3],
+        intrinsic_vec[4], intrinsic_vec[5], cameraGeometry->imageDelay(),
+        cameraGeometry->readoutTime(), id));
+  }else {
     std::cerr << "unrecognized camera geometry type " << cameraGeometry->type() << ".\n";
   }
   return std::shared_ptr<okvis::cameras::CameraBase>();
