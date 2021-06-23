@@ -201,4 +201,10 @@ std::vector<int> PointSharedData::anchorObservationIds() const {
   }
   return anchorObservationIds;
 }
+
+std::shared_ptr<const okvis::ceres::PoseParameterBlock> PointSharedData::poseParameterBlockPtr(
+    int observationIndex) const {
+  return std::static_pointer_cast<const okvis::ceres::PoseParameterBlock>(
+      stateInfoForObservations_.at(observationIndex).T_WBj_ptr);
+}
 } // namespace swift_vio

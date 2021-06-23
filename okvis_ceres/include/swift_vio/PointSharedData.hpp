@@ -336,10 +336,7 @@ class PointSharedData {
   /// @name Getters for parameter blocks
   /// @{
   std::shared_ptr<const okvis::ceres::PoseParameterBlock> poseParameterBlockPtr(
-      int observationIndex) const {
-    return std::static_pointer_cast<const okvis::ceres::PoseParameterBlock>(
-        stateInfoForObservations_.at(observationIndex).T_WBj_ptr);
-  }
+      int observationIndex) const;
 
   std::shared_ptr<const okvis::ceres::ParameterBlock>
   speedAndBiasParameterBlockPtr(int observationIndex) const {
