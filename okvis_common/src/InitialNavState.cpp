@@ -80,9 +80,8 @@ void alignZ(const Eigen::Vector3d& a_S, Eigen::Quaterniond* q_WS) {
 
 // Initialise pose from IMU measurements. For convenience as static.
 bool initPoseFromImu(
-    const okvis::ImuMeasurementDeque & imuMeasurements,
-    okvis::kinematics::Transformation & T_WS)
-{
+    const okvis::ImuMeasurementDeque &imuMeasurements,
+    okvis::kinematics::Transformation &T_WS) {
   // set translation to zero, unit rotation
   T_WS.setIdentity();
   if (imuMeasurements.size() == 0)
@@ -106,5 +105,19 @@ bool initPoseFromImu(
   poseIncrement.tail<3>() *= angle;
   T_WS.oplus(-poseIncrement);
   return true;
+}
+
+void initBiasesFromStaticImu(const okvis::ImuMeasurementDeque &imuMeasurements,
+                             const Eigen::Vector3d &gravityB,
+                             okvis::ImuMeasurement *biases) {
+  Eigen::Vector3d gyroSum = Eigen::Vector3d::Zero();
+  Eigen::Vector3d accelSum = Eigen::Vector3d::Zero();
+  for (const auto &imudata : imuMeasurements) {
+    gyroSum += imudata.measurement.gyroscopes;
+    accelSum += imudata.measurement.accelerometers;
+  }
+  double invnum = 1.0 / imuMeasurements.size();
+  biases->measurement.gyroscopes = gyroSum * invnum;
+  biases->measurement.accelerometers = accelSum * invnum + gravityB;
 }
 }  // namespace swift_vio

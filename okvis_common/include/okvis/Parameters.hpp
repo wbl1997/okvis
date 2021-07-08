@@ -133,6 +133,8 @@ struct ImuParameters{
 
   const Eigen::Vector3d &gravityDirection() const;
 
+  Eigen::Vector3d gravity() const;
+
   void setGravityDirection(const Eigen::Vector3d &gravityDirection);
 
 private:

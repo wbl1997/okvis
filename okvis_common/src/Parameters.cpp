@@ -52,6 +52,11 @@ ImuParameters::ImuParameters()
 const Eigen::Vector3d &ImuParameters::gravityDirection() const {
   return normalGravity;
 }
+
+Eigen::Vector3d ImuParameters::gravity() const {
+  return g * normalGravity;
+}
+
 void ImuParameters::setGravityDirection(
     const Eigen::Vector3d &gravityDirection) {
   normalGravity = gravityDirection;
