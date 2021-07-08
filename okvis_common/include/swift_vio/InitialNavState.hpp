@@ -53,5 +53,9 @@ void alignZ(const Eigen::Vector3d &a_S, Eigen::Quaterniond *q_WS);
  */
 bool initPoseFromImu(const okvis::ImuMeasurementDeque &imuMeasurements,
                      okvis::kinematics::Transformation &T_WS);
+
+void initBiasesFromStaticImu(const okvis::ImuMeasurementDeque &imuMeasurements,
+                             const Eigen::Vector3d &gravityB,
+                             okvis::ImuMeasurement *biases);
 }  // namespace swift_vio
 #endif  // INITIAL_NAV_STATE_HPP
