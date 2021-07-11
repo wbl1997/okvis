@@ -293,16 +293,6 @@ class Estimator : public VioBackendInterface
   /// @param[in] initialized Whether or not initialised.
   void setLandmarkInitialized(uint64_t landmarkId, bool initialized) override;
 
-  /**
-   * @brief for a landmark, remove its existing epipolar constraints, add all
-   * its observations as reprojection errors.
-   *   The head tail two view constraint scheme is assumed.
-   * So each observation except for the head obs records the matching
-   * residual block Id. The head obs has a residual block Id 0.
-   *   thread unsafe, call it when the estimator is protected by the estimator_mutex_.
-   * @param lmId ID of landmark.
-   */
-  bool replaceEpipolarWithReprojectionErrors(uint64_t lmId);
 
   /**
    * @brief merge two landmarks: fuse the shorter feature track to the longer,
@@ -310,20 +300,6 @@ class Estimator : public VioBackendInterface
    * also reset landmark ids for relevant keypoints in multiframes.
    */
   virtual uint64_t mergeTwoLandmarks(uint64_t lmIdA, uint64_t lmIdB);
-
-  /**
-   * @brief add the input keypoint as an observation to the landmark and add an
-   * epipolar constraint between the input keypoint and its first obs. Assume
-   * the same camIdx for the two keypoints. thread unsafe, call it when the
-   * estimator is protected by the estimator_mutex_.
-   * @param lmId ID of landmark.
-   * @param removeExisting remove existing epipolar constraints for this
-   * landmark.
-   */
-  template <class GEOMETRY_TYPE>
-  bool addEpipolarConstraint(uint64_t landmarkId, uint64_t poseId,
-                             size_t camIdx, size_t keypointIdx,
-                             bool removeExisting);
 
   /**
    * @brief addReprojectionFactors add reprojection factors for all observations

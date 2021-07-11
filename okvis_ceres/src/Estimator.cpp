@@ -1427,25 +1427,6 @@ const okvis::MapPoint &Estimator::getLandmarkUnsafe(uint64_t landmarkId) const {
   return landmarksMap_.at(landmarkId);
 }
 
-bool Estimator::replaceEpipolarWithReprojectionErrors(uint64_t lmId) {
-  PointMap::iterator lmIt = landmarksMap_.find(lmId);
-  std::map<okvis::KeypointIdentifier, uint64_t>& obsMap =
-      lmIt->second.observations;
-  for (std::map<okvis::KeypointIdentifier, uint64_t>::iterator obsIter = obsMap.begin();
-       obsIter != obsMap.end(); ++obsIter) {
-    if (obsIter->second != 0u) {
-      mapPtr_->removeResidualBlock(
-          reinterpret_cast<::ceres::ResidualBlockId>(obsIter->second));
-    }
-
-    // jhuai: we will add reprojection factors in the optimize() step, hence, less
-    // coupling between feature tracking frontend and estimator, and flexibility
-    // in choosing which landmark's observations to use in the opt problem.
-    obsIter->second = 0u;
-  }
-  return true;
-}
-
 uint64_t Estimator::mergeTwoLandmarks(uint64_t lmIdA, uint64_t lmIdB) {
   PointMap::iterator lmItA = landmarksMap_.find(lmIdA);
   PointMap::iterator lmItB = landmarksMap_.find(lmIdB);
