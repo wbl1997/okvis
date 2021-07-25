@@ -13,6 +13,7 @@ struct InitialNavState {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   bool initializeToCustomPose;
+  bool startInMotion;
   okvis::Time stateTime;  // epoch for the initialization values
   Eigen::Vector3d p_WS;
   Eigen::Quaterniond q_WS;
