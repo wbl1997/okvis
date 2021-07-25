@@ -63,6 +63,10 @@
 // Camera measurements
 // z = h((T_WB(t_{ij}) * T_BCi)^{-1} * T_WBh(t_h) * T_BCh * p_Ch, camera intrinsics)
 
+// Error definitions.
+// R_{WB} = Exp(\theta) \hat{R}_{WB}
+// p = dp + \hat{p}
+
 namespace okvis {
 namespace ceres {
 /// \brief The 2D keypoint reprojection error accounting for rolling shutter
@@ -121,6 +125,24 @@ class RSCameraReprojectionError
           9 /* T_si */,
           6 /* T_ai */> base_t;
 
+  enum Index
+  {
+    T_WBt = 0,
+    p_Ch,
+    T_WBh,
+    T_BCt,
+    T_BCh,
+    Intrinsics,
+    ReadoutTime,
+    CameraTd,
+    ImuTd,
+    Imu_T_BA,
+    ImuBiases,
+    T_gi,
+    T_si,
+    T_ai
+  };
+
   /// \brief Number of residuals (2)
   static const int kNumResiduals = 2;
 
@@ -138,62 +160,28 @@ class RSCameraReprojectionError
 
   /**
    * @brief RSCameraReprojectionError Construct with measurement and information matrix
-   * @param cameraGeometry
-   * @warning The camera geometry will be modified in evaluating Jacobians.
-   * @param cameraId The id of the camera in the okvis::cameras::NCameraSystem.
    * @param measurement
    * @param information The information (weight) matrix.
    * @param imuMeasCanopy imu meas in the neighborhood of stateEpoch for
    *     compensating the rolling shutter effect.
    * @param stateEpoch epoch of the pose state and speed and biases
-   * @param tdAtCreation the time offset at the creation of the state.
-   * @param gravityMag
    */
   RSCameraReprojectionError(
       const measurement_t& measurement,
       const covariance_t& covariance,
+      std::shared_ptr<const okvis::cameras::CameraGeometryBase> targetCamera,
       std::shared_ptr<const okvis::ImuMeasurementDeque> imuMeasurementCanopy,
-      const ImuParameters& imuParameters,
-      okvis::Time stateEpoch, double tdAtCreation);
+      std::shared_ptr<const okvis::ImuParameters> imuParameters,
+      okvis::Time targetStateTime, okvis::Time targetImageTime);
 
   /// \brief Trivial destructor.
   virtual ~RSCameraReprojectionError()
   {
   }
 
-  // setters
-  /// \brief Set the measurement.
-  /// @param[in] measurement The measurement.
-  virtual void setMeasurement(const measurement_t& measurement)
-  {
-    measurement_ = measurement;
-  }
-
   /// \brief Set the information.
   /// @param[in] information The information (weight) matrix.
   virtual void setCovariance(const covariance_t& information);
-
-  // getters
-  /// \brief Get the measurement.
-  /// \return The measurement vector.
-  virtual const measurement_t& measurement() const
-  {
-    return measurement_;
-  }
-
-  /// \brief Get the information matrix.
-  /// \return The information (weight) matrix.
-  virtual const covariance_t& information() const
-  {
-    return information_;
-  }
-
-  /// \brief Get the covariance matrix.
-  /// \return The inverse information (covariance) matrix.
-  virtual const covariance_t& covariance() const
-  {
-    return covariance_;
-  }
 
   // error term and Jacobian implementation
   /**
@@ -225,7 +213,7 @@ class RSCameraReprojectionError
                                             double** jacobians,
                                             double** jacobiansMinimal) const;
 
-  bool EvaluateWithMinimalJacobiansGlobalAutoDiff(double const* const * parameters,
+  bool EvaluateWithMinimalJacobiansAutoDiff(double const* const * parameters,
                                             double* residuals,
                                             double** jacobians,
                                             double** jacobiansMinimal) const;
@@ -261,17 +249,18 @@ class RSCameraReprojectionError
  protected:
   measurement_t measurement_; ///< The (2D) measurement.
 
-  // const after initialization
   std::shared_ptr<const okvis::ImuMeasurementDeque> imuMeasCanopy_;
   std::shared_ptr<const okvis::ImuMeasurementDeque> imuParameters_;
+
+  std::shared_ptr<const okvis::cameras::CameraGeometryBase> targetCamera_;
 
   // weighting related
   covariance_t information_; ///< The 2x2 information matrix.
   covariance_t squareRootInformation_; ///< The 2x2 square root information matrix.
   covariance_t covariance_; ///< The 2x2 covariance matrix.
 
-  okvis::Time stateEpoch_; ///< Timestamp of the target pose, T_WBt.
-  okvis::Time imageTimestamp_; ///< Raw timestamp of the target image.
+  okvis::Time targetStateTime_; ///< Timestamp of the target pose, T_WBt.
+  okvis::Time targetImageTime_; ///< Raw timestamp of the target image.
 };
 
 }  // namespace ceres

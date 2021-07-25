@@ -398,8 +398,10 @@ CameraBase::ProjectionStatus PinholeCamera<DISTORTION_T>::projectHomogeneousWith
                                                   &pointJacobian3,
                                                   intrinsicsJacobian);
   }
-  pointJacobian->template bottomRightCorner<2, 1>() = Eigen::Vector2d::Zero();
-  pointJacobian->template topLeftCorner<2, 3>() = pointJacobian3;
+  if (pointJacobian) {
+    pointJacobian->template bottomRightCorner<2, 1>() = Eigen::Vector2d::Zero();
+    pointJacobian->template topLeftCorner<2, 3>() = pointJacobian3;
+  }
   return status;
 }
 

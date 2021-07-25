@@ -79,6 +79,8 @@ class RsReprojectionError
   typedef GEOMETRY_TYPE camera_geometry_t;
 
   static const int kDistortionDim = GEOMETRY_TYPE::distortion_t::NumDistortionIntrinsics;
+  static const int kMinProjectionIntrinsicDim =  PROJ_INTRINSIC_MODEL::kNumParams;
+  static const int kIntrinsicDim = GEOMETRY_TYPE::NumIntrinsics;
 
   /// \brief The base class type.
   typedef ::ceres::SizedCostFunction<
@@ -187,6 +189,17 @@ class RsReprojectionError
     return covariance_;
   }
 
+  inline void getIntrinsicsVector(const double* projectionIntrinsics, const double* distortion,
+                                  Eigen::Matrix<double, -1, 1>& intrinsics) const {
+    intrinsics.resize(kIntrinsicDim);
+    Eigen::Map<const Eigen::Matrix<double, PROJ_INTRINSIC_MODEL::kNumParams, 1>>
+        projIntrinsics(projectionIntrinsics);
+    PROJ_INTRINSIC_MODEL::localToGlobal(projIntrinsics, &intrinsics);
+    Eigen::Map<const Eigen::Matrix<double, kDistortionDim, 1>>
+        distortionIntrinsics(distortion);
+    intrinsics.tail<kDistortionDim>() = distortionIntrinsics;
+  }
+
   // error term and Jacobian implementation
   /**
    * @brief This evaluates the error term and additionally computes the Jacobians.
@@ -217,7 +230,7 @@ class RsReprojectionError
                                             double** jacobians,
                                             double** jacobiansMinimal) const;
 
-  bool EvaluateWithMinimalJacobiansGlobalAutoDiff(double const* const * parameters,
+  bool EvaluateWithMinimalJacobiansAutoDiff(double const* const * parameters,
                                             double* residuals,
                                             double** jacobians,
                                             double** jacobiansMinimal) const;

@@ -108,12 +108,35 @@ EUCM::projectHomogeneous(const Eigen::Vector4d &point, Eigen::Vector2d *imagePoi
   return status;
 }
 
+CameraBase::ProjectionStatus EUCM::projectHomogeneousWithExternalParameters(
+    const Eigen::Vector4d &point, const Eigen::VectorXd &parameters,
+    Eigen::Vector2d *imagePoint, Eigen::Matrix<double, 2, 4> *pointJacobian,
+    Eigen::Matrix2Xd *intrinsicsJacobian) const {
+  Eigen::Vector3d head = point.head<3>();
+  Eigen::Matrix<double, 2, 3> pointJacobian3;
+  CameraBase::ProjectionStatus status;
+  if (point[3] < 0) {
+    status = projectWithExternalParameters(-head, parameters, imagePoint,
+                                                  &pointJacobian3,
+                                                  intrinsicsJacobian);
+  } else {
+    status = projectWithExternalParameters(head, parameters, imagePoint,
+                                                  &pointJacobian3,
+                                                  intrinsicsJacobian);
+  }
+  if (pointJacobian) {
+    pointJacobian->template bottomRightCorner<2, 1>() = Eigen::Vector2d::Zero();
+    pointJacobian->template topLeftCorner<2, 3>() = pointJacobian3;
+  }
+  return status;
+}
+
 CameraBase::ProjectionStatus EUCM::projectWithExternalParameters(
     const Eigen::Vector3d &point, const Eigen::VectorXd &parameters,
-    Eigen::Vector2d *imagePoint, Eigen::Matrix<double, 2, 3> */*pointJacobian*/,
-    Eigen::Matrix2Xd */*intrinsicsJacobian*/) const {
+    Eigen::Vector2d *imagePoint, Eigen::Matrix<double, 2, 3> *pointJacobian,
+    Eigen::Matrix2Xd *intrinsicsJacobian) const {
   ExtendedUnifiedCamera<double> eucm(parameters);
-  bool status = eucm.project(point, *imagePoint);
+  bool status = eucm.project(point, *imagePoint, pointJacobian, intrinsicsJacobian);
   if (status) {
     return okvis::cameras::CameraBase::ProjectionStatus::Successful;
   }

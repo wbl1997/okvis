@@ -134,17 +134,19 @@ bool RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, L
   Eigen::Vector4d hp_C = T_CB * hp_B;
 
   // calculate the reprojection error
+  Eigen::Matrix<double, -1, 1> intrinsics;
+  getIntrinsicsVector(parameters[3], parameters[4], intrinsics);
   measurement_t kp;
   Eigen::Matrix<double, 2, 4> Jh;
   Eigen::Matrix<double, 2, 4> Jh_weighted;
   Eigen::Matrix<double, 2, Eigen::Dynamic> Jpi;
   Eigen::Matrix<double, 2, Eigen::Dynamic> Jpi_weighted;
   if (jacobians != NULL) {
-    cameraGeometryBase_->projectHomogeneous(hp_C, &kp, &Jh, &Jpi);
+    cameraGeometryBase_->projectHomogeneousWithExternalParameters(hp_C, intrinsics, &kp, &Jh, &Jpi);
     Jh_weighted = squareRootInformation_ * Jh;
     Jpi_weighted = squareRootInformation_ * Jpi;
   } else {
-    cameraGeometryBase_->projectHomogeneous(hp_C, &kp);
+    cameraGeometryBase_->projectHomogeneousWithExternalParameters(hp_C, intrinsics, &kp);
   }
 
   measurement_t error = kp - measurement_;
@@ -246,7 +248,7 @@ bool RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, L
 template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
           class EXTRINSIC_MODEL, class LANDMARK_MODEL>
 bool RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL>::
-    EvaluateWithMinimalJacobiansGlobalAutoDiff(double const* const* parameters,
+    EvaluateWithMinimalJacobiansAutoDiff(double const* const* parameters,
                                          double* residuals, double** jacobians,
                                          double** jacobiansMinimal) const {
   const int numOutputs = 4;
@@ -291,30 +293,21 @@ bool RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, L
   if (!diffState)
     std::cerr << "Potentially wrong Jacobians in autodiff " << std::endl;
 
-//  Eigen::VectorXd intrinsics(GEOMETRY_TYPE::NumIntrinsics);
-//  Eigen::Map<const Eigen::Matrix<double, PROJ_INTRINSIC_MODEL::kNumParams, 1>>
-//      projIntrinsics(parameters[3]);
-//  PROJ_INTRINSIC_MODEL::localToGlobal(projIntrinsics, &intrinsics);
-
-//  Eigen::Map<const Eigen::Matrix<double, kDistortionDim, 1>>
-//      distortionIntrinsics(parameters[4]);
-//  intrinsics.tail<kDistortionDim>() = distortionIntrinsics;
-//  cameraGeometryBase_->setIntrinsics(intrinsics);
-
   Eigen::Map<const Eigen::Vector4d> hp_C(&php_C[0]);
-
   // calculate the reprojection error
+  Eigen::Matrix<double, -1, 1> intrinsics;
+  getIntrinsicsVector(parameters[3], parameters[4], intrinsics);
   measurement_t kp;
   Eigen::Matrix<double, 2, 4> Jh;
   Eigen::Matrix<double, 2, 4> Jh_weighted;
   Eigen::Matrix<double, 2, Eigen::Dynamic> Jpi;
   Eigen::Matrix<double, 2, Eigen::Dynamic> Jpi_weighted;
   if (jacobians != NULL) {
-    cameraGeometryBase_->projectHomogeneous(hp_C, &kp, &Jh, &Jpi);
+    cameraGeometryBase_->projectHomogeneousWithExternalParameters(hp_C, intrinsics, &kp, &Jh, &Jpi);
     Jh_weighted = squareRootInformation_ * Jh;
     Jpi_weighted = squareRootInformation_ * Jpi;
   } else {
-    cameraGeometryBase_->projectHomogeneous(hp_C, &kp);
+    cameraGeometryBase_->projectHomogeneousWithExternalParameters(hp_C, intrinsics, &kp);
   }
 
   measurement_t error = kp - measurement_;
