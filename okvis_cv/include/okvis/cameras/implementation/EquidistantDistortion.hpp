@@ -270,12 +270,12 @@ bool EquidistantDistortion::distortWithExternalParameters(
         + k4 * t6 * t7 * t8 * t9 * t11 * u0 * 8.0)
         + k1 * t6 * t8 * t11 * u0 * 2.0;
     t7 = t11 * t17 * t18 * u0 * u1;
-    J(0, 0) = (t7 + t6 * t8 * t25 * u0) - t6 * t17 * t19 * u0 * u1;
-    J(1, 0) = ((t20 - t3 * t6 * t17 * t19) + t3 * t11 * t17 * t18)
+    J(0, 1) = (t7 + t6 * t8 * t25 * u0) - t6 * t17 * t19 * u0 * u1;
+    J(1, 1) = ((t20 - t3 * t6 * t17 * t19) + t3 * t11 * t17 * t18)
         + t6 * t8 * t25 * u1;
-    J(0, 1) = ((t20 - t2 * t6 * t17 * t19) + t2 * t11 * t17 * t18)
+    J(0, 0) = ((t20 - t2 * t6 * t17 * t19) + t2 * t11 * t17 * t18)
         + t6 * t8 * t4 * u0;
-    J(1, 1) = (t7 + t6 * t8 * t4 * u1) - t6 * t17 * t19 * u0 * u1;
+    J(1, 0) = (t7 + t6 * t8 * t4 * u1) - t6 * t17 * t19 * u0 * u1;
     if (parameterJacobian) {
       Eigen::Matrix2Xd & Ji = *parameterJacobian;
       Ji.resize(2,NumDistortionIntrinsics);
