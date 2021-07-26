@@ -283,7 +283,7 @@ bool RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, L
                             dhC_deltaTWS.data(),
                             dhC_dExtrinsic.data()};
   LocalBearingVector<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL,
-                     swift_vio::HomogeneousPointParameterization>
+                     okvis::ceres::HomogeneousPointLocalParameterization>
       rsre(*this);
   bool diffState =
           ::ceres::internal::AutoDifferentiate<

@@ -300,6 +300,8 @@ const int kEpipolarFactorId = 1;
 const int kChordalDistanceId = 2;
 const int kReprojectionErrorWithPapId = 3;
 const int kTangentDistanceId = 4;
+const int kRsReprojectionErrorId = 5;
+const int kRSCameraReprojectionErrorId = 6;
 
 #ifndef RESIDUAL_MODEL_SWITCH_CASES
 #define RESIDUAL_MODEL_SWITCH_CASES          \

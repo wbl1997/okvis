@@ -32,17 +32,12 @@
 // States
 // T_WBi stamped by the base IMU clock.
 
+// landmark hp_Ch = [alpha, beta, 1, rho] = [X/Z, Y/Z, 1, 1/Z] where X, Y, Z are the coordinates of the landmark in the host camera frame Ch.
+
 // IMU intrinsic parameters have three blocks
 // Tgi: a fully populated matrix for R_AiGi, scale factors, and misalignment.
 // Tsi: a fully populated matrix for g-sensitivity.
 // Tai: 6 parameters for scale factors, and misalignment.
-
-// IMU extrinsic parameters
-// T_BAi
-// For the base IMU, T_BAi should be locked to identity.
-
-// IMU time offset relative to the base IMU
-// It should be locked to zero for the base IMU.
 
 // IMU measurements timestamped by the IMU itself.
 // w_m = T_gi * R_AiB * w_B + T_s * R_AiB * a_B + b_g
@@ -61,7 +56,7 @@
 // Camera time offset relative to the base IMU.
 
 // Camera measurements
-// z = h((T_WB(t_{ij}) * T_BCi)^{-1} * T_WBh(t_h) * T_BCh * p_Ch, camera intrinsics)
+// z = h((T_WB(t_{ij}) * T_BCi)^{-1} * T_WBh(t_h) * T_BCh * hp_Ch, camera intrinsics)
 
 // Error definitions.
 // R_{WB} = Exp(\theta) \hat{R}_{WB}
@@ -84,16 +79,14 @@ class RSCameraReprojectionError
     : public ::ceres::SizedCostFunction<
           2 /* number of residuals */, 
           7 /* T_WBt */, 
-          3 /* p_Ch */,
+          4 /* hp_Ch */,
           7 /* T_WBh */,
           7 /* T_BCt */,
           7 /* T_BCh */,
           GEOMETRY_TYPE::NumIntrinsics,
           1 /* frame readout time */,
           1 /* camera time offset */,
-          1 /* IMU i's time offset */,
-          7 /* IMU i's extrinsic parameters */,
-          6 /* bg_i and ba_i */,
+          9 /* speed, bg_i and ba_i */,
           9 /* T_gi */,
           9 /* T_si */,
           6 /* T_ai */>,
@@ -106,21 +99,21 @@ class RSCameraReprojectionError
   typedef GEOMETRY_TYPE camera_geometry_t;
 
   static const int kDistortionDim = GEOMETRY_TYPE::distortion_t::NumDistortionIntrinsics;
+  static const int kIntrinsicsDim = GEOMETRY_TYPE::NumIntrinsics;
 
   /// \brief The base class type.
   typedef ::ceres::SizedCostFunction<
           2 /* number of residuals */, 
           7 /* T_WBt */, 
-          3 /* p_Ch */,
+          4 /* hp_Ch */,
           7 /* T_WBh */,
           7 /* T_BCt */,
           7 /* T_BCh */,
           GEOMETRY_TYPE::NumIntrinsics,
           1 /* frame readout time */,
           1 /* camera time offset */,
-          1 /* IMU i's time offset */,
+          9 /* velocity, bg_i and ba_i */,
           7 /* IMU i's extrinsic parameters */,
-          6 /* bg_i and ba_i */,
           9 /* T_gi */,
           9 /* T_si */,
           6 /* T_ai */> base_t;
@@ -128,16 +121,14 @@ class RSCameraReprojectionError
   enum Index
   {
     T_WBt = 0,
-    p_Ch,
+    hp_Ch,
     T_WBh,
     T_BCt,
     T_BCh,
     Intrinsics,
     ReadoutTime,
     CameraTd,
-    ImuTd,
-    Imu_T_BA,
-    ImuBiases,
+    SpeedAndBiases,
     T_gi,
     T_si,
     T_ai

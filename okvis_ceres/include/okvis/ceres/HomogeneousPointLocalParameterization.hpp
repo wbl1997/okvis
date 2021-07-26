@@ -56,6 +56,9 @@ class HomogeneousPointLocalParameterization :
 {
  public:
   OKVIS_DEFINE_EXCEPTION(Exception,std::runtime_error)
+  static const int kModelId = 0;
+  static const int kGlobalDim = 4;
+  static const int kLocalDim = 3;
 
   /// \brief Destructor (does nothing)
   virtual ~HomogeneousPointLocalParameterization()

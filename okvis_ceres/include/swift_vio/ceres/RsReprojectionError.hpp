@@ -14,8 +14,9 @@
 #include <okvis/Measurements.hpp>
 
 #include <okvis/assert_macros.hpp>
-#include <okvis/ceres/PoseLocalParameterization.hpp>
 #include <okvis/ceres/ErrorInterface.hpp>
+#include <okvis/ceres/HomogeneousPointLocalParameterization.hpp>
+#include <okvis/ceres/PoseLocalParameterization.hpp>
 
 #include <swift_vio/imu/ImuModels.hpp>
 #include <swift_vio/ExtrinsicModels.hpp>
@@ -58,7 +59,7 @@ class LocalBearingVector;
 ///     Its kNumParams should not be zero.
 template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
           class EXTRINSIC_MODEL=swift_vio::Extrinsic_p_BC_q_BC,
-          class LANDMARK_MODEL=swift_vio::HomogeneousPointParameterization>
+          class LANDMARK_MODEL=okvis::ceres::HomogeneousPointLocalParameterization>
 class RsReprojectionError
     : public ::ceres::SizedCostFunction<
           2 /* number of residuals */, 7 /* pose */, 4 /* landmark */,
@@ -79,7 +80,7 @@ class RsReprojectionError
   typedef GEOMETRY_TYPE camera_geometry_t;
 
   static const int kDistortionDim = GEOMETRY_TYPE::distortion_t::NumDistortionIntrinsics;
-  static const int kMinProjectionIntrinsicDim =  PROJ_INTRINSIC_MODEL::kNumParams;
+  static const int kMinProjectionIntrinsicDim = PROJ_INTRINSIC_MODEL::kNumParams;
   static const int kIntrinsicDim = GEOMETRY_TYPE::NumIntrinsics;
 
   /// \brief The base class type.
