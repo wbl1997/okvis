@@ -47,13 +47,12 @@ namespace ceres {
 ///     constant values from a provided extrinsic entity, e.g., T_BC.
 ///     Its kNumParams should not be zero.
 template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-          class EXTRINSIC_MODEL = swift_vio::Extrinsic_p_BC_q_BC,
-          class LANDMARK_MODEL = swift_vio::ParallaxAngleParameterization,
-          class IMU_MODEL = swift_vio::Imu_BG_BA>
+          class EXTRINSIC_MODEL = swift_vio::Extrinsic_p_BC_q_BC>
 class ReprojectionErrorWithPap
     : public ::ceres::SizedCostFunction<
           2 /* residuals */, 7 /* observing frame pose */, 7 /* main anchor */,
-          7 /* associate anchor */, LANDMARK_MODEL::kGlobalDim /* landmark */,
+          7 /* associate anchor */,
+          swift_vio::ParallaxAngleParameterization::kGlobalDim /* landmark */,
           7 /* camera extrinsic */,
           PROJ_INTRINSIC_MODEL::kNumParams /* camera projection intrinsic */,
           GEOMETRY_TYPE::distortion_t::NumDistortionIntrinsics,
@@ -68,6 +67,7 @@ class ReprojectionErrorWithPap
 
   /// \brief Make the camera geometry type accessible.
   typedef GEOMETRY_TYPE camera_geometry_t;
+  typedef swift_vio::ParallaxAngleParameterization LANDMARK_MODEL;
   static const int kProjectionIntrinsicDim = PROJ_INTRINSIC_MODEL::kNumParams;
   static const int kDistortionDim = GEOMETRY_TYPE::distortion_t::NumDistortionIntrinsics;
   static const int kNumResiduals = 2;

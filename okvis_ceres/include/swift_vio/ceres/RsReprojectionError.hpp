@@ -25,8 +25,7 @@
 namespace okvis {
 namespace ceres {
 
-template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL,
-          class LANDMARK_MODEL>
+template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL>
 class LocalBearingVector;
 
 // TODO(jhuai): simplify template arguments to CameraModel, ExtrinsicModel,
@@ -58,8 +57,7 @@ class LocalBearingVector;
 ///     constant values from a provided extrinsic entity, e.g., T_BC.
 ///     Its kNumParams should not be zero.
 template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-          class EXTRINSIC_MODEL=swift_vio::Extrinsic_p_BC_q_BC,
-          class LANDMARK_MODEL=okvis::ceres::HomogeneousPointLocalParameterization>
+          class EXTRINSIC_MODEL=swift_vio::Extrinsic_p_BC_q_BC>
 class RsReprojectionError
     : public ::ceres::SizedCostFunction<
           2 /* number of residuals */, 7 /* pose */, 4 /* landmark */,
@@ -78,7 +76,7 @@ class RsReprojectionError
 
   /// \brief Make the camera geometry type accessible.
   typedef GEOMETRY_TYPE camera_geometry_t;
-
+  typedef okvis::ceres::HomogeneousPointLocalParameterization LANDMARK_MODEL;
   static const int kDistortionDim = GEOMETRY_TYPE::distortion_t::NumDistortionIntrinsics;
   static const int kMinProjectionIntrinsicDim = PROJ_INTRINSIC_MODEL::kNumParams;
   static const int kIntrinsicDim = GEOMETRY_TYPE::NumIntrinsics;
@@ -275,7 +273,7 @@ class RsReprojectionError
     return "RsReprojectionError";
   }
 
-  friend class LocalBearingVector<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL>;
+  friend class LocalBearingVector<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>;
  protected:
 //  uint64_t cameraId_; ///< ID of the camera.
   measurement_t measurement_; ///< The (2D) measurement.
@@ -304,12 +302,11 @@ class RsReprojectionError
 // AutoDifferentiate will invoke Evaluate() if the Functor is a ceres::CostFunction
 // see ceres-solver/include/ceres/internal/variadic_evaluate.h
 // so we have to separate operator() from Evaluate()
-template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-          class EXTRINSIC_MODEL, class LANDMARK_MODEL>
+template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL>
 class LocalBearingVector {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  LocalBearingVector(const RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL>& rsre);
+  LocalBearingVector(const RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>& rsre);
   template <typename Scalar>
   bool operator()(const Scalar* const T_WS, const Scalar* const hp_W,
                   const Scalar* const extrinsic, const Scalar* const t_r,
@@ -318,7 +315,7 @@ class LocalBearingVector {
                   const Scalar* const deltaExtrinsic, Scalar* hp_C) const;
 
  private:
-  const RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL>& rsre_;
+  const RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>& rsre_;
 };
 
 }  // namespace ceres
