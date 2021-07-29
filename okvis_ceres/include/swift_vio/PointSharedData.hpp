@@ -127,7 +127,7 @@ class PointSharedData {
    * @brief computePoseAndVelocityForJacobians
    * @warning Only call this function after
    * computePoseAndVelocityAtObservation() has finished.
-   * @param useLinearizationPoint
+   * @param useLinearizationPoint use provided linearization points?
    */
   void computePoseAndVelocityForJacobians(bool useLinearizationPoint);
   /// @}

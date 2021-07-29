@@ -195,7 +195,6 @@ bool ChordalDistance<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
       setJacobiansZero(jacobians, jacobiansMinimal);
       return false;
     }
-    // use first estimates.
     okvis::kinematics::Transformation T_WBtij_forJac =
         pointDataPtr_->T_WBtij_ForJacobian(observationIndex_);
 
@@ -447,7 +446,6 @@ bool ChordalDistance<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
       setJacobiansZero(jacobians, jacobiansMinimal);
       return false;
     }
-    // use first estimates.
     okvis::kinematics::Transformation T_WBtij_forJac =
         pointDataPtr_->T_WBtij_ForJacobian(observationIndex_);
     okvis::kinematics::Transformation T_WBtmi_forJac =

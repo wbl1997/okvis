@@ -821,8 +821,8 @@ class Estimator : public VioBackendInterface
     uint64_t id;
     const okvis::Time timestamp;         // t_j, fixed once initialized
     const double tdAtCreation;  // t_{d_j}, fixed once initialized
-    // first estimate of position r_WB and velocity v_WB
-    std::shared_ptr<Eigen::Matrix<double, 6, 1>> linearizationPoint;
+    // linearization points of position r_WB and velocity v_WB.
+    std::shared_ptr<Eigen::Matrix<double, 6, 1>> positionVelocityLin;
     // IMU measurements centering at state timestamp. It is initialized
     // when IMU readings surpass state timestamp, and then updated
     // when next state arrives.

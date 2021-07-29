@@ -27,10 +27,10 @@ RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
         const measurement_t& measurement,
         const covariance_t& covariance,
         std::shared_ptr<const okvis::ImuMeasurementDeque> imuMeasCanopy,
-        std::shared_ptr<const Eigen::Matrix<double, 6, 1>> posVelAtLinearization,
+        std::shared_ptr<const Eigen::Matrix<double, 6, 1>> positionVelocityLin,
         okvis::Time stateEpoch, double tdAtCreation, double gravityMag)
     : imuMeasCanopy_(imuMeasCanopy),
-      posVelAtLinearization_(posVelAtLinearization),
+      positionVelocityLin_(positionVelocityLin),
       stateEpoch_(stateEpoch),
       tdAtCreation_(tdAtCreation),
       gravityMag_(gravityMag) {
@@ -170,12 +170,12 @@ bool RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
     }
     std::pair<Eigen::Matrix<double, 3, 1>, Eigen::Quaternion<double>> T_WB_lin = pairT_WB;
     SpeedAndBiases speedAndBiasesLin = speedBgBa;
-    if (posVelAtLinearization_) {
-      // compute p_WB, v_WB at (t_{f_i,j}) that use FIRST ESTIMATES of
-      // position and velocity, i.e., their linearization point
-      T_WB_lin = std::make_pair(posVelAtLinearization_->head<3>(), q_WB0);
+    if (positionVelocityLin_) {
+      // compute position and velocity at t_{f_i,j} with first estimates of
+      // position and velocity at t_j.
+      T_WB_lin = std::make_pair(positionVelocityLin_->head<3>(), q_WB0);
       speedAndBiasesLin = Eigen::Map<const Eigen::Matrix<double, 9, 1>>(parameters[7]);
-      speedAndBiasesLin.head<3>() = posVelAtLinearization_->tail<3>();
+      speedAndBiasesLin.head<3>() = positionVelocityLin_->tail<3>();
       if (relativeFeatureTime >= wedge) {
         swift_vio::ode::predictStates(*imuMeasCanopy_, gravityMag_, T_WB_lin,
                                     speedAndBiasesLin, t_start, t_end);

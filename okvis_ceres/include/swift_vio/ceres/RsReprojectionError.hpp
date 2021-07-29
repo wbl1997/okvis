@@ -285,7 +285,7 @@ class RsReprojectionError
 
   // const after initialization
   std::shared_ptr<const okvis::ImuMeasurementDeque> imuMeasCanopy_;
-  std::shared_ptr<const Eigen::Matrix<double, 6, 1>> posVelAtLinearization_;
+  std::shared_ptr<const Eigen::Matrix<double, 6, 1>> positionVelocityLin_;
   // weighting related
   covariance_t information_; ///< The 2x2 information matrix.
   covariance_t squareRootInformation_; ///< The 2x2 square root information matrix.

@@ -193,7 +193,7 @@ class EpipolarFactor
 
   std::vector<okvis::Time> stateEpoch_; ///< The timestamp of the set of robot states related to this error term.
   std::vector<double> tdAtCreation_;
-  ///< To avoid complication in marginalizing speed and biases, first estimates
+  ///< To avoid complexity in marginalizing speed and biases, first estimates
   ///  of speed and biases are used for computing pose at exposure.
   std::vector<Eigen::Matrix<double, 9, 1>,
               Eigen::aligned_allocator<Eigen::Matrix<double, 9, 1>>>
