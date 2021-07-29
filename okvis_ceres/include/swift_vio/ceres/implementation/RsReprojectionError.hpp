@@ -168,23 +168,23 @@ bool RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
       setJacobiansZero(jacobians, jacobiansMinimal);
       return true;
     }
-    std::pair<Eigen::Matrix<double, 3, 1>, Eigen::Quaternion<double>> T_WB_fej = pairT_WB;
-    SpeedAndBiases speedAndBiasesFej = speedBgBa;
+    std::pair<Eigen::Matrix<double, 3, 1>, Eigen::Quaternion<double>> T_WB_lin = pairT_WB;
+    SpeedAndBiases speedAndBiasesLin = speedBgBa;
     if (posVelAtLinearization_) {
       // compute p_WB, v_WB at (t_{f_i,j}) that use FIRST ESTIMATES of
       // position and velocity, i.e., their linearization point
-      T_WB_fej = std::make_pair(posVelAtLinearization_->head<3>(), q_WB0);
-      speedAndBiasesFej = Eigen::Map<const Eigen::Matrix<double, 9, 1>>(parameters[7]);
-      speedAndBiasesFej.head<3>() = posVelAtLinearization_->tail<3>();
+      T_WB_lin = std::make_pair(posVelAtLinearization_->head<3>(), q_WB0);
+      speedAndBiasesLin = Eigen::Map<const Eigen::Matrix<double, 9, 1>>(parameters[7]);
+      speedAndBiasesLin.head<3>() = posVelAtLinearization_->tail<3>();
       if (relativeFeatureTime >= wedge) {
-        swift_vio::ode::predictStates(*imuMeasCanopy_, gravityMag_, T_WB_fej,
-                                    speedAndBiasesFej, t_start, t_end);
+        swift_vio::ode::predictStates(*imuMeasCanopy_, gravityMag_, T_WB_lin,
+                                    speedAndBiasesLin, t_start, t_end);
       } else if (relativeFeatureTime <= -wedge) {
-        swift_vio::ode::predictStatesBackward(*imuMeasCanopy_, gravityMag_, T_WB_fej,
-                                            speedAndBiasesFej, t_start, t_end);
+        swift_vio::ode::predictStatesBackward(*imuMeasCanopy_, gravityMag_, T_WB_lin,
+                                            speedAndBiasesLin, t_start, t_end);
       }
-      C_BW = T_WB_fej.second.toRotationMatrix().transpose();
-      t_WB_W = T_WB_fej.first;
+      C_BW = T_WB_lin.second.toRotationMatrix().transpose();
+      t_WB_W = T_WB_lin.first;
       T_BW.topLeftCorner<3, 3>() = C_BW;
       T_BW.topRightCorner<3, 1>() = -C_BW * t_WB_W;
       hp_B = T_BW * hp_W;
@@ -210,11 +210,11 @@ bool RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
 
     okvis::ImuMeasurement queryValue;
     swift_vio::ode::interpolateInertialData(*imuMeasCanopy_, t_end, queryValue);
-    queryValue.measurement.gyroscopes -= speedAndBiasesFej.segment<3>(3);
+    queryValue.measurement.gyroscopes -= speedAndBiasesLin.segment<3>(3);
     Eigen::Vector3d p =
         okvis::kinematics::crossMx(queryValue.measurement.gyroscopes) *
             hp_B.head<3>() +
-        C_BW * speedAndBiasesFej.head<3>() * hp_W[3];
+        C_BW * speedAndBiasesLin.head<3>() * hp_W[3];
     dhC_td.head<3>() = -C_CB * p;
     dhC_td[3] = 0;
 

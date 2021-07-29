@@ -72,31 +72,31 @@ void PointSharedData::computePoseAndVelocityForJacobians(
         imuAugmentedParamBlockPtrs_, &imuAugmentedParams,
         ImuModelNameToId(imuParameters_->model_type));
     for (auto& item : stateInfoForObservations_) {
-      okvis::kinematics::Transformation T_WB_fej =
+      okvis::kinematics::Transformation T_WB_lin =
           std::static_pointer_cast<const okvis::ceres::PoseParameterBlock>(
               item.T_WBj_ptr)
               ->estimate();
-      okvis::SpeedAndBiases speedAndBiasesFej =
+      okvis::SpeedAndBiases speedAndBiasesLin =
           std::static_pointer_cast<
               const okvis::ceres::SpeedAndBiasParameterBlock>(
               item.speedAndBiasPtr)
               ->estimate();
       std::shared_ptr<const Eigen::Matrix<double, 6, 1>>
-          posVelFirstEstimatePtr = item.positionVelocityPtr;
-      T_WB_fej = okvis::kinematics::Transformation(
-          posVelFirstEstimatePtr->head<3>(), T_WB_fej.q());
-      speedAndBiasesFej.head<3>() = posVelFirstEstimatePtr->tail<3>();
+          posVelFirstEstimatePtr = item.positionVelocityLinPtr;
+      T_WB_lin = okvis::kinematics::Transformation(
+          posVelFirstEstimatePtr->head<3>(), T_WB_lin.q());
+      speedAndBiasesLin.head<3>() = posVelFirstEstimatePtr->tail<3>();
       okvis::Duration featureTime(normalizedFeatureTime(item));
       poseAndLinearVelocityAtObservation(
           *item.imuMeasurementPtr, imuAugmentedParams, *imuParameters_,
-          item.stateEpoch, featureTime, &T_WB_fej, &speedAndBiasesFej);
-      item.v_WBtij_fej = speedAndBiasesFej.head<3>();
-      item.T_WBtij_fej = T_WB_fej;
+          item.stateEpoch, featureTime, &T_WB_lin, &speedAndBiasesLin);
+      item.v_WBtij_lin = speedAndBiasesLin.head<3>();
+      item.T_WBtij_lin = T_WB_lin;
     }
   } else {
     for (auto& item : stateInfoForObservations_) {
-      item.T_WBtij_fej = item.T_WBtij;
-      item.v_WBtij_fej = item.v_WBtij;
+      item.T_WBtij_lin = item.T_WBtij;
+      item.v_WBtij_lin = item.v_WBtij;
     }
   }
   status_ = PointSharedDataState::NavStateForJacReady;
