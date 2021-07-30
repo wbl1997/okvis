@@ -353,6 +353,7 @@ class VioBackendInterface {
   /// param[in] computeUncertainty True, if uncertainties should be computed.
   virtual void setComputeUncertainty(bool /*computeUncertainty*/) {}
 
+  virtual void setPointLandmarkOptions(const swift_vio::PointLandmarkOptions&) {};
   ///@}
 };
 

@@ -608,7 +608,7 @@ class Estimator : public VioBackendInterface
     optimizationOptions_ = optimizationOptions;
   }
 
-  void setPointLandmarkOptions(const swift_vio::PointLandmarkOptions& plOptions) {
+  void setPointLandmarkOptions(const swift_vio::PointLandmarkOptions& plOptions) override {
     pointLandmarkOptions_ = plOptions;
   }
 

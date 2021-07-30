@@ -19,6 +19,16 @@ bool ParallaxAngleParameterization::plus(const double *x, const double *delta,
   return true;
 }
 
+bool ParallaxAngleParameterization::minus(const double* /*x*/, const double* /*x_plus_delta*/, double* /*delta*/) {
+  OKVIS_ASSERT_TRUE(std::runtime_error, false, "Not implemented!");
+  return false;
+}
+
+bool ParallaxAngleParameterization::plusJacobian(const double*, double* /*jacobian*/) {
+  OKVIS_ASSERT_TRUE(std::runtime_error, false, "Not implemented!");
+  return false;
+}
+
 bool InverseDepthParameterization::plus(const double *x, const double *delta,
                                         double *x_plus_delta) {
   x_plus_delta[0] = x[0] + delta[0];
