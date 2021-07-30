@@ -44,7 +44,6 @@
 #include <stdint.h>
 #include <okvis/ceres/ParameterBlock.hpp>
 #include <okvis/assert_macros.hpp>
-#include <Eigen/Core>
 
 /// \brief okvis Main namespace of this package.
 namespace okvis {
@@ -58,7 +57,6 @@ namespace ceres {
 template<int Dim, int MinDim, class T>
 class ParameterBlockSized : public okvis::ceres::ParameterBlock {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   OKVIS_DEFINE_EXCEPTION(Exception,std::runtime_error)
 
   /// @brief Dimension of the parameter block.

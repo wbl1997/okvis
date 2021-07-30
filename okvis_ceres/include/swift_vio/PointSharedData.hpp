@@ -62,6 +62,8 @@ enum class PointSharedDataState {
 // The data of the class members may be updated in ceres EvaluationCallback.
 class PointSharedData {
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
   typedef std::vector<StateInfoForOneKeypoint,
                       Eigen::aligned_allocator<StateInfoForOneKeypoint>>
       StateInfoForObservationsType;
@@ -155,17 +157,6 @@ class PointSharedData {
    * @return
    */
   std::vector<int> anchorObservationIds() const;
-
-  okvis::kinematics::Transformation T_WB_mainAnchor() const {
-    return stateInfoForObservations_[anchorIds_[0].observationIndex_].T_WBtij;
-  }
-
-  okvis::kinematics::Transformation T_WB_mainAnchorForJacobian(bool useFirstEstimate) const {
-    if (useFirstEstimate)
-      return stateInfoForObservations_[anchorIds_[0].observationIndex_].T_WBtij_lin;
-    else
-      return T_WB_mainAnchor();
-  }
 
   okvis::kinematics::Transformation T_WB_mainAnchorStateEpoch() const {
     const StateInfoForOneKeypoint& mainAnchorItem =

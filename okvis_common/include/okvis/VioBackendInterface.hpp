@@ -67,7 +67,6 @@ namespace okvis {
 class VioBackendInterface {
  public:
   OKVIS_DEFINE_EXCEPTION(Exception, std::runtime_error)
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /// @brief Default constructor.
   VioBackendInterface() {}

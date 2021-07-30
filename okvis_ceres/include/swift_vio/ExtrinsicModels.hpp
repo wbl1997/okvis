@@ -260,7 +260,6 @@ class Extrinsic_p_BC_q_BC_base : public ::ceres::LocalParameterization {
 
 class Extrinsic_p_BC_q_BC final : public Extrinsic_p_BC_q_BC_base {
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   static const int kModelId = 2;
 
   static void toDimensionLabels(std::vector<std::string>* extrinsicLabels) {
@@ -345,7 +344,6 @@ public:
 
 class Extrinsic_p_C0C_q_C0C final : public Extrinsic_p_BC_q_BC_base {
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   static const int kModelId = 3;
 
   static void toDimensionLabels(std::vector<std::string>* extrinsicLabels) {

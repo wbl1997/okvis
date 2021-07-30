@@ -22,7 +22,6 @@ typedef double TimeOffset;  // can represent either T_d or T_r
 class CameraTimeParamBlock
     : public ParameterBlockSized<nTimeDim, nTimeMinDim, TimeOffset> {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   /// \brief The base class type.
   typedef ParameterBlockSized<nTimeDim, nTimeMinDim, TimeOffset> base_t;
 

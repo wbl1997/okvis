@@ -2,6 +2,8 @@
 #include <swift_vio/PointSharedData.hpp>
 
 class PointSharedDataTest : public ::testing::Test {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
  protected:
   void SetUp() override {
     int modulo = 7;

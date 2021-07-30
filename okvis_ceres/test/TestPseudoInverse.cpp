@@ -36,6 +36,8 @@ TEST(matrixTestSuite, pseudoInverseSymmSqrtFullRank) {
 
 class SimpleProjection {
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
   SimpleProjection() {
     K << 600, 0, 320, 0, 600, 240, 0, 0, 1;
     Kinv << 1.0 / 600, 0, -320.0 / 600, 0, 1.0 / 600, -240.0 / 600, 0, 0, 1;

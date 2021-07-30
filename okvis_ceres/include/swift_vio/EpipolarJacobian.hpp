@@ -46,6 +46,8 @@ inline bool obsDirectionJacobian(
 
 class EpipolarJacobian {
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
   inline EpipolarJacobian(const Eigen::Matrix3d& R_CjCk,
                           const Eigen::Vector3d& t_CjCk,
                           const Eigen::Vector3d& fj, const Eigen::Vector3d& fk);
