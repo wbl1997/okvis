@@ -49,7 +49,7 @@ namespace ceres {
 
 /// \brief Provides some additional interfaces to ceres' LocalParamization
 ///        than are needed in the generic marginalisation okvis::ceres::MarginalizationError.
-class LocalParamizationAdditionalInterfaces {
+class LocalParamizationAdditionalInterfaces : public ::ceres::LocalParameterization {
  public:
 
   /// \brief Trivial destructor.

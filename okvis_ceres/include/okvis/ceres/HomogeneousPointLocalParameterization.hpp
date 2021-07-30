@@ -51,7 +51,6 @@ namespace ceres {
 /// \brief Local parameterisation of a homogeneous point [x,y,z,w]^T.
 ///        We use a Euclidean-type perturbation, i.e. only affect the x-y-z-part.
 class HomogeneousPointLocalParameterization :
-    public ::ceres::LocalParameterization,
     public LocalParamizationAdditionalInterfaces
 {
  public:
