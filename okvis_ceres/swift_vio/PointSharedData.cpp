@@ -102,11 +102,8 @@ void PointSharedData::computePoseAndVelocityForJacobians(
   status_ = PointSharedDataState::NavStateForJacReady;
 }
 
-void PointSharedData::computeSharedJacobians(int cameraObservationModelId) {
+void PointSharedData::computeSharedJacobians(int /*cameraObservationModelId*/) {
   CHECK(status_ == PointSharedDataState::NavStateForJacReady);
-  if (cameraObservationModelId == cameras::kChordalDistanceId) {
-
-  }
 }
 
 void PointSharedData::removeExtraObservations(

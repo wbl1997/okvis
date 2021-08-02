@@ -40,6 +40,7 @@
 #define INCLUDE_OKVIS_CERES_REPROJECTIONERRORBASE_HPP_
 
 #include "ceres/ceres.h"
+#include <okvis/ceres/ErrorInterface.hpp>
 
 /// \brief okvis Main namespace of this package.
 namespace okvis {
@@ -82,7 +83,9 @@ class ReprojectionError2dBase
           7 /* size of third parameter (camera extrinsics) */>,
       public ReprojectionErrorBase {
  public:
-
+  static const int kModelId = 0;
+  /// \brief Number of residuals (2)
+  static const int kNumResiduals = 2;
   /// \brief Measurement type (2D).
   typedef Eigen::Vector2d measurement_t;
 

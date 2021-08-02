@@ -25,6 +25,12 @@
 namespace okvis {
 namespace ceres {
 
+class RsReprojectionErrorBase : public ErrorInterface {
+public:
+  static const int kModelId = 5;
+  static const int kNumResiduals = 2;
+};
+
 template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL>
 class LocalBearingVector;
 
@@ -69,7 +75,7 @@ class RsReprojectionError
           1 /* time offset between visual and inertial data */,
           9 /* velocity and biases */
           >,
-      public ErrorInterface {
+      public RsReprojectionErrorBase {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   OKVIS_DEFINE_EXCEPTION(Exception,std::runtime_error)
@@ -104,9 +110,6 @@ class RsReprojectionError
   typedef typename std::conditional<(kDistortionDim > 1),
       Eigen::Matrix<double, 2, kDistortionDim, Eigen::RowMajor>,
       Eigen::Matrix<double, 2, kDistortionDim>>::type DistortionJacType;
-
-  /// \brief Number of residuals (2)
-  static const int kNumResiduals = 2;
 
   /// \brief The keypoint type (measurement type).
   typedef Eigen::Vector2d keypoint_t;

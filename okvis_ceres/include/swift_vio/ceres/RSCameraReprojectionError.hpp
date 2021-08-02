@@ -64,6 +64,12 @@
 
 namespace okvis {
 namespace ceres {
+class RSCameraReprojectionErrorBase : public ErrorInterface {
+public:
+  static const int kModelId = 6;
+  static const int kNumResiduals = 2;
+};
+
 /// \brief The 2D keypoint reprojection error accounting for rolling shutter
 ///     skew and time offset and camera intrinsics.
 /// \warning A potential problem with this reprojection error happens when
@@ -90,7 +96,7 @@ class RSCameraReprojectionError
           9 /* T_gi */,
           9 /* T_si */,
           6 /* T_ai */>,
-      public ErrorInterface {
+      public RSCameraReprojectionErrorBase {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   OKVIS_DEFINE_EXCEPTION(Exception,std::runtime_error)
@@ -134,9 +140,6 @@ class RSCameraReprojectionError
     T_ai
   };
 
-  /// \brief Number of residuals (2)
-  static const int kNumResiduals = 2;
-
   /// \brief The keypoint type (measurement type).
   typedef Eigen::Vector2d keypoint_t;
 
@@ -160,7 +163,7 @@ class RSCameraReprojectionError
   RSCameraReprojectionError(
       const measurement_t& measurement,
       const covariance_t& covariance,
-      std::shared_ptr<const okvis::cameras::CameraGeometryBase> targetCamera,
+      std::shared_ptr<const okvis::cameras::CameraBase> targetCamera,
       std::shared_ptr<const okvis::ImuMeasurementDeque> imuMeasurementCanopy,
       std::shared_ptr<const okvis::ImuParameters> imuParameters,
       okvis::Time targetStateTime, okvis::Time targetImageTime);
@@ -241,9 +244,9 @@ class RSCameraReprojectionError
   measurement_t measurement_; ///< The (2D) measurement.
 
   std::shared_ptr<const okvis::ImuMeasurementDeque> imuMeasCanopy_;
-  std::shared_ptr<const okvis::ImuMeasurementDeque> imuParameters_;
+  std::shared_ptr<const okvis::ImuParameters> imuParameters_;
 
-  std::shared_ptr<const okvis::cameras::CameraGeometryBase> targetCamera_;
+  std::shared_ptr<const okvis::cameras::CameraBase> targetCamera_;
 
   // weighting related
   covariance_t information_; ///< The 2x2 information matrix.

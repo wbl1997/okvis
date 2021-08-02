@@ -25,6 +25,12 @@
 namespace okvis {
 namespace ceres {
 
+class ReprojectionErrorWithPapBase : public ErrorInterface {
+public:
+  static const int kModelId = 3;
+  static const int kNumResiduals = 2;
+};
+
 /// \brief The reprojection error with pap \pi(R_{C(t_{i,j})} * N_{i,j}) - z_{i,j} accounting
 /// for rolling shutter skew and time offset and camera intrinsics.
 /// \warning A potential problem with this error term happens when
@@ -60,7 +66,7 @@ class ReprojectionErrorWithPap
           9 /* velocity and biases of observing frame */,
           9 /* velocity and biases of main anchor */,
           9 /* velocity and biases of associate anchor */>,
-      public ErrorInterface {
+      public ReprojectionErrorWithPapBase {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   OKVIS_DEFINE_EXCEPTION(Exception,std::runtime_error)
@@ -70,7 +76,7 @@ class ReprojectionErrorWithPap
   typedef swift_vio::ParallaxAngleParameterization LANDMARK_MODEL;
   static const int kProjectionIntrinsicDim = PROJ_INTRINSIC_MODEL::kNumParams;
   static const int kDistortionDim = GEOMETRY_TYPE::distortion_t::NumDistortionIntrinsics;
-  static const int kNumResiduals = 2;
+
   /// \brief The base class type.
   typedef ::ceres::SizedCostFunction<
       kNumResiduals, 7, 7, 7, LANDMARK_MODEL::kGlobalDim, 7, PROJ_INTRINSIC_MODEL::kNumParams,
