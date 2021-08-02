@@ -30,7 +30,7 @@ class ParallaxAnglePointTest : public ::testing::Test {
 TEST_F(ParallaxAnglePointTest, CopyAndSet) {
   std::vector<double> params;
   pap_.set(quatAndCS_.data());
-  pap_.copy(&params);
+  pap_.getParameters(&params);
   Eigen::Map<const Eigen::Matrix<double, 6, 1>> paramVector(params.data());
   EXPECT_LT((paramVector - quatAndCS_).lpNorm<Eigen::Infinity>(), eps);
 }

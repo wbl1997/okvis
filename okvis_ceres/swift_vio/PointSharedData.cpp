@@ -63,42 +63,35 @@ void PointSharedData::computePoseAndVelocityAtObservation() {
   status_ = PointSharedDataState::NavStateReady;
 }
 
-void PointSharedData::computePoseAndVelocityForJacobians(
-    bool useFirstEstimate) {
+void PointSharedData::computePoseAndVelocityForJacobians() {
   CHECK(status_ == PointSharedDataState::NavStateReady);
-  if (useFirstEstimate) {
-    Eigen::Matrix<double, -1, 1> imuAugmentedParams;
-    getImuAugmentedStatesEstimate(
-        imuAugmentedParamBlockPtrs_, &imuAugmentedParams,
-        ImuModelNameToId(imuParameters_->model_type));
-    for (auto& item : stateInfoForObservations_) {
-      okvis::kinematics::Transformation T_WB_lin =
-          std::static_pointer_cast<const okvis::ceres::PoseParameterBlock>(
-              item.T_WBj_ptr)
-              ->estimate();
-      okvis::SpeedAndBiases speedAndBiasesLin =
-          std::static_pointer_cast<
-              const okvis::ceres::SpeedAndBiasParameterBlock>(
-              item.speedAndBiasPtr)
-              ->estimate();
-      std::shared_ptr<const Eigen::Matrix<double, 6, 1>>
-          posVelFirstEstimatePtr = item.positionVelocityLinPtr;
-      T_WB_lin = okvis::kinematics::Transformation(
-          posVelFirstEstimatePtr->head<3>(), T_WB_lin.q());
-      speedAndBiasesLin.head<3>() = posVelFirstEstimatePtr->tail<3>();
-      okvis::Duration featureTime(normalizedFeatureTime(item));
-      poseAndLinearVelocityAtObservation(
-          *item.imuMeasurementPtr, imuAugmentedParams, *imuParameters_,
-          item.stateEpoch, featureTime, &T_WB_lin, &speedAndBiasesLin);
-      item.v_WBtij_lin = speedAndBiasesLin.head<3>();
-      item.T_WBtij_lin = T_WB_lin;
-    }
-  } else {
-    for (auto& item : stateInfoForObservations_) {
-      item.T_WBtij_lin = item.T_WBtij;
-      item.v_WBtij_lin = item.v_WBtij;
-    }
+  Eigen::Matrix<double, -1, 1> imuAugmentedParams;
+  getImuAugmentedStatesEstimate(
+      imuAugmentedParamBlockPtrs_, &imuAugmentedParams,
+      ImuModelNameToId(imuParameters_->model_type));
+  for (auto& item : stateInfoForObservations_) {
+    okvis::kinematics::Transformation T_WB_lin =
+        std::static_pointer_cast<const okvis::ceres::PoseParameterBlock>(
+            item.T_WBj_ptr)
+            ->estimate();
+    okvis::SpeedAndBiases speedAndBiasesLin =
+        std::static_pointer_cast<
+            const okvis::ceres::SpeedAndBiasParameterBlock>(
+            item.speedAndBiasPtr)
+            ->estimate();
+    std::shared_ptr<const Eigen::Matrix<double, 6, 1>>
+        posVelLinPtr = item.positionVelocityLinPtr;
+    T_WB_lin = okvis::kinematics::Transformation(
+        posVelLinPtr->head<3>(), T_WB_lin.q());
+    speedAndBiasesLin.head<3>() = posVelLinPtr->tail<3>();
+    okvis::Duration featureTime(normalizedFeatureTime(item));
+    poseAndLinearVelocityAtObservation(
+        *item.imuMeasurementPtr, imuAugmentedParams, *imuParameters_,
+        item.stateEpoch, featureTime, &T_WB_lin, &speedAndBiasesLin);
+    item.v_WBtij_lin = speedAndBiasesLin.head<3>();
+    item.T_WBtij_lin = T_WB_lin;
   }
+
   status_ = PointSharedDataState::NavStateForJacReady;
 }
 

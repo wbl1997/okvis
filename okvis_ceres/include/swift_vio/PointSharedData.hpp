@@ -129,9 +129,8 @@ class PointSharedData {
    * @brief computePoseAndVelocityForJacobians
    * @warning Only call this function after
    * computePoseAndVelocityAtObservation() has finished.
-   * @param useLinearizationPoint use provided linearization points?
    */
-  void computePoseAndVelocityForJacobians(bool useLinearizationPoint);
+  void computePoseAndVelocityForJacobians();
   /// @}
 
   /**
@@ -166,20 +165,14 @@ class PointSharedData {
             ->estimate();
   }
 
-  okvis::kinematics::Transformation T_WB_mainAnchorStateEpochForJacobian(
-      bool useFirstEstimate) const {
+  okvis::kinematics::Transformation T_WB_mainAnchorStateEpochForJacobian() const {
     const StateInfoForOneKeypoint& mainAnchorItem =
         stateInfoForObservations_.at(anchorIds_[0].observationIndex_);
     okvis::kinematics::Transformation T_WB_lin =
         std::static_pointer_cast<const okvis::ceres::PoseParameterBlock>(
             mainAnchorItem.T_WBj_ptr)
             ->estimate();
-    if (useFirstEstimate) {
-      std::shared_ptr<const Eigen::Matrix<double, 6, 1>>
-          posVelFirstEstimatePtr = mainAnchorItem.positionVelocityLinPtr;
-      T_WB_lin = okvis::kinematics::Transformation(
-          posVelFirstEstimatePtr->head<3>(), T_WB_lin.q());
-    }
+    T_WB_lin.setTranslation(mainAnchorItem.positionVelocityLinPtr->head<3>());
     return T_WB_lin;
   }
   /// @}

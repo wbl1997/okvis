@@ -150,6 +150,8 @@ class Transformation
     return &parameters_[0];
   }
 
+  double *parameterMutablePtr() { return parameters_.data(); }
+
   /// \brief Set this to a random transformation.
   void setRandom();
   /// \brief Set this to a random transformation with bounded rotation and translation.
@@ -165,6 +167,11 @@ class Transformation
   /// @param[in] r_AB The translation r_AB (represented in frame A).
   /// @param[in] q_AB The Quaternion q_AB (as an Eigen Quaternion).
   void set(const Eigen::Vector3d & r_AB, const Eigen::Quaternion<double>& q_AB);
+
+  template<typename Derived_coeffs>
+  void setTranslation(const Eigen::MatrixBase<Derived_coeffs> &r);
+
+  void setRotation(const Eigen::Quaterniond &q);
 
   /// \brief Set this transformation to identity
   void setIdentity();

@@ -1,5 +1,7 @@
 #include "swift_vio/PointLandmarkModels.hpp"
 #include <swift_vio/ParallaxAnglePoint.hpp>
+#include <okvis/ceres/HomogeneousPointLocalParameterization.hpp>
+
 
 namespace swift_vio {
 bool ParallaxAngleParameterization::plus(const double *x, const double *delta,
@@ -47,5 +49,20 @@ bool InverseDepthParameterization::minus(const double* x,
   return true;
 }
 
+std::shared_ptr<okvis::ceres::LocalParamizationAdditionalInterfaces> createLandmarkLocalParameterization(int modelId) {
+  std::shared_ptr<okvis::ceres::LocalParamizationAdditionalInterfaces> parameterizationPtr;
+  switch (modelId) {
+    case okvis::ceres::HomogeneousPointLocalParameterization::kModelId:
+      parameterizationPtr.reset(new okvis::ceres::HomogeneousPointLocalParameterization());
+      break;
+    case InverseDepthParameterization::kModelId:
+      parameterizationPtr.reset(new InverseDepthParameterization());
+      break;
+    case ParallaxAngleParameterization::kModelId:
+      parameterizationPtr.reset(new ParallaxAngleParameterization());
+      break;
+  }
+  return parameterizationPtr;
+}
 
 } // namespace swift_vio

@@ -31,6 +31,15 @@ public:
   }
 
   template <typename Scalar>
+  static void oplus(const Scalar* x, const Scalar* delta, Scalar* x_plus_delta) {
+    Eigen::Map<const Eigen::Matrix<Scalar, 3, 1> > dr(delta);
+    Eigen::Map<const Eigen::Matrix<Scalar, 3, 1> > r(x);
+    Eigen::Map<const Eigen::Quaternion<Scalar> > q(x + 3);
+    Eigen::Map<Eigen::Matrix<Scalar, 3, 1> > rplus(x_plus_delta);
+    rplus = r - q * dr;
+  }
+
+  template <typename Scalar>
   static void ominus(const Scalar *T, const Scalar *T_plus, Scalar *delta) {
     Eigen::Map<const Eigen::Quaternion<Scalar>> q(T + 3);
     Eigen::Map<Eigen::Vector3d> deltaVec(delta);
@@ -217,6 +226,18 @@ public:
     Eigen::Matrix<Scalar, 3, 1> omega = delta.template tail<3>();
     Eigen::Quaternion<Scalar> dq = okvis::kinematics::expAndTheta(omega);
     T->second = dq * T->second;
+  }
+
+  template <typename Scalar>
+  static void oplus(const Scalar* x, const Scalar* delta, Scalar* x_plus_delta) {
+    Eigen::Map<const Eigen::Matrix<Scalar, 3, 1> > dr(delta);
+    Eigen::Map<const Eigen::Matrix<Scalar, 3, 1> > dq(delta + 3);
+    Eigen::Map<const Eigen::Matrix<Scalar, 3, 1> > r(x);
+    Eigen::Map<const Eigen::Quaternion<Scalar> > q(x + 3);
+    Eigen::Map<Eigen::Matrix<Scalar, 3, 1> > rplus(x_plus_delta);
+    Eigen::Map<Eigen::Quaternion<Scalar> > qplus(x_plus_delta + 3);
+    rplus = r + dr;
+    qplus = okvis::kinematics::expAndTheta(Eigen::Matrix<Scalar, 3, 1>(dq)) * q;
   }
 
   template <typename Scalar>

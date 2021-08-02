@@ -296,18 +296,18 @@ class ParallaxAnglePoint {
   ParallaxAnglePoint(double w, double x, double y, double z, double ct, double st)
       : n_(w, x, y, z), theta_(ct, st) {}
 
-  void copy(std::vector<double>* parameters) const {
+  void getParameters(std::vector<double>* parameters) const {
     parameters->resize(6);
     memcpy(parameters->data(), n_.data(), sizeof(double) * 4);
     memcpy(parameters->data() + 4, theta_.data(), sizeof(double) * 2);
   }
 
-  void copy(Eigen::Matrix<double, 6, 1>* parameters) const {
+  void getParameters(Eigen::Matrix<double, 6, 1>* parameters) const {
     memcpy(parameters->data(), n_.data(), sizeof(double) * 4);
     memcpy(parameters->data() + 4, theta_.data(), sizeof(double) * 2);
   }
 
-  void copy(double* parameters) const {
+  void getParameters(double* parameters) const {
     memcpy(parameters, n_.data(), sizeof(double) * 4);
     memcpy(parameters + 4, theta_.data(), sizeof(double) * 2);
   }

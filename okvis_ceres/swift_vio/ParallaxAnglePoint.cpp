@@ -42,7 +42,7 @@ bool ParallaxAnglePoint::optimizePosition(
   }
   swift_vio::BearingResiduals f(pointDataPtr, 0.01);
   Eigen::Matrix<double, 6, 1> x;
-  copy(&x);
+  getParameters(&x);
   swift_vio::ParallaxAngleParameterization localPap;
   swift_vio::ceres::TinySolver<swift_vio::BearingResiduals> solver(&localPap);
   solver.options.max_num_iterations = 15;  

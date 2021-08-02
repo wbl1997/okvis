@@ -4,7 +4,9 @@
 namespace swift_vio {
 class CameraObservationModel {
 public:
-  static int toResidualDim(int modelId);
+  static int residualDim(int modelId);
+
+  static int toLandmarkModelId(int modelId);
 };
 
 #ifndef RESIDUAL_MODEL_SWITCH_CASES

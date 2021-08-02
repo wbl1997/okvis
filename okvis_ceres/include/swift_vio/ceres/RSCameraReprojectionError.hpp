@@ -11,11 +11,13 @@
 #include <vector>
 #include <memory>
 #include <ceres/ceres.h>
-#include <okvis/Measurements.hpp>
 
 #include <okvis/assert_macros.hpp>
+#include <okvis/cameras/CameraBase.hpp>
 #include <okvis/ceres/PoseLocalParameterization.hpp>
 #include <okvis/ceres/ErrorInterface.hpp>
+#include <okvis/Measurements.hpp>
+#include <okvis/Parameters.hpp>
 
 #include <swift_vio/imu/ImuModels.hpp>
 #include <swift_vio/ExtrinsicModels.hpp>

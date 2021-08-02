@@ -155,7 +155,7 @@ public:
   }
 };
 
-// add the model switch functions
+std::shared_ptr<okvis::ceres::LocalParamizationAdditionalInterfaces> createLandmarkLocalParameterization(int modelId);
 } // namespace swift_vio
 
 #endif // INCLUDE_SWIFT_VIO_POINT_LANDMARK_MODELS_HPP_
