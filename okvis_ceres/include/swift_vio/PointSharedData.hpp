@@ -250,6 +250,10 @@ class PointSharedData {
     return stateInfoForObservations_[index].normalizedRow;
   }
 
+  okvis::Time imageTime(int index) const {
+    return stateInfoForObservations_[index].imageTimestamp;
+  }
+
   std::vector<okvis::kinematics::Transformation,
               Eigen::aligned_allocator<okvis::kinematics::Transformation>>
   poseAtObservationList() const {

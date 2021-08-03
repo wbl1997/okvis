@@ -41,7 +41,7 @@ EpipolarFactor<GEOMETRY_TYPE, EXTRINSIC_MODEL, PROJ_INTRINSIC_MODEL>::
         std::vector<std::shared_ptr<const okvis::ImuMeasurementDeque>>&
             imuMeasCanopy,
         const std::vector<okvis::Time>& stateEpoch,
-        const std::vector<double>& tdAtCreation,
+        const std::vector<okvis::Time>& imageTimes,
         const std::vector<
             Eigen::Matrix<double, 9, 1>,
             Eigen::aligned_allocator<Eigen::Matrix<double, 9, 1>>>&
@@ -51,7 +51,7 @@ EpipolarFactor<GEOMETRY_TYPE, EXTRINSIC_MODEL, PROJ_INTRINSIC_MODEL>::
       covariance_(covariance12),
       imuMeasCanopy_(imuMeasCanopy),
       stateEpoch_(stateEpoch),
-      tdAtCreation_(tdAtCreation),
+      imageTimes_(imageTimes),
       speedAndBiases_(speedAndBiases),
       gravityMag_(gravityMag) {
   ReprojectionErrorBase::setLandmarkId(landmarkId);
@@ -84,7 +84,7 @@ void EpipolarFactor<GEOMETRY_TYPE, EXTRINSIC_MODEL, PROJ_INTRINSIC_MODEL>::
   Eigen::Matrix<double, 9, 1> speedBgBa = speedAndBiases_[index];
 
   double relativeFeatureTime =
-      tdLatestEstimate + trLatestEstimate * dtij_dtr_[index] - tdAtCreation_[index];
+      tdLatestEstimate + trLatestEstimate * dtij_dtr_[index] + (imageTimes_[index] - stateEpoch_[index]).toSec();
 
   okvis::Time t_start = stateEpoch_[index];
   okvis::Time t_end = stateEpoch_[index] + okvis::Duration(relativeFeatureTime);
@@ -275,7 +275,7 @@ bool EpipolarFactor<GEOMETRY_TYPE, EXTRINSIC_MODEL, PROJ_INTRINSIC_MODEL>::
       de_dtj[j] = de_dtj_eigen[0];
 
       double featureTime =
-          tdLatestEstimate + trLatestEstimate * dtij_dtr_[j] - tdAtCreation_[j];
+          tdLatestEstimate + trLatestEstimate * dtij_dtr_[j] + (imageTimes_[j] - stateEpoch_[j]).toSec();
       featureDelay[j] = featureTime;
     }
     double de_dtd = de_dtj[0] + de_dtj[1];

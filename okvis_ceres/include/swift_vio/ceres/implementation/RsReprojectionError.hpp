@@ -28,11 +28,11 @@ RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
         const covariance_t& covariance,
         std::shared_ptr<const okvis::ImuMeasurementDeque> imuMeasCanopy,
         std::shared_ptr<const Eigen::Matrix<double, 6, 1>> positionVelocityLin,
-        okvis::Time stateEpoch, double tdAtCreation, double gravityMag)
+        okvis::Time stateEpoch, okvis::Time imageTime, double gravityMag)
     : imuMeasCanopy_(imuMeasCanopy),
       positionVelocityLin_(positionVelocityLin),
       stateEpoch_(stateEpoch),
-      tdAtCreation_(tdAtCreation),
+      imageTime_(imageTime),
       gravityMag_(gravityMag) {
   setMeasurement(measurement);
   setCovariance(covariance);
@@ -92,7 +92,7 @@ bool RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
   double ypixel(measurement_[1]);
   uint32_t height = cameraGeometryBase_->imageHeight();
   double kpN = ypixel / height - 0.5;
-  double relativeFeatureTime = tdLatestEstimate + trLatestEstimate * kpN - tdAtCreation_;
+  double relativeFeatureTime = tdLatestEstimate + trLatestEstimate * kpN + (imageTime_ - stateEpoch_).toSec();
   std::pair<Eigen::Matrix<double, 3, 1>, Eigen::Quaternion<double>> pairT_WB(
       t_WB_W0, q_WB0);
   Eigen::Matrix<double, 9, 1> speedBgBa =
@@ -534,7 +534,7 @@ operator()(const Scalar* const T_WB, const Scalar* const php_W,
   Scalar kpN = (Scalar)(ypixel / height - 0.5);
   Scalar tdLatestEstimate = t_d[0];
   Scalar relativeFeatureTime =
-      tdLatestEstimate + trLatestEstimate * kpN - (Scalar)rsre_.tdAtCreation_;
+      tdLatestEstimate + trLatestEstimate * kpN + (Scalar)(rsre_.imageTime_ - rsre_.stateEpoch_).toSec();
 
   std::pair<Eigen::Matrix<Scalar, 3, 1>, Eigen::Quaternion<Scalar>> pairT_WB(
       t_WB_W, q_WB);

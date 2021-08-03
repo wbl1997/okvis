@@ -89,7 +89,7 @@ class EpipolarFactor
    * @param imuMeasCanopy imu measurements in neighborhoods of the left and
    *     right stateEpochs
    * @param stateEpoch left and right state timestamps
-   * @param tdAtCreation left and right reference td
+   * @param imageTimes left and right image timestamps
    * @param gravityMag magnitude of gravity
    */
   EpipolarFactor(
@@ -104,7 +104,7 @@ class EpipolarFactor
       std::vector<std::shared_ptr<const okvis::ImuMeasurementDeque>>&
           imuMeasCanopy,
       const std::vector<okvis::Time>& stateEpoch,
-      const std::vector<double>& tdAtCreation,
+      const std::vector<okvis::Time>& imageTimes,
       const std::vector<Eigen::Matrix<double, 9, 1>,
                         Eigen::aligned_allocator<Eigen::Matrix<double, 9, 1>>>&
           speedAndBiases,
@@ -195,7 +195,7 @@ class EpipolarFactor
   mutable double squareRootInformation_; ///< The square root information matrix.
 
   std::vector<okvis::Time> stateEpoch_; ///< The timestamp of the set of robot states related to this error term.
-  std::vector<double> tdAtCreation_;
+  std::vector<okvis::Time> imageTimes_;
   ///< To avoid complexity in marginalizing speed and biases, first estimates
   ///  of speed and biases are used for computing pose at exposure.
   std::vector<Eigen::Matrix<double, 9, 1>,

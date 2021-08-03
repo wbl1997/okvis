@@ -133,7 +133,7 @@ class RsReprojectionError
    * @param imuMeasCanopy imu meas in the neighborhood of stateEpoch for
    *     compensating the rolling shutter effect.
    * @param stateEpoch epoch of the pose state and speed and biases
-   * @param tdAtCreation the time offset at the creation of the state.
+   * @param imageTime the raw image time.
    * @param gravityMag
    */
   RsReprojectionError(
@@ -142,7 +142,7 @@ class RsReprojectionError
       const covariance_t& covariance,
       std::shared_ptr<const okvis::ImuMeasurementDeque> imuMeasCanopy,
       std::shared_ptr<const Eigen::Matrix<double, 6, 1>> posVelAtLinearization,
-      okvis::Time stateEpoch, double tdAtCreation, double gravityMag);
+      okvis::Time stateEpoch, okvis::Time imageTime, double gravityMag);
 
   /// \brief Trivial destructor.
   virtual ~RsReprojectionError()
@@ -295,7 +295,7 @@ class RsReprojectionError
   covariance_t covariance_; ///< The 2x2 covariance matrix.
 
   okvis::Time stateEpoch_; ///< The timestamp of the set of robot states related to this error term.
-  double tdAtCreation_; /// time offset at the creation of the states
+  okvis::Time imageTime_; /// raw image time.
   const double gravityMag_; ///< gravity in the world frame is [0, 0, -gravityMag_].
 };
 

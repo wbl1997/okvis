@@ -1107,22 +1107,23 @@ void poseAndVelocityAtObservation(
     bool use_RK4) {
   ImuErrorModel<double> iem(sb->tail<6>(), imuAugmentedParams, true);
   const double wedge = 5e-8;
+  double relFeatureTime = featureTime.toSec();
   if (use_RK4) {
-    if (featureTime >= okvis::Duration(wedge)) {
+    if (relFeatureTime >= wedge) {
       ImuOdometry::propagation_RungeKutta(imuMeas, imuParameters, *T_WB, *sb,
                                           iem, stateEpoch,
                                           stateEpoch + featureTime);
-    } else if (featureTime <= okvis::Duration(-wedge)) {
+    } else if (relFeatureTime <= -wedge) {
       ImuOdometry::propagationBackward_RungeKutta(imuMeas, imuParameters, *T_WB,
                                                   *sb, iem, stateEpoch,
                                                   stateEpoch + featureTime);
     }
   } else {
     Eigen::Vector3d tempV_WS = sb->head<3>();
-    if (featureTime >= okvis::Duration(wedge)) {
+    if (relFeatureTime >= wedge) {
       ImuOdometry::propagation(imuMeas, imuParameters, *T_WB, tempV_WS, iem,
                                stateEpoch, stateEpoch + featureTime);
-    } else if (featureTime <= okvis::Duration(-wedge)) {
+    } else if (relFeatureTime <= -wedge) {
       ImuOdometry::propagationBackward(imuMeas, imuParameters, *T_WB, tempV_WS,
                                        iem, stateEpoch,
                                        stateEpoch + featureTime);
