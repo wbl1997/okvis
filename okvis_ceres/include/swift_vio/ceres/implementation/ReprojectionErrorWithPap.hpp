@@ -73,7 +73,7 @@ bool ReprojectionErrorWithPap<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MOD
                                 &intrinsicsJacobian);
     bool projectOk = projectStatus ==
                      okvis::cameras::CameraBase::ProjectionStatus::Successful;
-    PROJ_INTRINSIC_MODEL::kneadIntrinsicJacobian(&intrinsicsJacobian);
+    PROJ_INTRINSIC_MODEL::minimalIntrinsicJacobian(&intrinsicsJacobian);
     Eigen::Vector2d error = imagePoint - measurement_;
     // weight
     Eigen::Vector2d weighted_error = squareRootInformation_ * error;
@@ -176,7 +176,7 @@ bool ReprojectionErrorWithPap<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MOD
                               &intrinsicsJacobian);
   bool projectOk = projectStatus ==
                    okvis::cameras::CameraBase::ProjectionStatus::Successful;
-  PROJ_INTRINSIC_MODEL::kneadIntrinsicJacobian(&intrinsicsJacobian);
+  PROJ_INTRINSIC_MODEL::minimalIntrinsicJacobian(&intrinsicsJacobian);
   Eigen::Vector2d error = imagePoint - measurement_;
   // weight
   Eigen::Vector2d weighted_error = squareRootInformation_ * error;

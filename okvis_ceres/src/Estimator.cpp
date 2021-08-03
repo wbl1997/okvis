@@ -1177,6 +1177,10 @@ bool Estimator::setSpeedAndBias(uint64_t poseId, size_t imuIdx, const okvis::Spe
       poseId, imuIdx, SensorStates::Imu, ImuSensorStates::SpeedAndBias, speedAndBias);
 }
 
+void Estimator::setPositionVelocityLin(uint64_t poseId, const Eigen::Matrix<double, 6, 1>& posVelLin) {
+  *(statesMap_.at(poseId).positionVelocityLin) = posVelLin;
+}
+
 // Set the homogeneous coordinates for a landmark.
 bool Estimator::setLandmark(
     uint64_t landmarkId, const Eigen::Vector4d & landmark)

@@ -173,7 +173,7 @@ public:
   /// w.r.t. the intrinsics.
   /// @return     Get information about the success of the projection. See
   ///             \ref ProjectionStatus for more information.
-  inline CameraBase::ProjectionStatus projectHomogeneousWithExternalParameters(
+  CameraBase::ProjectionStatus projectHomogeneousWithExternalParameters(
       const Eigen::Vector4d &point, const Eigen::VectorXd &parameters,
       Eigen::Vector2d *imagePoint,
       Eigen::Matrix<double, 2, 4> *pointJacobian = NULL,

@@ -586,6 +586,7 @@ class Estimator : public VioBackendInterface
    */
   bool setSpeedAndBias(uint64_t poseId, size_t imuIdx, const okvis::SpeedAndBias & speedAndBias) override;
 
+  void setPositionVelocityLin(uint64_t poseId, const Eigen::Matrix<double, 6, 1>& posVelLin) final;
 
   /// @brief Set whether a frame is a keyframe or not.
   /// @param[in] frameId The frame ID.

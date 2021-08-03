@@ -427,7 +427,7 @@ void RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
   if (jacobians[3] != NULL) {
     Eigen::Map<ProjectionIntrinsicJacType> J1(jacobians[3]);
     Eigen::Matrix<double, 2, Eigen::Dynamic> Jpi_weighted_copy = Jpi_weighted;
-    PROJ_INTRINSIC_MODEL::kneadIntrinsicJacobian(&Jpi_weighted_copy);
+    PROJ_INTRINSIC_MODEL::minimalIntrinsicJacobian(&Jpi_weighted_copy);
     J1 = Jpi_weighted_copy
         .template topLeftCorner<2, PROJ_INTRINSIC_MODEL::kNumParams>();
     if (jacobiansMinimal != NULL) {
