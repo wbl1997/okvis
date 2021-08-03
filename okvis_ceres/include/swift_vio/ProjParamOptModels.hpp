@@ -21,7 +21,7 @@ class ProjectionOptFXY_CXY {
     (*local_opt_params) = global_proj_params.head<4>();
   }
 
-  static void kneadIntrinsicJacobian(Eigen::Matrix2Xd* /*intrinsicJacobian*/) {}
+  static void minimalIntrinsicJacobian(Eigen::Matrix2Xd* /*intrinsicJacobian*/) {}
   static Eigen::MatrixXd getInitCov(double sigma_focal_length,
                                     double sigma_principal_point) {
     Eigen::MatrixXd covProjIntrinsics = Eigen::Matrix<double, 4, 4>::Identity();
@@ -58,7 +58,7 @@ class ProjectionOptFX_CXY {
     (*local_opt_params)[0] = global_proj_params[0];
     local_opt_params->segment<2>(1) = global_proj_params.segment<2>(2);
   }
-  static void kneadIntrinsicJacobian(Eigen::Matrix2Xd* intrinsicJac) {
+  static void minimalIntrinsicJacobian(Eigen::Matrix2Xd* intrinsicJac) {
     const int resultCols = intrinsicJac->cols() - 1;
     intrinsicJac->col(0) += intrinsicJac->col(1);
     intrinsicJac->block(0, 1, 2, resultCols - 1) =
@@ -99,7 +99,7 @@ class ProjectionOptFX {
     local_opt_params->resize(1, 1);
     (*local_opt_params)[0] = global_proj_params[0];
   }
-  static void kneadIntrinsicJacobian(Eigen::Matrix2Xd* intrinsicJac) {
+  static void minimalIntrinsicJacobian(Eigen::Matrix2Xd* intrinsicJac) {
     const int resultCols = intrinsicJac->cols() - 3;
     intrinsicJac->col(0) += intrinsicJac->col(1);
     intrinsicJac->block(0, 1, 2, resultCols - 1) =
@@ -165,13 +165,13 @@ inline int ProjectionOptNameToId(std::string pinhole_opt_rep, bool* isFixed=null
   }
 }
 
-inline void ProjectionOptKneadIntrinsicJacobian(
+inline void ProjectionOptMinimalIntrinsicJacobian(
     int model_id, Eigen::Matrix2Xd* intrinsicJac) {
   switch (model_id) {
 #define MODEL_CASES PROJ_OPT_MODEL_CASES
 #define PROJ_OPT_MODEL_CASE(ProjOptModel) \
   case ProjOptModel::kModelId:            \
-    return ProjOptModel::kneadIntrinsicJacobian(intrinsicJac);
+    return ProjOptModel::minimalIntrinsicJacobian(intrinsicJac);
 
     MODEL_SWITCH_CASES
 

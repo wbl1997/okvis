@@ -23,7 +23,7 @@ int ImuOdometry::propagation(
     const okvis::Time& t_end,
     Eigen::MatrixXd* covariance,
     Eigen::MatrixXd* jacobian,
-    const Eigen::Matrix<double, 6, 1>* linearizationPointAtTStart) {
+    const Eigen::Matrix<double, 6, 1>* positionVelocityLin) {
   okvis::Time time = t_start;
 
   // sanity check:
@@ -33,7 +33,7 @@ int ImuOdometry::propagation(
         << imuMeasurements.front().timeStamp << " " << time;
   }
 
-  bool use_first_estimate = (linearizationPointAtTStart != nullptr);
+  bool use_first_estimate = (positionVelocityLin != nullptr);
   if (imuMeasurements.back().timeStamp < t_end) {
     LOG(WARNING) << "Imu last reading has an epoch "
                  << imuMeasurements.back().timeStamp
@@ -51,7 +51,7 @@ int ImuOdometry::propagation(
   // subsequent steps
   Eigen::Matrix<double, 6, 1> linPoint;
   if (use_first_estimate) {
-    linPoint = *linearizationPointAtTStart;
+    linPoint = *positionVelocityLin;
   } else {
     linPoint << r_0, v_WS;
   }
@@ -444,7 +444,7 @@ int ImuOdometry::propagation(
     F.block<3, 3>(3, 12) = C_WS_0 * dalpha_db_a;
 
     if (use_first_estimate) {
-      linPoint = *linearizationPointAtTStart;
+      linPoint = *positionVelocityLin;
       F.block<3, 3>(0, 3) = okvis::kinematics::crossMx(
           -(linPoint_1.head<3>() - linPoint.head<3>() - linPoint.tail<3>() * Delta_t -
             0.5 * g_W * Delta_t * Delta_t));  // pq
@@ -1107,22 +1107,23 @@ void poseAndVelocityAtObservation(
     bool use_RK4) {
   ImuErrorModel<double> iem(sb->tail<6>(), imuAugmentedParams, true);
   const double wedge = 5e-8;
+  double relFeatureTime = featureTime.toSec();
   if (use_RK4) {
-    if (featureTime >= okvis::Duration(wedge)) {
+    if (relFeatureTime >= wedge) {
       ImuOdometry::propagation_RungeKutta(imuMeas, imuParameters, *T_WB, *sb,
                                           iem, stateEpoch,
                                           stateEpoch + featureTime);
-    } else if (featureTime <= okvis::Duration(-wedge)) {
+    } else if (relFeatureTime <= -wedge) {
       ImuOdometry::propagationBackward_RungeKutta(imuMeas, imuParameters, *T_WB,
                                                   *sb, iem, stateEpoch,
                                                   stateEpoch + featureTime);
     }
   } else {
     Eigen::Vector3d tempV_WS = sb->head<3>();
-    if (featureTime >= okvis::Duration(wedge)) {
+    if (relFeatureTime >= wedge) {
       ImuOdometry::propagation(imuMeas, imuParameters, *T_WB, tempV_WS, iem,
                                stateEpoch, stateEpoch + featureTime);
-    } else if (featureTime <= okvis::Duration(-wedge)) {
+    } else if (relFeatureTime <= -wedge) {
       ImuOdometry::propagationBackward(imuMeas, imuParameters, *T_WB, tempV_WS,
                                        iem, stateEpoch,
                                        stateEpoch + featureTime);

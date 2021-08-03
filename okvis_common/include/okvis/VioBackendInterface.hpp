@@ -67,7 +67,6 @@ namespace okvis {
 class VioBackendInterface {
  public:
   OKVIS_DEFINE_EXCEPTION(Exception, std::runtime_error)
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /// @brief Default constructor.
   VioBackendInterface() {}
@@ -329,6 +328,8 @@ class VioBackendInterface {
    */
   virtual bool setSpeedAndBias(uint64_t poseId, size_t imuIdx, const okvis::SpeedAndBias & speedAndBias) = 0;
 
+  virtual void setPositionVelocityLin(uint64_t /*poseId*/, const Eigen::Matrix<double, 6, 1>& /*posVelLin*/) {};
+
   /// @brief Set the homogeneous coordinates for a landmark
   /// @param[in] landmarkId The landmark ID.
   /// @param[in] landmark Homogeneous coordinates of landmark in W-frame.
@@ -354,6 +355,7 @@ class VioBackendInterface {
   /// param[in] computeUncertainty True, if uncertainties should be computed.
   virtual void setComputeUncertainty(bool /*computeUncertainty*/) {}
 
+  virtual void setPointLandmarkOptions(const swift_vio::PointLandmarkOptions&) {};
   ///@}
 };
 

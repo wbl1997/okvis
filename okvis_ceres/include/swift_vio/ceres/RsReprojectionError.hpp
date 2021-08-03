@@ -27,8 +27,13 @@ namespace okvis
   namespace ceres
   {
 
-    template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL,
-              class LANDMARK_MODEL>
+class RsReprojectionErrorBase : public ErrorInterface {
+public:
+  static const int kModelId = 5;
+  static const int kNumResiduals = 2;
+};
+
+template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL>
     class LocalBearingVector;
 
     // TODO(jhuai): simplify template arguments to CameraModel, ExtrinsicModel,
@@ -60,8 +65,7 @@ namespace okvis
     ///     constant values from a provided extrinsic entity, e.g., T_BC.
     ///     Its kNumParams should not be zero.
     template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-              class EXTRINSIC_MODEL = swift_vio::Extrinsic_p_BC_q_BC,
-              class LANDMARK_MODEL = okvis::ceres::HomogeneousPointLocalParameterization>
+          class EXTRINSIC_MODEL=swift_vio::Extrinsic_p_BC_q_BC>
     class RsReprojectionError
         : public ::ceres::SizedCostFunction<
               2 /* number of residuals */,
@@ -76,7 +80,7 @@ namespace okvis
               1 /* time offset between visual and inertial data */,
               9 /* velocity and biases */
               >,
-          public ErrorInterface
+      public RsReprojectionErrorBase {
     {
     public:
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -84,7 +88,7 @@ namespace okvis
 
       /// \brief Make the camera geometry type accessible.
       typedef GEOMETRY_TYPE camera_geometry_t;
-
+  typedef okvis::ceres::HomogeneousPointLocalParameterization LANDMARK_MODEL;
       static const int kDistortionDim = GEOMETRY_TYPE::distortion_t::NumDistortionIntrinsics;
       static const int kMinProjectionIntrinsicDim = PROJ_INTRINSIC_MODEL::kNumParams;
       static const int kIntrinsicDim = GEOMETRY_TYPE::NumIntrinsics;
@@ -113,9 +117,6 @@ namespace okvis
                                         Eigen::Matrix<double, 2, kDistortionDim, Eigen::RowMajor>,
                                         Eigen::Matrix<double, 2, kDistortionDim>>::type DistortionJacType;
 
-      /// \brief Number of residuals (2)
-      static const int kNumResiduals = 2;
-
       /// \brief The keypoint type (measurement type).
       typedef Eigen::Vector2d keypoint_t;
 
@@ -138,7 +139,7 @@ namespace okvis
    * @param imuMeasCanopy imu meas in the neighborhood of stateEpoch for
    *     compensating the rolling shutter effect.
    * @param stateEpoch epoch of the pose state and speed and biases
-   * @param tdAtCreation the time offset at the creation of the state.
+   * @param imageTime the raw image time.
    * @param gravityMag
    */
       RsReprojectionError(
@@ -147,7 +148,7 @@ namespace okvis
           const covariance_t &covariance,
           std::shared_ptr<const okvis::ImuMeasurementDeque> imuMeasCanopy,
           std::shared_ptr<const Eigen::Matrix<double, 6, 1>> posVelAtLinearization,
-          okvis::Time stateEpoch, double tdAtCreation, double gravityMag);
+      okvis::Time stateEpoch, okvis::Time imageTime, double gravityMag);
 
       /// \brief Trivial destructor.
       virtual ~RsReprojectionError()
@@ -282,7 +283,7 @@ namespace okvis
         return "RsReprojectionError";
       }
 
-      friend class LocalBearingVector<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL>;
+  friend class LocalBearingVector<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>;
 
     protected:
       //  uint64_t cameraId_; ///< ID of the camera.
@@ -295,14 +296,14 @@ namespace okvis
 
       // const after initialization
       std::shared_ptr<const okvis::ImuMeasurementDeque> imuMeasCanopy_;
-      std::shared_ptr<const Eigen::Matrix<double, 6, 1>> posVelAtLinearization_;
+  std::shared_ptr<const Eigen::Matrix<double, 6, 1>> positionVelocityLin_;
       // weighting related
       covariance_t information_;           ///< The 2x2 information matrix.
       covariance_t squareRootInformation_; ///< The 2x2 square root information matrix.
       covariance_t covariance_;            ///< The 2x2 covariance matrix.
 
       okvis::Time stateEpoch_;  ///< The timestamp of the set of robot states related to this error term.
-      double tdAtCreation_;     /// time offset at the creation of the states
+  okvis::Time imageTime_; /// raw image time.
       const double gravityMag_; ///< gravity in the world frame is [0, 0, -gravityMag_].
     };
 
@@ -312,13 +313,12 @@ namespace okvis
     // AutoDifferentiate will invoke Evaluate() if the Functor is a ceres::CostFunction
     // see ceres-solver/include/ceres/internal/variadic_evaluate.h
     // so we have to separate operator() from Evaluate()
-    template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-              class EXTRINSIC_MODEL, class LANDMARK_MODEL>
+template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL>
     class LocalBearingVector
     {
     public:
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-      LocalBearingVector(const RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL> &rsre);
+  LocalBearingVector(const RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>& rsre);
       template <typename Scalar>
       bool operator()(const Scalar *const T_WS, const Scalar *const hp_W,
                       const Scalar *const extrinsic, const Scalar *const t_r,
@@ -327,7 +327,7 @@ namespace okvis
                       const Scalar *const deltaExtrinsic, Scalar *hp_C) const;
 
     private:
-      const RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL> &rsre_;
+  const RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>& rsre_;
     };
 
   } // namespace ceres

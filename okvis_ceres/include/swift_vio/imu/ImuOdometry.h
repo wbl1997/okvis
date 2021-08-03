@@ -36,8 +36,8 @@ class ImuOdometry {
    * @param[in] t_end End time.
    * @param[in,out] covariance Covariance for the propagated state.
    * @param[in,out] jacobian Jacobian w.r.t. the start state.
-   * @param[in] linearizationPointAtTStart is the first estimates of position
-   * p_WS and velocity v_WS at t_start
+   * @param[in] postionVelocityLin is the linearization points of position
+   * p_WS and velocity v_WS at t_start.
    * @return Number of integration steps.
    * assume W frame has z axis pointing up
    * Euler approximation is used to incrementally compute the integrals, and
@@ -52,7 +52,7 @@ class ImuOdometry {
       const okvis::Time& t_end,
       Eigen::MatrixXd* covariance = nullptr,
       Eigen::MatrixXd* jacobian = nullptr,
-      const Eigen::Matrix<double, 6, 1>* linearizationPointAtTStart = nullptr);
+      const Eigen::Matrix<double, 6, 1>* positionVelocityLin = nullptr);
 
   /**
    * @brief propagationRightInvariantError

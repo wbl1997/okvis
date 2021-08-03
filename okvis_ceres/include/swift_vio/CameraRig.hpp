@@ -293,48 +293,6 @@ class CameraRig {
     }
   }
 };
-
-// with the initialized landmark, compute the measurement Jacobian
-const int kReprojectionErrorId = 0;
-const int kEpipolarFactorId = 1;
-const int kChordalDistanceId = 2;
-const int kReprojectionErrorWithPapId = 3;
-const int kTangentDistanceId = 4;
-const int kRsReprojectionErrorId = 5;
-const int kRSCameraReprojectionErrorId = 6;
-
-#ifndef RESIDUAL_MODEL_SWITCH_CASES
-#define RESIDUAL_MODEL_SWITCH_CASES          \
-  case swift_vio::cameras::kReprojectionErrorId: \
-    RESIDUAL_MODEL_CASE(RsReprojectionError) \
-    break;                                   \
-  case swift_vio::cameras::kEpipolarFactorId:    \
-    RESIDUAL_MODEL_CASE(EpipolarFactor)      \
-    break;                                   \
-  case swift_vio::cameras::kChordalDistanceId:   \
-    RESIDUAL_MODEL_CASE(ChordalDistance)     \
-    break;                                   \
-  case swift_vio::cameras::kTangentDistanceId:   \
-    RESIDUAL_MODEL_CASE(TangentDistance)     \
-    break;                                   \
-  default:                                   \
-    MODEL_DOES_NOT_EXIST_EXCEPTION           \
-    break;
-#endif
-
-inline int CameraObservationModelResidualDim(int modelId) {
-  switch (modelId) {
-    case kEpipolarFactorId:
-      return 1;
-    case kChordalDistanceId:
-      return 3;
-    case kReprojectionErrorId:
-    case kReprojectionErrorWithPapId:
-    case kTangentDistanceId:
-    default:
-      return 2;
-  }
-}
 }  // namespace cameras
 }  // namespace swift_vio
 #endif  // INCLUDE_SWIFT_VIO_CAMERA_RIG_HPP_

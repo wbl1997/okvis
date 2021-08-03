@@ -11,12 +11,14 @@
 #include <vector>
 #include <memory>
 #include <ceres/ceres.h>
-#include <okvis/Measurements.hpp>
 #include <okvis/Parameters.hpp>
 
 #include <okvis/assert_macros.hpp>
+#include <okvis/cameras/CameraBase.hpp>
 #include <okvis/ceres/PoseLocalParameterization.hpp>
 #include <okvis/ceres/ErrorInterface.hpp>
+#include <okvis/Measurements.hpp>
+#include <okvis/Parameters.hpp>
 
 #include <swift_vio/imu/ImuModels.hpp>
 #include <swift_vio/ExtrinsicModels.hpp>
@@ -65,10 +67,11 @@
 
 namespace okvis
 {
-  namespace ceres
-  {
-    template <class GEOMETRY_TYPE>
-    class RS_LocalBearingVector;
+class RSCameraReprojectionErrorBase : public ErrorInterface {
+public:
+  static const int kModelId = 6;
+  static const int kNumResiduals = 2;
+};
 
     /// \brief The 2D keypoint reprojection error accounting for rolling shutter
     ///     skew and time offset and camera intrinsics.
@@ -96,7 +99,7 @@ namespace okvis
               9 /* T_gi */,
               9 /* T_si */,
               6 /* T_ai */
-              >,
+      public RSCameraReprojectionErrorBase {
           public ErrorInterface
     {
     public:
@@ -143,9 +146,6 @@ namespace okvis
         T_ai
       };
 
-      /// \brief Number of residuals (2)
-      static const int kNumResiduals = 2;
-
       /// \brief The keypoint type (measurement type).
       typedef Eigen::Vector2d keypoint_t;
 
@@ -169,7 +169,7 @@ namespace okvis
       RSCameraReprojectionError(
           const measurement_t &measurement,
           const covariance_t &covariance,
-          std::shared_ptr<const camera_geometry_t> targetCamera,
+      std::shared_ptr<const okvis::cameras::CameraBase> targetCamera,
           std::shared_ptr<const okvis::ImuMeasurementDeque> imuMeasCanopy,
           okvis::ImuParameters imuParameters,
           okvis::Time targetStateTime, okvis::Time targetImageTime);
@@ -274,9 +274,9 @@ namespace okvis
       std::shared_ptr<const camera_geometry_t> cameraGeometryBase_;
 
       std::shared_ptr<const okvis::ImuMeasurementDeque> imuMeasCanopy_;
-      okvis::ImuParameters imuParameters_;
+  std::shared_ptr<const okvis::ImuParameters> imuParameters_;
 
-      std::shared_ptr<const camera_geometry_t> targetCamera_;
+  std::shared_ptr<const okvis::cameras::CameraBase> targetCamera_;
 
       // weighting related
       covariance_t information_;           ///< The 2x2 information matrix.

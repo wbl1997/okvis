@@ -44,7 +44,6 @@
 #include <stdint.h>
 #include <okvis/ceres/ParameterBlock.hpp>
 #include <okvis/assert_macros.hpp>
-#include <Eigen/Core>
 
 /// \brief okvis Main namespace of this package.
 namespace okvis {
@@ -54,7 +53,6 @@ namespace ceres {
 /// @brief Base class providing the interface for parameter blocks.
 class ParameterBlockDynamic : public okvis::ceres::ParameterBlock {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   OKVIS_DEFINE_EXCEPTION(Exception,std::runtime_error)
 
   /// \brief Default constructor -- initialises elements in parametes_ to zero.

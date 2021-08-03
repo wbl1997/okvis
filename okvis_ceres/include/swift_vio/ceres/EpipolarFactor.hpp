@@ -24,6 +24,12 @@
 
 namespace okvis {
 namespace ceres {
+class EpipolarFactorBase : public ReprojectionErrorBase {
+public:
+  static const int kModelId = 1;
+  /// \brief Number of residuals (2)
+  static const int kNumResiduals = 1;
+};
 
 /**
  * \brief The 1D epipolar error.
@@ -44,7 +50,7 @@ class EpipolarFactor
           GEOMETRY_TYPE::distortion_t::NumDistortionIntrinsics,
           1 /* readout time */,
           1 /* camera time delay */>,
-      public ReprojectionErrorBase /* use this base to simplify handling visual
+      public EpipolarFactorBase /* use this base to simplify handling visual
                                       constraints in marginalization. */
 {
  public:
@@ -61,9 +67,6 @@ class EpipolarFactor
       1, 7, 7, 7, PROJ_INTRINSIC_MODEL::kNumParams,
       kDistortionDim, 1, 1>
       base_t;
-
-  /// \brief Number of residuals (2)
-  static const int kNumResiduals = 1;
 
   /// \brief The keypoint type (measurement type).
   typedef Eigen::Vector2d keypoint_t;
@@ -86,7 +89,7 @@ class EpipolarFactor
    * @param imuMeasCanopy imu measurements in neighborhoods of the left and
    *     right stateEpochs
    * @param stateEpoch left and right state timestamps
-   * @param tdAtCreation left and right reference td
+   * @param imageTimes left and right image timestamps
    * @param gravityMag magnitude of gravity
    */
   EpipolarFactor(
@@ -101,7 +104,7 @@ class EpipolarFactor
       std::vector<std::shared_ptr<const okvis::ImuMeasurementDeque>>&
           imuMeasCanopy,
       const std::vector<okvis::Time>& stateEpoch,
-      const std::vector<double>& tdAtCreation,
+      const std::vector<okvis::Time>& imageTimes,
       const std::vector<Eigen::Matrix<double, 9, 1>,
                         Eigen::aligned_allocator<Eigen::Matrix<double, 9, 1>>>&
           speedAndBiases,
@@ -192,8 +195,8 @@ class EpipolarFactor
   mutable double squareRootInformation_; ///< The square root information matrix.
 
   std::vector<okvis::Time> stateEpoch_; ///< The timestamp of the set of robot states related to this error term.
-  std::vector<double> tdAtCreation_;
-  ///< To avoid complication in marginalizing speed and biases, first estimates
+  std::vector<okvis::Time> imageTimes_;
+  ///< To avoid complexity in marginalizing speed and biases, first estimates
   ///  of speed and biases are used for computing pose at exposure.
   std::vector<Eigen::Matrix<double, 9, 1>,
               Eigen::aligned_allocator<Eigen::Matrix<double, 9, 1>>>

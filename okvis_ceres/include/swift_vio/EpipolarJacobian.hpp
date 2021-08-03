@@ -31,7 +31,7 @@ inline bool obsDirectionJacobian(
       cameraGeometry->project(fj, &imagePoint, &pointJacobian, &intrinsicsJacobian);
   if (projectOk != okvis::cameras::CameraBase::ProjectionStatus::Successful)
     return false;
-  ProjectionOptKneadIntrinsicJacobian(projOptModelId, &intrinsicsJacobian);
+  ProjectionOptMinimalIntrinsicJacobian(projOptModelId, &intrinsicsJacobian);
   Eigen::Matrix2d dz_df12 = pointJacobian.topLeftCorner<2, 2>();
   Eigen::Matrix2d df12_dz = dz_df12.inverse();
   int cols = intrinsicsJacobian.cols();
@@ -46,6 +46,8 @@ inline bool obsDirectionJacobian(
 
 class EpipolarJacobian {
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
   inline EpipolarJacobian(const Eigen::Matrix3d& R_CjCk,
                           const Eigen::Vector3d& t_CjCk,
                           const Eigen::Vector3d& fj, const Eigen::Vector3d& fk);

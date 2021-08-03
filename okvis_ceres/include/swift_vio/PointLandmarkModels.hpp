@@ -4,9 +4,11 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <ceres/ceres.h>
+#include <okvis/ceres/LocalParamizationAdditionalInterfaces.hpp>
+
 namespace swift_vio {
 // Expressed in an anchor camera frame [\alpha, \beta, 1, \rho] = [x, y, z, w]/z.
-class InverseDepthParameterization final: public ::ceres::LocalParameterization
+class InverseDepthParameterization final: public okvis::ceres::LocalParamizationAdditionalInterfaces
 {
 public:
   static const int kModelId = 1;
@@ -25,7 +27,12 @@ public:
   // The jacobian of Plus(x, delta) w.r.t delta at delta = 0.
   //
   // jacobian is a row-major GlobalSize() x LocalSize() matrix.
-  bool ComputeJacobian(const double* /*x*/, double* jacobian) const {
+  bool ComputeJacobian(const double* x, double* jacobian) const {
+    plusJacobian(x, jacobian);
+    return true;
+  }
+
+  static bool plusJacobian(const double*, double* jacobian) {
     Eigen::Map<Eigen::Matrix<double, kGlobalDim, kLocalDim, Eigen::RowMajor>> j(jacobian);
     j.setZero();
     j(0, 0) = 1.0;
@@ -48,6 +55,12 @@ public:
 
   static bool minus(const double* x, const double* x_plus_delta, double* delta);
 
+  bool Minus(const double *x, const double *x_plus_delta,
+             double *delta) const final {
+    minus(x, x_plus_delta, delta);
+    return true;
+  }
+
   static bool liftJacobian(const double* /*x*/, double* jacobian) {
     Eigen::Map<Eigen::Matrix<double, kLocalDim, kGlobalDim, Eigen::RowMajor>> j(jacobian);
     j.setZero();
@@ -56,13 +69,22 @@ public:
     j(2, 3) = 1.0;
     return true;
   }
+
+  /// \brief Computes the Jacobian from minimal space to naively
+  /// overparameterised space as used by ceres.
+  /// @param[in] x Variable.
+  /// @param[out] jacobian the Jacobian (dimension minDim x dim).
+  /// \return True on success.
+  bool ComputeLiftJacobian(const double *x, double *jacobian) const final {
+    return liftJacobian(x, jacobian);
+  }
 };
 
 // [x, y, z, w, c, s]
 // [x, y, z, w] is the quaternion underlying unit bearing vector n such that
 // n = q(w, x, y, z) * [0, 0, 1]'.
 // c, s are cos(theta) and sin(theta) where \theta is the parallax angle.
-class ParallaxAngleParameterization final: public ::ceres::LocalParameterization {
+class ParallaxAngleParameterization final: public okvis::ceres::LocalParamizationAdditionalInterfaces {
 public:
   static const int kModelId = 2;
   static const int kGlobalDim = 6;
@@ -78,13 +100,14 @@ public:
   }
 
   // The jacobian of Plus(x, delta) w.r.t delta at delta = 0.
-  //
   // jacobian is a row-major GlobalSize() x LocalSize() matrix.
   bool ComputeJacobian(const double* /*x*/, double* jacobian) const {
     Eigen::Map<Eigen::Matrix<double, kGlobalDim, kLocalDim, Eigen::RowMajor>> j(jacobian);
     j.setIdentity();
     return true;
   }
+
+  static bool plusJacobian(const double*, double* jacobian);
 
   // Size of x.
   int GlobalSize() const final {
@@ -104,6 +127,14 @@ public:
   /// @param[out] x_plus_delta Perturbed x.
   static bool plus(const double* x, const double* delta, double* x_plus_delta);
 
+  static bool minus(const double* x, const double* x_plus_delta, double* delta);
+
+  bool Minus(const double *x, const double *x_plus_delta,
+             double *delta) const final {
+    minus(x, x_plus_delta, delta);
+    return true;
+  }
+
   /// \brief Computes the Jacobian from minimal space to naively overparameterised space as used by ceres.
   /// @param[in] x Variable.
   /// @param[out] jacobian the Jacobian (dimension minDim x dim).
@@ -113,9 +144,18 @@ public:
     j.setIdentity();
     return true;
   }
+
+  /// \brief Computes the Jacobian from minimal space to naively
+  /// overparameterised space as used by ceres.
+  /// @param[in] x Variable.
+  /// @param[out] jacobian the Jacobian (dimension minDim x dim).
+  /// \return True on success.
+  bool ComputeLiftJacobian(const double *x, double *jacobian) const final {
+    return liftJacobian(x, jacobian);
+  }
 };
 
-// add the model switch functions
+std::shared_ptr<okvis::ceres::LocalParamizationAdditionalInterfaces> createLandmarkLocalParameterization(int modelId);
 } // namespace swift_vio
 
 #endif // INCLUDE_SWIFT_VIO_POINT_LANDMARK_MODELS_HPP_

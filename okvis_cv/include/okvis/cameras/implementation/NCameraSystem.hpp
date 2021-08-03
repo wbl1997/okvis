@@ -136,6 +136,14 @@ std::shared_ptr<const cameras::CameraBase> NCameraSystem::cameraGeometry(
   return cameraGeometries_[cameraIndex];
 }
 
+std::shared_ptr<cameras::CameraBase> NCameraSystem::cameraGeometryMutable(
+    size_t cameraIndex)
+{
+  OKVIS_ASSERT_TRUE_DBG(Exception, cameraIndex < cameraGeometries_.size(),
+                        "Camera index " << cameraIndex << "out of range.");
+  return cameraGeometries_[cameraIndex];
+}
+
 // get the distortion type of cmaera cameraIndex
 inline NCameraSystem::DistortionType NCameraSystem::distortionType(size_t cameraIndex) const
 {

@@ -28,6 +28,7 @@ add_library(${PROJECT_NAME}
 
   swift_vio/ceres/corrector.cc
   swift_vio/BearingResiduals.cpp
+  swift_vio/CameraObservationModel.cpp
   swift_vio/CameraTimeParamBlock.cpp
   swift_vio/ExtrinsicModels.cpp
   swift_vio/MultipleTransformPointJacobian.cpp

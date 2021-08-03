@@ -19,14 +19,11 @@
 namespace okvis {
 /// \brief ceres Namespace for ceres-related functionality implemented in okvis.
 namespace ceres {
-template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-          class EXTRINSIC_MODEL, class LANDMARK_MODEL, class IMU_MODEL>
-ReprojectionErrorWithPap<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL,
-                    EXTRINSIC_MODEL, LANDMARK_MODEL, IMU_MODEL>::ReprojectionErrorWithPap() {}
+template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL>
+ReprojectionErrorWithPap<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::ReprojectionErrorWithPap() {}
 
-template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-          class EXTRINSIC_MODEL, class LANDMARK_MODEL, class IMU_MODEL>
-ReprojectionErrorWithPap<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL, IMU_MODEL>::
+template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL>
+ReprojectionErrorWithPap<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
     ReprojectionErrorWithPap(
         std::shared_ptr<const camera_geometry_t> cameraGeometry,
         const Eigen::Vector2d& imageObservation,
@@ -45,17 +42,15 @@ ReprojectionErrorWithPap<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, L
   cameraGeometryBase_ = cameraGeometry;
 }
 
-template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-          class EXTRINSIC_MODEL, class LANDMARK_MODEL, class IMU_MODEL>
-bool ReprojectionErrorWithPap<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL, IMU_MODEL>::
+template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL>
+bool ReprojectionErrorWithPap<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
     Evaluate(double const* const* parameters, double* residuals,
              double** jacobians) const {
   return EvaluateWithMinimalJacobians(parameters, residuals, jacobians, NULL);
 }
 
-template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-          class EXTRINSIC_MODEL, class LANDMARK_MODEL, class IMU_MODEL>
-bool ReprojectionErrorWithPap<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL, IMU_MODEL>::
+template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL>
+bool ReprojectionErrorWithPap<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
     EvaluateWithMinimalJacobians(double const* const* parameters,
                                  double* residuals, double** jacobians,
                                  double** jacobiansMinimal) const {
@@ -78,7 +73,7 @@ bool ReprojectionErrorWithPap<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MOD
                                 &intrinsicsJacobian);
     bool projectOk = projectStatus ==
                      okvis::cameras::CameraBase::ProjectionStatus::Successful;
-    PROJ_INTRINSIC_MODEL::kneadIntrinsicJacobian(&intrinsicsJacobian);
+    PROJ_INTRINSIC_MODEL::minimalIntrinsicJacobian(&intrinsicsJacobian);
     Eigen::Vector2d error = imagePoint - measurement_;
     // weight
     Eigen::Vector2d weighted_error = squareRootInformation_ * error;
@@ -181,7 +176,7 @@ bool ReprojectionErrorWithPap<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MOD
                               &intrinsicsJacobian);
   bool projectOk = projectStatus ==
                    okvis::cameras::CameraBase::ProjectionStatus::Successful;
-  PROJ_INTRINSIC_MODEL::kneadIntrinsicJacobian(&intrinsicsJacobian);
+  PROJ_INTRINSIC_MODEL::minimalIntrinsicJacobian(&intrinsicsJacobian);
   Eigen::Vector2d error = imagePoint - measurement_;
   // weight
   Eigen::Vector2d weighted_error = squareRootInformation_ * error;
@@ -195,7 +190,6 @@ bool ReprojectionErrorWithPap<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MOD
       setJacobiansZero(jacobians, jacobiansMinimal);
       return false;
     }
-    // use first estimates.
     okvis::kinematics::Transformation T_WBtij_forJac =
         pointDataPtr_->T_WBtij_ForJacobian(observationIndex_);
     okvis::kinematics::Transformation T_WBtmi_forJac =
@@ -217,11 +211,11 @@ bool ReprojectionErrorWithPap<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MOD
         T_WCtai_jacobian.multiply();
     swift_vio::DirectionFromParallaxAngleJacobian directionFromParallaxAngleJacobian(
         pair_T_WCtmi, pair_T_WCtai.first, pair_T_WCtij.first, pap);
-    Eigen::Vector3d Nij_fej = directionFromParallaxAngleJacobian.evaluate();
+    Eigen::Vector3d Nij_lin = directionFromParallaxAngleJacobian.evaluate();
 
     Eigen::Matrix3d R_CtijW = pair_T_WCtij.second.toRotationMatrix().transpose();
     Eigen::Matrix<double, 3, 3> dNC_dN = R_CtijW;
-    Eigen::Matrix<double, 3, 3> dNC_dtheta_WCtij = R_CtijW * okvis::kinematics::crossMx(Nij_fej);
+    Eigen::Matrix<double, 3, 3> dNC_dtheta_WCtij = R_CtijW * okvis::kinematics::crossMx(Nij_lin);
     Eigen::Matrix<double, kNumResiduals, 3> de_dN = pointJacobian * dNC_dN;
 
     Eigen::Matrix3d dN_dp_WCtij;
@@ -539,9 +533,8 @@ bool ReprojectionErrorWithPap<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MOD
   return valid;
 }
 
-template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-          class EXTRINSIC_MODEL, class LANDMARK_MODEL, class IMU_MODEL>
-void ReprojectionErrorWithPap<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL, IMU_MODEL>::
+template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL>
+void ReprojectionErrorWithPap<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
     setJacobiansZero(double** jacobians, double** jacobiansMinimal) const {
   zeroJacobian<7, 6, kNumResiduals>(0, jacobians, jacobiansMinimal);
   zeroJacobian<7, 6, kNumResiduals>(1, jacobians, jacobiansMinimal);

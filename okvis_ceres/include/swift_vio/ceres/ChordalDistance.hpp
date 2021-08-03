@@ -24,6 +24,13 @@
 
 namespace okvis {
 namespace ceres {
+
+class ChordalDistanceBase : public ErrorInterface {
+public:
+  static const int kModelId = 2;
+  static const int kNumResiduals = 3;
+};
+
 /// \brief The chordal distance (N_{i,j} - R_{C(t_{i,j})} * f_{i,j}) accounting
 /// for rolling shutter skew and time offset and camera intrinsics.
 /// \warning A potential problem with this error term happens when
@@ -46,13 +53,12 @@ namespace ceres {
 ///     constant values from a provided extrinsic entity, e.g., T_BC.
 ///     Its kNumParams should not be zero.
 template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-          class EXTRINSIC_MODEL = swift_vio::Extrinsic_p_BC_q_BC,
-          class LANDMARK_MODEL = swift_vio::ParallaxAngleParameterization,
-          class IMU_MODEL = swift_vio::Imu_BG_BA>
+          class EXTRINSIC_MODEL = swift_vio::Extrinsic_p_BC_q_BC>
 class ChordalDistance
     : public ::ceres::SizedCostFunction<
           3 /* residuals */, 7 /* observing frame pose */, 7 /* main anchor */,
-          7 /* associate anchor */, LANDMARK_MODEL::kGlobalDim /* landmark */,
+          7 /* associate anchor */,
+          swift_vio::ParallaxAngleParameterization::kGlobalDim /* landmark */,
           7 /* camera extrinsic */,
           PROJ_INTRINSIC_MODEL::kNumParams /* camera projection intrinsic */,
           GEOMETRY_TYPE::distortion_t::NumDistortionIntrinsics,
@@ -60,16 +66,17 @@ class ChordalDistance
           9 /* velocity and biases of observing frame */,
           9 /* velocity and biases of main anchor */,
           9 /* velocity and biases of associate anchor */>,
-      public ErrorInterface {
+      public ChordalDistanceBase {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   OKVIS_DEFINE_EXCEPTION(Exception,std::runtime_error)
 
   /// \brief Make the camera geometry type accessible.
   typedef GEOMETRY_TYPE camera_geometry_t;
+  typedef swift_vio::ParallaxAngleParameterization LANDMARK_MODEL;
   static const int kProjectionIntrinsicDim = PROJ_INTRINSIC_MODEL::kNumParams;
   static const int kDistortionDim = GEOMETRY_TYPE::distortion_t::NumDistortionIntrinsics;
-  static const int kNumResiduals = 3;
+
   /// \brief The base class type.
   typedef ::ceres::SizedCostFunction<
       kNumResiduals, 7, 7, 7, LANDMARK_MODEL::kGlobalDim, 7, PROJ_INTRINSIC_MODEL::kNumParams,

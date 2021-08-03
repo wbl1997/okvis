@@ -26,8 +26,8 @@ namespace okvis
     RSCameraReprojectionError<GEOMETRY_TYPE>::RSCameraReprojectionError(
         const measurement_t &measurement,
         const covariance_t &covariance,
-        std::shared_ptr<const camera_geometry_t> targetCamera,
-        std::shared_ptr<const okvis::ImuMeasurementDeque> imuMeasCanopy,
+    std::shared_ptr<const okvis::cameras::CameraBase> targetCamera,
+    std::shared_ptr<const okvis::ImuMeasurementDeque> imuMeasCanopy,
         okvis::ImuParameters imuParameters,
         okvis::Time targetStateTime, okvis::Time targetImageTime)
         : imuMeasCanopy_(imuMeasCanopy),
@@ -109,9 +109,9 @@ namespace okvis
       Eigen::Map<const Eigen::Matrix<double, 6, 1>> Ta(parameters[Index::T_ai]); // not used for now.
 
       double ypixel(measurement_[1]);
-      uint32_t height = cameraGeometryBase_->imageHeight();
+  uint32_t height = targetCamera_->imageHeight();
       double kpN = ypixel / height - 0.5;
-      double relativeFeatureTime =
+  double relativeFeatureTime = (targetImageTime_ - targetStateTime_).toSec() + cameraTd + readoutTime * kpN ;
           cameraTd + readoutTime * kpN - (targetStateTime_.toSec() - targetImageTime_.toSec()); //tdAtCreation_=targetStateTime_-targetImageTime_
       std::pair<Eigen::Matrix<double, 3, 1>, Eigen::Quaternion<double>> pair_T_WBt(p_WBt0, q_WBt0);
 
@@ -156,12 +156,11 @@ namespace okvis
       Eigen::Matrix<double, 2, Eigen::Dynamic> Jpi;
       Eigen::Matrix<double, 2, Eigen::Dynamic> Jpi_weighted;
       if (jacobians != NULL)
-      {
-        cameraGeometryBase_->projectWithExternalParameters(hp_Ct.head<3>(), intrinsics, &kp, &Jh, &Jpi); 
+    targetCamera_->projectWithExternalParameters(hp_Ct.head<3>(), intrinsics, &kp, &Jh, &Jpi);
         Jh_weighted = squareRootInformation_ * Jh;
         Jpi_weighted = squareRootInformation_ * Jpi;
       }
-      else
+    targetCamera_->projectWithExternalParameters(hp_Ct.head<3>(), intrinsics, &kp);
       {
         cameraGeometryBase_->projectWithExternalParameters(hp_Ct.head<3>(), intrinsics, &kp, &Jh, &Jpi);
       }
@@ -200,22 +199,12 @@ namespace okvis
         Eigen::Vector3d dhC_td;
         Eigen::Matrix<double, 3, 9> dhC_sb;
 
-        //t
-        Eigen::Vector3d p_BP_Wt = hp_Wt.head<3>() - p_WBt * hp_Wt[3];
-        Eigen::Matrix<double, 4, 6> dhS_deltaTWSt;
-        dhS_deltaTWSt.topLeftCorner<3, 3>() = -C_BWt * hp_Wt[3];                            //p
-        dhS_deltaTWSt.topRightCorner<3, 3>() = C_BWt * okvis::kinematics::crossMx(p_BP_Wt);                     //q
         dhS_deltaTWSt.row(3).setZero();
-
-        dhC_deltaTWSt = (T_CBt * dhS_deltaTWSt).topRows<3>();
-
-        Eigen::Matrix<double, 4, 6> dhC_dExtrinsict_temp;
         dhC_dExtrinsict_temp.block<3, 3>(0, 0) = -C_CBt * hp_Ct[3];  
         //dhC_dExtrinsict_temp.block<3, 3>(0, 3) = -okvis::kinematics::crossMx(hp_Ct.head<3>()) * C_CBt;
         dhC_dExtrinsict_temp.block<3, 3>(0, 3) = okvis::kinematics::crossMx(C_CBt * (T_WBt .inverse() * (T_WBh * T_BCh) * hp_Ch).head<3>()) ;
         dhC_dExtrinsict_temp.row(3).setZero();
         dhC_dExtrinsict = dhC_dExtrinsict_temp.topRows<3>();
-
         //h
         //hp_Ct = (T_WBt * T_BCt).inverse() * (T_WBh * T_BCh) * hp_Ch;
         Eigen::Vector3d p_BP_Wh = (T_BCh.T() * hp_Ch).head<3>();
@@ -242,26 +231,6 @@ namespace okvis
         dhC_dExtrinsich = ((T_WBt * T_BCt).inverse().T()*dhW_dExtrinsich).topRows<3>();
 
         //other
-        okvis::ImuMeasurement queryValue;
-        swift_vio::ode::interpolateInertialData(*imuMeasCanopy_, t_end, queryValue);
-        queryValue.measurement.gyroscopes -= speedBgBa.segment<3>(3);
-        Eigen::Vector3d p =
-            okvis::kinematics::crossMx(queryValue.measurement.gyroscopes) *
-                hp_Bt.head<3>() +
-            C_BWt * speedBgBa.head<3>() * hp_Wt[3];
-        dhC_td = -C_CBt * p;
-
-        Eigen::Matrix3d dhC_vW = -C_CBt * C_BWt * relativeFeatureTime * hp_Wt[3];
-        Eigen::Matrix3d dhC_bg =
-            -C_CBt * C_BWt *
-            okvis::kinematics::crossMx(hp_Wt.head<3>() - hp_Wt[3] * p_WBt) *
-            relativeFeatureTime * q_WBt0.toRotationMatrix();        
-
-        //dhC_sb.row(3).setZero();
-        dhC_sb.topRightCorner<3, 3>().setZero();
-        dhC_sb.topLeftCorner<3, 3>() = dhC_vW;
-        dhC_sb.block<3, 3>(0, 3) = dhC_bg;
-
 
         //assignJacobians
           if (jacobians[0] != NULL)
@@ -646,10 +615,6 @@ namespace okvis
       zeroJacobian<4, 3, 2>(Index::hp_Ch, jacobians, jacobiansMinimal);
 
       // TODO(jhuai): binliang: correct the below for other parameters.
-      zeroJacobian<7, 6, 2>(Index::T_WBh, jacobians, jacobiansMinimal);
-      zeroJacobian<7, 6, 2>(Index::T_BCt, jacobians, jacobiansMinimal);
-      zeroJacobian<7, 6, 2>(Index::T_BCh, jacobians, jacobiansMinimal);
-      zeroJacobian<GEOMETRY_TYPE::NumIntrinsics, GEOMETRY_TYPE::NumIntrinsics, 2>(Index::Intrinsics, jacobians, jacobiansMinimal);
       zeroJacobian<1, 1, 2>(Index::ReadoutTime, jacobians, jacobiansMinimal);
       zeroJacobian<1, 1, 2>(Index::CameraTd, jacobians, jacobiansMinimal);
       zeroJacobian<9, 9, 2>(Index::SpeedAndBiases, jacobians, jacobiansMinimal);

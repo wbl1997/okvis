@@ -66,9 +66,6 @@ class ReprojectionError : public ReprojectionError2dBase
   /// \brief The base class type.
   typedef ::ceres::SizedCostFunction<2, 7, 4, 7> base_t;
 
-  /// \brief Number of residuals (2)
-  static const int kNumResiduals = 2;
-
   /// \brief The keypoint type (measurement type).
   typedef Eigen::Vector2d keypoint_t;
 

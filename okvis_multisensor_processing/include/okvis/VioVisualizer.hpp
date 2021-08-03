@@ -58,9 +58,10 @@ namespace okvis {
  */
 class VioVisualizer {
  public:
-
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   /// @brief This struct contains the relevant data for visualizing
   struct VisualizationData {
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     typedef std::shared_ptr<VisualizationData> Ptr;
     okvis::ObservationVector observations;    ///< Vector containing all the keypoint observations.
     std::shared_ptr<okvis::MultiFrame> currentFrames; ///< Current multiframe.

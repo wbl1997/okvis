@@ -14,6 +14,8 @@ namespace swift_vio {
 */
 class RelativeMotionJacobian {
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
   inline RelativeMotionJacobian(const std::pair<Eigen::Matrix3d, Eigen::Vector3d>& T_BC,
                                 const std::pair<Eigen::Matrix3d, Eigen::Vector3d>& T_GBj,
                                 const std::pair<Eigen::Matrix3d, Eigen::Vector3d>& T_GBk);

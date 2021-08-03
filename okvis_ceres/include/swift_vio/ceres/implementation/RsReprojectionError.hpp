@@ -17,27 +17,23 @@ namespace okvis
 {
   /// \brief ceres Namespace for ceres-related functionality implemented in okvis.
   namespace ceres
-  {
-    template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-              class EXTRINSIC_MODEL, class LANDMARK_MODEL>
-    RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL,
-                        EXTRINSIC_MODEL, LANDMARK_MODEL>::RsReprojectionError()
+template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL>
+RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::RsReprojectionError()
         : gravityMag_(9.80665) {}
 
-    template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-              class EXTRINSIC_MODEL, class LANDMARK_MODEL>
-    RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL>::
+template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL>
+RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
         RsReprojectionError(
             std::shared_ptr<const camera_geometry_t> cameraGeometry,
             const measurement_t &measurement,
             const covariance_t &covariance,
             std::shared_ptr<const okvis::ImuMeasurementDeque> imuMeasCanopy,
-            std::shared_ptr<const Eigen::Matrix<double, 6, 1>> posVelAtLinearization,
-            okvis::Time stateEpoch, double tdAtCreation, double gravityMag)
+        std::shared_ptr<const Eigen::Matrix<double, 6, 1>> positionVelocityLin,
+        okvis::Time stateEpoch, okvis::Time imageTime, double gravityMag)
         : imuMeasCanopy_(imuMeasCanopy),
-          posVelAtLinearization_(posVelAtLinearization),
+      positionVelocityLin_(positionVelocityLin),
           stateEpoch_(stateEpoch),
-          tdAtCreation_(tdAtCreation),
+      imageTime_(imageTime),
           gravityMag_(gravityMag)
     {
       setMeasurement(measurement);
@@ -45,9 +41,8 @@ namespace okvis
       setCameraGeometry(cameraGeometry);
     }
 
-    template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-              class EXTRINSIC_MODEL, class LANDMARK_MODEL>
-    void RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL>::
+template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL>
+void RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
         setCovariance(const covariance_t &covariance)
     {
       information_ = covariance.inverse();
@@ -58,18 +53,16 @@ namespace okvis
       squareRootInformation_ = lltOfInformation.matrixL().transpose();
     }
 
-    template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-              class EXTRINSIC_MODEL, class LANDMARK_MODEL>
-    bool RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL>::
+template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL>
+bool RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
         Evaluate(double const *const *parameters, double *residuals,
                  double **jacobians) const
     {
       return EvaluateWithMinimalJacobians(parameters, residuals, jacobians, NULL);
     }
 
-    template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-              class EXTRINSIC_MODEL, class LANDMARK_MODEL>
-    bool RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL>::
+template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL>
+bool RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
         EvaluateWithMinimalJacobians(double const *const *parameters,
                                      double *residuals, double **jacobians,
                                      double **jacobiansMinimal) const
@@ -78,9 +71,8 @@ namespace okvis
                                                   jacobiansMinimal);
     }
 
-    template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-              class EXTRINSIC_MODEL, class LANDMARK_MODEL>
-    bool RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL>::
+template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL>
+bool RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
         EvaluateWithMinimalJacobiansAnalytic(double const *const *parameters,
                                              double *residuals, double **jacobians,
                                              double **jacobiansMinimal) const
@@ -106,7 +98,7 @@ namespace okvis
       double ypixel(measurement_[1]);
       uint32_t height = cameraGeometryBase_->imageHeight();
       double kpN = ypixel / height - 0.5;
-      double relativeFeatureTime = tdLatestEstimate + trLatestEstimate * kpN - tdAtCreation_;
+  double relativeFeatureTime = tdLatestEstimate + trLatestEstimate * kpN + (imageTime_ - stateEpoch_).toSec();
       std::pair<Eigen::Matrix<double, 3, 1>, Eigen::Quaternion<double>> pairT_WB(
           t_WB_W0, q_WB0);
       Eigen::Matrix<double, 9, 1> speedBgBa =
@@ -192,28 +184,23 @@ namespace okvis
           setJacobiansZero(jacobians, jacobiansMinimal);
           return true;
         }
-        
-        std::pair<Eigen::Matrix<double, 3, 1>, Eigen::Quaternion<double>> T_WB_fej = pairT_WB;
-        SpeedAndBiases speedAndBiasesFej = speedBgBa;
-        if (posVelAtLinearization_)
-        {
-          // compute p_WB, v_WB at (t_{f_i,j}) that use FIRST ESTIMATES of
-          // position and velocity, i.e., their linearization point
-          T_WB_fej = std::make_pair(posVelAtLinearization_->head<3>(), q_WB0);
-          speedAndBiasesFej = Eigen::Map<const Eigen::Matrix<double, 9, 1>>(parameters[7]);
-          speedAndBiasesFej.head<3>() = posVelAtLinearization_->tail<3>();
+    std::pair<Eigen::Matrix<double, 3, 1>, Eigen::Quaternion<double>> T_WB_lin = pairT_WB;
+    SpeedAndBiases speedAndBiasesLin = speedBgBa;
+    if (positionVelocityLin_) {
+      // compute position and velocity at t_{f_i,j} with first estimates of
+      // position and velocity at t_j.
+      T_WB_lin = std::make_pair(positionVelocityLin_->head<3>(), q_WB0);
+      speedAndBiasesLin = Eigen::Map<const Eigen::Matrix<double, 9, 1>>(parameters[7]);
+      speedAndBiasesLin.head<3>() = positionVelocityLin_->tail<3>();
           if (relativeFeatureTime >= wedge)
-          {
-            swift_vio::ode::predictStates(*imuMeasCanopy_, gravityMag_, T_WB_fej,
-                                          speedAndBiasesFej, t_start, t_end);
+        swift_vio::ode::predictStates(*imuMeasCanopy_, gravityMag_, T_WB_lin,
+                                    speedAndBiasesLin, t_start, t_end);
           }
-          else if (relativeFeatureTime <= -wedge)
-          {
-            swift_vio::ode::predictStatesBackward(*imuMeasCanopy_, gravityMag_, T_WB_fej,
-                                                  speedAndBiasesFej, t_start, t_end);
+        swift_vio::ode::predictStatesBackward(*imuMeasCanopy_, gravityMag_, T_WB_lin,
+                                            speedAndBiasesLin, t_start, t_end);
           }
-          C_BW = T_WB_fej.second.toRotationMatrix().transpose();
-          t_WB_W = T_WB_fej.first;
+      C_BW = T_WB_lin.second.toRotationMatrix().transpose();
+      t_WB_W = T_WB_lin.first;
           T_BW.topLeftCorner<3, 3>() = C_BW;
           T_BW.topRightCorner<3, 1>() = -C_BW * t_WB_W;
           hp_B = T_BW * hp_W;
@@ -239,11 +226,11 @@ namespace okvis
 
         okvis::ImuMeasurement queryValue;
         swift_vio::ode::interpolateInertialData(*imuMeasCanopy_, t_end, queryValue);
-        queryValue.measurement.gyroscopes -= speedAndBiasesFej.segment<3>(3);
+    queryValue.measurement.gyroscopes -= speedAndBiasesLin.segment<3>(3);
         Eigen::Vector3d p =
             okvis::kinematics::crossMx(queryValue.measurement.gyroscopes) *
                 hp_B.head<3>() +
-            C_BW * speedAndBiasesFej.head<3>() * hp_W[3];
+        C_BW * speedAndBiasesLin.head<3>() * hp_W[3];
         dhC_td.head<3>() = -C_CB * p;
         dhC_td[3] = 0;
 
@@ -267,9 +254,8 @@ namespace okvis
 
     // This evaluates the error term and additionally computes
     // the Jacobians in the minimal internal representation via autodiff
-    template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-              class EXTRINSIC_MODEL, class LANDMARK_MODEL>
-    bool RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL>::
+template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL>
+bool RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
         EvaluateWithMinimalJacobiansAutoDiff(double const *const *parameters,
                                              double *residuals, double **jacobians,
                                              double **jacobiansMinimal) const
@@ -305,8 +291,7 @@ namespace okvis
                                 dhC_sb.data(),
                                 dhC_deltaTWS.data(),
                                 dhC_dExtrinsic.data()};
-      LocalBearingVector<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL,
-                         okvis::ceres::HomogeneousPointLocalParameterization>
+  LocalBearingVector<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>
           rsre(*this);
       bool diffState =
           ::ceres::internal::AutoDifferentiate<
@@ -376,9 +361,8 @@ namespace okvis
       return true;
     }
 
-    template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-              class EXTRINSIC_MODEL, class LANDMARK_MODEL>
-    void RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL>::
+template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL>
+void RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
         setJacobiansZero(double **jacobians, double **jacobiansMinimal) const
     {
       zeroJacobian<7, 6, 2>(0, jacobians, jacobiansMinimal);
@@ -394,9 +378,8 @@ namespace okvis
       zeroJacobian<9, 9, 2>(7, jacobians, jacobiansMinimal);
     }
 
-    template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-              class EXTRINSIC_MODEL, class LANDMARK_MODEL>
-    void RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL>::
+template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL>
+void RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
         assignJacobians(
             double const *const *parameters, double **jacobians,
             double **jacobiansMinimal,
@@ -483,7 +466,7 @@ namespace okvis
       {
         Eigen::Map<ProjectionIntrinsicJacType> J1(jacobians[3]);
         Eigen::Matrix<double, 2, Eigen::Dynamic> Jpi_weighted_copy = Jpi_weighted;
-        PROJ_INTRINSIC_MODEL::kneadIntrinsicJacobian(&Jpi_weighted_copy);
+    PROJ_INTRINSIC_MODEL::minimalIntrinsicJacobian(&Jpi_weighted_copy);
         J1 = Jpi_weighted_copy
                  .template topLeftCorner<2, PROJ_INTRINSIC_MODEL::kNumParams>();
         if (jacobiansMinimal != NULL)
@@ -560,20 +543,16 @@ namespace okvis
       }
     }
 
-    template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-              class EXTRINSIC_MODEL, class LANDMARK_MODEL>
-    LocalBearingVector<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL,
-                       LANDMARK_MODEL>::
+template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL>
+LocalBearingVector<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
         LocalBearingVector(
-            const RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL,
-                                      EXTRINSIC_MODEL, LANDMARK_MODEL> &
+        const RsReprojectionError<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>&
                 rsre)
         : rsre_(rsre) {}
 
-    template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL,
-              class EXTRINSIC_MODEL, class LANDMARK_MODEL>
+template <class GEOMETRY_TYPE, class PROJ_INTRINSIC_MODEL, class EXTRINSIC_MODEL>
     template <typename Scalar>
-    bool LocalBearingVector<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL, LANDMARK_MODEL>::
+bool LocalBearingVector<GEOMETRY_TYPE, PROJ_INTRINSIC_MODEL, EXTRINSIC_MODEL>::
     operator()(const Scalar *const T_WB, const Scalar *const php_W,
                const Scalar *const T_BC_params,
                const Scalar *const t_r,
@@ -615,7 +594,7 @@ namespace okvis
       Scalar kpN = (Scalar)(ypixel / height - 0.5);
       Scalar tdLatestEstimate = t_d[0];
       Scalar relativeFeatureTime =
-          tdLatestEstimate + trLatestEstimate * kpN - (Scalar)rsre_.tdAtCreation_;
+      tdLatestEstimate + trLatestEstimate * kpN + (Scalar)(rsre_.imageTime_ - rsre_.stateEpoch_).toSec();
 
       std::pair<Eigen::Matrix<Scalar, 3, 1>, Eigen::Quaternion<Scalar>> pairT_WB(
           t_WB_W, q_WB);

@@ -128,6 +128,8 @@ class NCameraSystem
   /// @return The camera geometry.
   inline std::shared_ptr<const cameras::CameraBase> cameraGeometry(size_t cameraIndex) const;
 
+  inline std::shared_ptr<cameras::CameraBase> cameraGeometryMutable(size_t cameraIndex);
+
   /// \brief get the distortion type of the camera
   /// @param[in] cameraIndex The camera index for which the distortion type should be returned.
   /// @return The distortion type

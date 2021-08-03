@@ -200,6 +200,19 @@ inline void Transformation::set(const Eigen::Vector3d & r_AB,
   q_ = q_AB.normalized();
   updateC();
 }
+
+template <typename Derived_coeffs>
+inline void
+Transformation::setTranslation(const Eigen::MatrixBase<Derived_coeffs> &r) {
+  EIGEN_STATIC_ASSERT_VECTOR_SPECIFIC_SIZE(Derived_coeffs, 3);
+  r_ = r;
+}
+
+inline void Transformation::setRotation(const Eigen::Quaterniond &q) {
+  q_ = q;
+  updateC();
+}
+
 // Set this transformation to identity
 inline void Transformation::setIdentity() {
   q_.setIdentity();

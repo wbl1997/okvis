@@ -69,6 +69,7 @@ namespace absolute_pose {
  */
 class FrameAbsolutePoseSacProblem : public AbsolutePoseSacProblem {
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   OKVIS_DEFINE_EXCEPTION(Exception,std::runtime_error)
 
   typedef AbsolutePoseSacProblem base_t;

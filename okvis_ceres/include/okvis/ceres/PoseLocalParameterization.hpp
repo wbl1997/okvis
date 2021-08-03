@@ -49,8 +49,7 @@ namespace okvis {
 namespace ceres {
 
 /// \brief Pose local parameterisation, i.e. for orientation dq(dalpha) x q_bar.
-class PoseLocalParameterization : public ::ceres::LocalParameterization,
-    public LocalParamizationAdditionalInterfaces {
+class PoseLocalParameterization : public LocalParamizationAdditionalInterfaces {
  public:
 
   /// \brief Trivial destructor.
@@ -130,8 +129,7 @@ class PoseLocalParameterization : public ::ceres::LocalParameterization,
 
 /// \brief Pose local parameterisation, i.e. for orientation dq(dalpha) x q_bar.
 ///        Here, we only perturb the translation though.
-class PoseLocalParameterization3d : public ::ceres::LocalParameterization,
-    public LocalParamizationAdditionalInterfaces {
+class PoseLocalParameterization3d : public LocalParamizationAdditionalInterfaces {
  public:
 
   /// \brief Trivial destructor.
@@ -191,8 +189,7 @@ class PoseLocalParameterization3d : public ::ceres::LocalParameterization,
 
 /// \brief Pose local parameterisation, i.e. for orientation dq(dalpha) x q_bar.
 ///        Here, we only perturb the translation and yaw though.
-class PoseLocalParameterization4d : public ::ceres::LocalParameterization,
-    public LocalParamizationAdditionalInterfaces {
+class PoseLocalParameterization4d : public LocalParamizationAdditionalInterfaces {
  public:
 
   /// \brief Trivial destructor.
@@ -252,8 +249,7 @@ class PoseLocalParameterization4d : public ::ceres::LocalParameterization,
 
 /// \brief Pose local parameterisation, i.e. for orientation dq(dalpha) x q_bar.
 ///        Here, we only perturb roll and pitch, i.e. dalpha = [dalpha1, dalpha2, 0]^T.
-class PoseLocalParameterization2d : public ::ceres::LocalParameterization,
-    public LocalParamizationAdditionalInterfaces {
+class PoseLocalParameterization2d : public LocalParamizationAdditionalInterfaces {
  public:
 
   /// \brief Trivial destructor.

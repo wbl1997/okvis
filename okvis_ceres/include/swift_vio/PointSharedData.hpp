@@ -40,14 +40,14 @@ struct StateInfoForOneKeypoint {
     double normalizedRow; // v / imageHeight - 0.5.
     okvis::Time imageTimestamp; // raw image frame timestamp may be different for cameras in NFrame.
     // linearization points at the state.
-    std::shared_ptr<const Eigen::Matrix<double, 6, 1>> positionVelocityPtr;
+    std::shared_ptr<const Eigen::Matrix<double, 6, 1>> positionVelocityLinPtr;
     // Pose of the body frame in the world frame at the feature observation epoch.
     // It should be computed with IMU propagation for RS cameras.
     okvis::kinematics::Transformation T_WBtij;
     Eigen::Vector3d v_WBtij;
     Eigen::Vector3d omega_Btij;
-    okvis::kinematics::Transformation  T_WBtij_fej;
-    Eigen::Vector3d v_WBtij_fej;
+    okvis::kinematics::Transformation  T_WBtij_lin;
+    Eigen::Vector3d v_WBtij_lin;
 };
 
 enum class PointSharedDataState {
@@ -62,6 +62,8 @@ enum class PointSharedDataState {
 // The data of the class members may be updated in ceres EvaluationCallback.
 class PointSharedData {
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
   typedef std::vector<StateInfoForOneKeypoint,
                       Eigen::aligned_allocator<StateInfoForOneKeypoint>>
       StateInfoForObservationsType;
@@ -87,10 +89,10 @@ class PointSharedData {
   void setImuInfo(
       int index, const okvis::Time stateEpoch,
       std::shared_ptr<const okvis::ImuMeasurementDeque> imuMeasurements,
-      std::shared_ptr<const Eigen::Matrix<double, 6, 1>> positionVelocityPtr) {
+      std::shared_ptr<const Eigen::Matrix<double, 6, 1>> positionVelocityLinPtr) {
     stateInfoForObservations_[index].stateEpoch = stateEpoch;
     stateInfoForObservations_[index].imuMeasurementPtr = imuMeasurements;
-    stateInfoForObservations_[index].positionVelocityPtr = positionVelocityPtr;
+    stateInfoForObservations_[index].positionVelocityLinPtr = positionVelocityLinPtr;
   }
 
   void setImuAugmentedParameterPtrs(
@@ -127,9 +129,8 @@ class PointSharedData {
    * @brief computePoseAndVelocityForJacobians
    * @warning Only call this function after
    * computePoseAndVelocityAtObservation() has finished.
-   * @param useLinearizationPoint
    */
-  void computePoseAndVelocityForJacobians(bool useLinearizationPoint);
+  void computePoseAndVelocityForJacobians();
   /// @}
 
   /**
@@ -156,17 +157,6 @@ class PointSharedData {
    */
   std::vector<int> anchorObservationIds() const;
 
-  okvis::kinematics::Transformation T_WB_mainAnchor() const {
-    return stateInfoForObservations_[anchorIds_[0].observationIndex_].T_WBtij;
-  }
-
-  okvis::kinematics::Transformation T_WB_mainAnchorForJacobian(bool useFirstEstimate) const {
-    if (useFirstEstimate)
-      return stateInfoForObservations_[anchorIds_[0].observationIndex_].T_WBtij_fej;
-    else
-      return T_WB_mainAnchor();
-  }
-
   okvis::kinematics::Transformation T_WB_mainAnchorStateEpoch() const {
     const StateInfoForOneKeypoint& mainAnchorItem =
         stateInfoForObservations_.at(anchorIds_[0].observationIndex_);
@@ -175,21 +165,15 @@ class PointSharedData {
             ->estimate();
   }
 
-  okvis::kinematics::Transformation T_WB_mainAnchorStateEpochForJacobian(
-      bool useFirstEstimate) const {
+  okvis::kinematics::Transformation T_WB_mainAnchorStateEpochForJacobian() const {
     const StateInfoForOneKeypoint& mainAnchorItem =
         stateInfoForObservations_.at(anchorIds_[0].observationIndex_);
-    okvis::kinematics::Transformation T_WB_fej =
+    okvis::kinematics::Transformation T_WB_lin =
         std::static_pointer_cast<const okvis::ceres::PoseParameterBlock>(
             mainAnchorItem.T_WBj_ptr)
             ->estimate();
-    if (useFirstEstimate) {
-      std::shared_ptr<const Eigen::Matrix<double, 6, 1>>
-          posVelFirstEstimatePtr = mainAnchorItem.positionVelocityPtr;
-      T_WB_fej = okvis::kinematics::Transformation(
-          posVelFirstEstimatePtr->head<3>(), T_WB_fej.q());
-    }
-    return T_WB_fej;
+    T_WB_lin.setTranslation(mainAnchorItem.positionVelocityLinPtr->head<3>());
+    return T_WB_lin;
   }
   /// @}
 
@@ -266,6 +250,10 @@ class PointSharedData {
     return stateInfoForObservations_[index].normalizedRow;
   }
 
+  okvis::Time imageTime(int index) const {
+    return stateInfoForObservations_[index].imageTimestamp;
+  }
+
   std::vector<okvis::kinematics::Transformation,
               Eigen::aligned_allocator<okvis::kinematics::Transformation>>
   poseAtObservationList() const {
@@ -305,7 +293,7 @@ class PointSharedData {
   }
 
   okvis::kinematics::Transformation T_WBtij_ForJacobian(int index) const {
-    return stateInfoForObservations_[index].T_WBtij_fej;
+    return stateInfoForObservations_[index].T_WBtij_lin;
   }
 
   Eigen::Matrix3d Phi_pq_feature(int observationIndex) const {
@@ -314,14 +302,14 @@ class PointSharedData {
     double relFeatureTime = normalizedFeatureTime(item);
     Eigen::Vector3d gW(0, 0, -imuParameters_->g);
     Eigen::Vector3d dr =
-        -(item.T_WBtij_fej.r() - item.positionVelocityPtr->head<3>() -
-          item.positionVelocityPtr->tail<3>() * relFeatureTime -
+        -(item.T_WBtij_lin.r() - item.positionVelocityLinPtr->head<3>() -
+          item.positionVelocityLinPtr->tail<3>() * relFeatureTime -
           0.5 * gW * relFeatureTime * relFeatureTime);
     return okvis::kinematics::crossMx(dr);
   }
 
   Eigen::Vector3d v_WBtij_ForJacobian(int index) const {
-    return stateInfoForObservations_[index].v_WBtij_fej;
+    return stateInfoForObservations_[index].v_WBtij_lin;
   }
 
   PointSharedDataState status() const {

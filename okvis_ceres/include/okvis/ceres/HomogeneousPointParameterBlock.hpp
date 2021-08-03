@@ -53,6 +53,7 @@ class HomogeneousPointParameterBlock : public ParameterBlockSized<4, 3,
     Eigen::Vector4d>
 {
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /// \brief The estimate type (4D vector).
   typedef Eigen::Vector4d estimate_t;

@@ -586,6 +586,7 @@ class Estimator : public VioBackendInterface
    */
   bool setSpeedAndBias(uint64_t poseId, size_t imuIdx, const okvis::SpeedAndBias & speedAndBias) override;
 
+  void setPositionVelocityLin(uint64_t poseId, const Eigen::Matrix<double, 6, 1>& posVelLin) final;
 
   /// @brief Set whether a frame is a keyframe or not.
   /// @param[in] frameId The frame ID.
@@ -608,7 +609,7 @@ class Estimator : public VioBackendInterface
     optimizationOptions_ = optimizationOptions;
   }
 
-  void setPointLandmarkOptions(const swift_vio::PointLandmarkOptions& plOptions) {
+  void setPointLandmarkOptions(const swift_vio::PointLandmarkOptions& plOptions) override {
     pointLandmarkOptions_ = plOptions;
   }
 
@@ -797,35 +798,29 @@ class Estimator : public VioBackendInterface
   typedef std::array<std::vector<SpecificSensorStatesContainer>, 7> AllSensorStatesContainer; ///< Union of all sensor states.
 
   /// \brief States This summarizes all the possible states -- i.e. their ids:
-  /// t_j = t_{j_0} - imageDelay + t_{d_j}
-  /// here t_{j_0} is the raw timestamp of image j,
-  /// t_{d_j} is the current estimated time offset between the visual and
-  /// inertial data, after correcting the initial time offset
-  /// imageDelay. Therefore, t_{d_j} is usually 0 at the beginning of the algorithm.
-  /// t_j is the timestamp of the state, remains constant after initialization.
-  /// t_{f_i} = t_j - t_{d_j} + t_d + (v-N/2)t_r/N here t_d and t_r are the time
-  /// offset and image readout time, t_{f_i} is the time feature i is observed.
+  /// \f$ t_j = t_{j_0} - imageDelay + t_{d_j} \f$
+  /// here \f$ t_{j_0} \f$ is the raw timestamp of image j,
+  /// \f$ t_{d_j} \f$ is the current estimated time offset between the visual and
+  /// inertial data, after correcting the initial time offset imageDelay.
+  /// Therefore, \f$ t_{d_j} \f$ is usually 0 at the beginning of the algorithm.
+  /// \f$ t_j \f$ is the timestamp of the state, remains constant after initialization.
+  /// \f$ t_{f_{i,j}} = t_{j_0} - imageDelay + t_d + (v-N/2)t_r/N \f$ here \f$ t_d \f$ and \f$ t_r \f$ are the time
+  /// offset and image readout time, \f$ t_{f_{i, j}} \f$ is the time feature i is observed in frame j.
   struct States {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    States() : isKeyframe(false), id(0), tdAtCreation(0) {}
-    // _timestamp = image timestamp - imageDelay + _tdAtCreation
-    States(bool isKeyframe, uint64_t id, okvis::Time _timestamp,
-           double _tdAtCreation = 0.0)
+    States() : isKeyframe(false), id(0) {}
+    States(bool isKeyframe, uint64_t id, okvis::Time _timestamp)
         : isKeyframe(isKeyframe),
           id(id),
-          timestamp(_timestamp),
-          tdAtCreation(_tdAtCreation) {}
+          timestamp(_timestamp) {}
     GlobalStatesContainer global;
     AllSensorStatesContainer sensors;
     bool isKeyframe;
     uint64_t id;
     const okvis::Time timestamp;         // t_j, fixed once initialized
-    const double tdAtCreation;  // t_{d_j}, fixed once initialized
-    // first estimate of position r_WB and velocity v_WB
-    std::shared_ptr<Eigen::Matrix<double, 6, 1>> linearizationPoint;
-    // IMU measurements centering at state timestamp. It is initialized
-    // when IMU readings surpass state timestamp, and then updated
-    // when next state arrives.
+    // linearization points of position r_WB and velocity v_WB.
+    std::shared_ptr<Eigen::Matrix<double, 6, 1>> positionVelocityLin;
+    // IMU measurements centering at state timestamp.
     std::shared_ptr<okvis::ImuMeasurementDeque> imuReadingWindow;
   };
 
