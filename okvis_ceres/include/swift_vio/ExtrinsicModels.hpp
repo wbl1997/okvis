@@ -31,11 +31,12 @@ public:
   }
 
   template <typename Scalar>
-  static void oplus(const Scalar* x, const Scalar* delta, Scalar* x_plus_delta) {
-    Eigen::Map<const Eigen::Matrix<Scalar, 3, 1> > dr(delta);
-    Eigen::Map<const Eigen::Matrix<Scalar, 3, 1> > r(x);
-    Eigen::Map<const Eigen::Quaternion<Scalar> > q(x + 3);
-    Eigen::Map<Eigen::Matrix<Scalar, 3, 1> > rplus(x_plus_delta);
+  static void oplus(const Scalar *x, const Scalar *delta,
+                    Scalar *x_plus_delta) {
+    Eigen::Map<const Eigen::Matrix<Scalar, 3, 1>> dr(delta);
+    Eigen::Map<const Eigen::Matrix<Scalar, 3, 1>> r(x);
+    Eigen::Map<const Eigen::Quaternion<Scalar>> q(x + 3);
+    Eigen::Map<Eigen::Matrix<Scalar, 3, 1>> rplus(x_plus_delta);
     rplus = r - q * dr;
   }
 
@@ -114,33 +115,41 @@ public:
   }
 
   /**
-   * @brief dT_BC_dExtrinsic Jacobian of perturbation in the tangent space of \f$ T_{BC} \f$
-   * relative to perturbation on the parameters \f$ p_{CB} \f$.
-   * The perturbation in the tangent space of \f$ T_{BC} \f$ is \f$ [\delta t, \delta \theta] \f$.
-   * \f$ R_{BC} = Exp(\delta\theta) \hat{R}_{BC} \f$
-   * \f$ t_{BC} = \delta t + \hat{t}_{BC} \f$
-   * @param R_BC
+   * @brief dT_BC_dExtrinsic Jacobian of perturbation in the tangent space of
+   * \f$ T_{BC} \f$ relative to perturbation on the parameters \f$ p_{CB} \f$.
+   * The perturbation in the tangent space of \f$ T_{BC} \f$ is \f$ [\delta t,
+   * \delta \theta] \f$. \f$ R_{BC} = Exp(\delta\theta) \hat{R}_{BC} \f$ \f$
+   * t_{BC} = \delta t + \hat{t}_{BC} \f$
+   * @param T_BCi current camera relative pose.
    * @param j Jacobian
    */
-  static void dT_BC_dExtrinsic(const Eigen::Matrix3d &R_BC,
-                               Eigen::Matrix<double, 6, kNumParams> *j) {
-    j->topRows<3>() = -R_BC;
+  static void
+  dT_BC_dExtrinsic(const okvis::kinematics::Transformation &T_BCi,
+                   const okvis::kinematics::Transformation * /*T_BC0*/,
+                   Eigen::Matrix<double, 6, kNumParams> *j) {
+    j->topRows<3>() = -T_BCi.C();
     j->bottomRows<3>().setZero();
   }
 
-//  static void dpC_dExtrinsic_AIDP(const Eigen::Vector3d & /*pC*/,
-//                                  const Eigen::Matrix3d & /*R_CB*/,
-//                                  Eigen::MatrixXd *dpC_dT,
-//                                  const Eigen::Matrix3d *R_CfCa,
-//                                  const Eigen::Vector4d *ab1rho) {
-//    *dpC_dT = (*ab1rho)[3] * (Eigen::Matrix3d::Identity() - (*R_CfCa));
-//  }
+  static void dT_BC_dT_BC0(const okvis::kinematics::Transformation & /*T_BCi*/,
+                           const okvis::kinematics::Transformation * /*T_BC0*/,
+                           Eigen::Matrix<double, 6, 6> *j) {
+    j->setZero();
+  }
 
-//  static void dpC_dExtrinsic_HPP(const Eigen::Vector4d &hpC,
-//                                 const Eigen::Matrix3d & /*R_CB*/,
-//                                 Eigen::MatrixXd *dpC_dT) {
-//    *dpC_dT = Eigen::Matrix3d::Identity() * hpC[3];
-//  }
+  //  static void dpC_dExtrinsic_AIDP(const Eigen::Vector3d & /*pC*/,
+  //                                  const Eigen::Matrix3d & /*R_CB*/,
+  //                                  Eigen::MatrixXd *dpC_dT,
+  //                                  const Eigen::Matrix3d *R_CfCa,
+  //                                  const Eigen::Vector4d *ab1rho) {
+  //    *dpC_dT = (*ab1rho)[3] * (Eigen::Matrix3d::Identity() - (*R_CfCa));
+  //  }
+
+  //  static void dpC_dExtrinsic_HPP(const Eigen::Vector4d &hpC,
+  //                                 const Eigen::Matrix3d & /*R_CB*/,
+  //                                 Eigen::MatrixXd *dpC_dT) {
+  //    *dpC_dT = Eigen::Matrix3d::Identity() * hpC[3];
+  //  }
 
   /**
    * @brief dhC_dExtrinsic_HPP \f$ h^C = T_{BC}^{-1} h^B \f$
@@ -155,18 +164,20 @@ public:
   dhC_dExtrinsic_HPP(const Eigen::Matrix<double, 4, 1> &hpC,
                      const Eigen::Matrix<double, 3, 3> & /*R_CB*/,
                      Eigen::Matrix<double, 4, kNumParams> *dhC_dExtrinsic) {
-    dhC_dExtrinsic->topLeftCorner<3, 3>() = Eigen::Matrix3d::Identity() * hpC[3];
+    dhC_dExtrinsic->topLeftCorner<3, 3>() =
+        Eigen::Matrix3d::Identity() * hpC[3];
     dhC_dExtrinsic->row(3).setZero();
   }
 
   // the error state is $\delta p_B^C$ or $\delta p_S^C$
-//  static void updateState(const Eigen::Vector3d &r, const Eigen::Quaterniond &q,
-//                          const Eigen::VectorXd &delta,
-//                          Eigen::Vector3d *r_delta,
-//                          Eigen::Quaterniond *q_delta) {
-//    *r_delta = r - q * delta;
-//    *q_delta = q;
-//  }
+  //  static void updateState(const Eigen::Vector3d &r, const Eigen::Quaterniond
+  //  &q,
+  //                          const Eigen::VectorXd &delta,
+  //                          Eigen::Vector3d *r_delta,
+  //                          Eigen::Quaterniond *q_delta) {
+  //    *r_delta = r - q * delta;
+  //    *q_delta = q;
+  //  }
 
   static void toDimensionLabels(std::vector<std::string> *extrinsicLabels) {
     *extrinsicLabels = {"p_CS_C_x[m]", "p_CS_C_y", "p_CS_C_z"};
@@ -186,15 +197,15 @@ public:
     *extrinsic_opt_coeffs = T_BC.q().conjugate() * (-T_BC.r());
   }
 
-//  template <class Scalar>
-//  static std::pair<Eigen::Matrix<Scalar, 3, 1>, Eigen::Quaternion<Scalar>>
-//  get_T_BC(const okvis::kinematics::Transformation &T_BC_base,
-//           const Scalar *parameters) {
-//    Eigen::Matrix<Scalar, 3, 1> t_CB_C(parameters[0], parameters[1],
-//                                       parameters[2]);
-//    Eigen::Quaternion<Scalar> q_BC = T_BC_base.q().cast<Scalar>();
-//    return std::make_pair(q_BC * (-t_CB_C), q_BC);
-//  }
+  //  template <class Scalar>
+  //  static std::pair<Eigen::Matrix<Scalar, 3, 1>, Eigen::Quaternion<Scalar>>
+  //  get_T_BC(const okvis::kinematics::Transformation &T_BC_base,
+  //           const Scalar *parameters) {
+  //    Eigen::Matrix<Scalar, 3, 1> t_CB_C(parameters[0], parameters[1],
+  //                                       parameters[2]);
+  //    Eigen::Quaternion<Scalar> q_BC = T_BC_base.q().cast<Scalar>();
+  //    return std::make_pair(q_BC * (-t_CB_C), q_BC);
+  //  }
 };
 
 // This is different from PoseLocalParameterization in liftJacobian() and
@@ -207,20 +218,21 @@ public:
 
   static inline int getMinimalDim() { return kNumParams; }
 
-//  static void updateState(const Eigen::Vector3d &r, const Eigen::Quaterniond &q,
-//                          const Eigen::VectorXd &delta,
-//                          Eigen::Vector3d *r_delta,
-//                          Eigen::Quaterniond *q_delta) {
-//    Eigen::Vector3d deltaAlpha = delta.segment<3>(3);
-//    *r_delta = r + delta.head<3>();
-//    *q_delta = okvis::kinematics::expAndTheta(deltaAlpha) * q;
-//    q_delta->normalize();
-//  }
+  //  static void updateState(const Eigen::Vector3d &r, const Eigen::Quaterniond
+  //  &q,
+  //                          const Eigen::VectorXd &delta,
+  //                          Eigen::Vector3d *r_delta,
+  //                          Eigen::Quaterniond *q_delta) {
+  //    Eigen::Vector3d deltaAlpha = delta.segment<3>(3);
+  //    *r_delta = r + delta.head<3>();
+  //    *q_delta = okvis::kinematics::expAndTheta(deltaAlpha) * q;
+  //    q_delta->normalize();
+  //  }
 
   template <typename Scalar>
-  static void oplus(
-      const Scalar *const deltaT,
-      std::pair<Eigen::Matrix<Scalar, 3, 1>, Eigen::Quaternion<Scalar>> *T) {
+  static void
+  oplus(const Scalar *const deltaT,
+        std::pair<Eigen::Matrix<Scalar, 3, 1>, Eigen::Quaternion<Scalar>> *T) {
     Eigen::Map<const Eigen::Matrix<Scalar, 6, 1>> delta(deltaT);
     T->first += delta.template head<3>();
     Eigen::Matrix<Scalar, 3, 1> omega = delta.template tail<3>();
@@ -229,25 +241,24 @@ public:
   }
 
   template <typename Scalar>
-  static void oplus(const Scalar* x, const Scalar* delta, Scalar* x_plus_delta) {
-    Eigen::Map<const Eigen::Matrix<Scalar, 3, 1> > dr(delta);
-    Eigen::Map<const Eigen::Matrix<Scalar, 3, 1> > dq(delta + 3);
-    Eigen::Map<const Eigen::Matrix<Scalar, 3, 1> > r(x);
-    Eigen::Map<const Eigen::Quaternion<Scalar> > q(x + 3);
-    Eigen::Map<Eigen::Matrix<Scalar, 3, 1> > rplus(x_plus_delta);
-    Eigen::Map<Eigen::Quaternion<Scalar> > qplus(x_plus_delta + 3);
+  static void oplus(const Scalar *x, const Scalar *delta,
+                    Scalar *x_plus_delta) {
+    Eigen::Map<const Eigen::Matrix<Scalar, 3, 1>> dr(delta);
+    Eigen::Map<const Eigen::Matrix<Scalar, 3, 1>> dq(delta + 3);
+    Eigen::Map<const Eigen::Matrix<Scalar, 3, 1>> r(x);
+    Eigen::Map<const Eigen::Quaternion<Scalar>> q(x + 3);
+    Eigen::Map<Eigen::Matrix<Scalar, 3, 1>> rplus(x_plus_delta);
+    Eigen::Map<Eigen::Quaternion<Scalar>> qplus(x_plus_delta + 3);
     rplus = r + dr;
     qplus = okvis::kinematics::expAndTheta(Eigen::Matrix<Scalar, 3, 1>(dq)) * q;
   }
 
   template <typename Scalar>
-  static void ominus(const Scalar *T, const Scalar *T_plus,
-                     Scalar *delta) {
+  static void ominus(const Scalar *T, const Scalar *T_plus, Scalar *delta) {
     delta[0] = T_plus[0] - T[0];
     delta[1] = T_plus[1] - T[1];
     delta[2] = T_plus[2] - T[2];
-    const Eigen::Quaterniond q_plus(T_plus[6], T_plus[3], T_plus[4],
-                                    T_plus[5]);
+    const Eigen::Quaterniond q_plus(T_plus[6], T_plus[3], T_plus[4], T_plus[5]);
     const Eigen::Quaterniond q(T[6], T[3], T[4], T[5]);
     Eigen::Map<Eigen::Vector3d> delta_q(&delta[3]);
     double theta;
@@ -354,20 +365,29 @@ public:
     return cov;
   }
 
-//  template <class Scalar>
-//  static std::pair<Eigen::Matrix<Scalar, 3, 1>, Eigen::Quaternion<Scalar>>
-//  get_T_BC(const okvis::kinematics::Transformation & /*T_BC_base*/,
-//           const Scalar *parameters) {
-//    Eigen::Matrix<Scalar, 3, 1> t_BC_B(parameters[0], parameters[1],
-//                                       parameters[2]);
-//    Eigen::Quaternion<Scalar> q_BC(parameters[6], parameters[3], parameters[4],
-//                                   parameters[5]);
-//    return std::make_pair(t_BC_B, q_BC);
-//  }
+  //  template <class Scalar>
+  //  static std::pair<Eigen::Matrix<Scalar, 3, 1>, Eigen::Quaternion<Scalar>>
+  //  get_T_BC(const okvis::kinematics::Transformation & /*T_BC_base*/,
+  //           const Scalar *parameters) {
+  //    Eigen::Matrix<Scalar, 3, 1> t_BC_B(parameters[0], parameters[1],
+  //                                       parameters[2]);
+  //    Eigen::Quaternion<Scalar> q_BC(parameters[6], parameters[3],
+  //    parameters[4],
+  //                                   parameters[5]);
+  //    return std::make_pair(t_BC_B, q_BC);
+  //  }
 
-  static void dT_BC_dExtrinsic(
-      Eigen::Matrix<double, 6, Extrinsic_p_BC_q_BC::kNumParams> *j) {
+  static void
+  dT_BC_dExtrinsic(const okvis::kinematics::Transformation & /*T_BCi*/,
+                   const okvis::kinematics::Transformation * /*T_BC0*/,
+                   Eigen::Matrix<double, 6, kNumParams> *j) {
     j->setIdentity();
+  }
+
+  static void dT_BC_dT_BC0(const okvis::kinematics::Transformation & /*T_BCi*/,
+                           const okvis::kinematics::Transformation * /*T_BC0*/,
+                           Eigen::Matrix<double, 6, 6> *j) {
+    j->setZero();
   }
 
   /**
@@ -380,19 +400,19 @@ public:
    * @param R_CfCa
    * @param ab1rho
    */
-//  static void dpC_dExtrinsic_AIDP(const Eigen::Vector3d &pC,
-//                                  const Eigen::Matrix3d &R_CB,
-//                                  Eigen::MatrixXd *dpC_dT,
-//                                  const Eigen::Matrix3d *R_CfCa,
-//                                  const Eigen::Vector4d *ab1rho) {
-//    dpC_dT->resize(3, 6);
-//    dpC_dT->block<3, 3>(0, 0) =
-//        ((*R_CfCa) - Eigen::Matrix3d::Identity()) * R_CB * (*ab1rho)[3];
-//    dpC_dT->block<3, 3>(0, 3) =
-//        (okvis::kinematics::crossMx(pC) -
-//         (*R_CfCa) * okvis::kinematics::crossMx(ab1rho->head<3>())) *
-//        R_CB;
-//  }
+  //  static void dpC_dExtrinsic_AIDP(const Eigen::Vector3d &pC,
+  //                                  const Eigen::Matrix3d &R_CB,
+  //                                  Eigen::MatrixXd *dpC_dT,
+  //                                  const Eigen::Matrix3d *R_CfCa,
+  //                                  const Eigen::Vector4d *ab1rho) {
+  //    dpC_dT->resize(3, 6);
+  //    dpC_dT->block<3, 3>(0, 0) =
+  //        ((*R_CfCa) - Eigen::Matrix3d::Identity()) * R_CB * (*ab1rho)[3];
+  //    dpC_dT->block<3, 3>(0, 3) =
+  //        (okvis::kinematics::crossMx(pC) -
+  //         (*R_CfCa) * okvis::kinematics::crossMx(ab1rho->head<3>())) *
+  //        R_CB;
+  //  }
 
   /**
    * @brief dpC_dExtrinsic_HPP homogeneous point
@@ -403,14 +423,14 @@ public:
    * @param R_CB
    * @param dpC_dT 3x6
    */
-//  static void dpC_dExtrinsic_HPP(const Eigen::Vector4d &hpC,
-//                                 const Eigen::Matrix3d &R_CB,
-//                                 Eigen::MatrixXd *dpC_dT) {
-//    dpC_dT->resize(3, 6);
-//    dpC_dT->block<3, 3>(0, 0) = -R_CB * hpC[3];
-//    dpC_dT->block<3, 3>(0, 3) =
-//        okvis::kinematics::crossMx(hpC.head<3>()) * R_CB;
-//  }
+  //  static void dpC_dExtrinsic_HPP(const Eigen::Vector4d &hpC,
+  //                                 const Eigen::Matrix3d &R_CB,
+  //                                 Eigen::MatrixXd *dpC_dT) {
+  //    dpC_dT->resize(3, 6);
+  //    dpC_dT->block<3, 3>(0, 0) = -R_CB * hpC[3];
+  //    dpC_dT->block<3, 3>(0, 3) =
+  //        okvis::kinematics::crossMx(hpC.head<3>()) * R_CB;
+  //  }
 
   /**
    * @brief dhC_dExtrinsic_HPP \f$ h^C = T_{BC}^{-1} h^B \f$
@@ -461,24 +481,39 @@ public:
     return cov;
   }
 
+  /**
+   * @brief dT_BC_dExtrinsic
+   * @param T_BCi current camera relative pose
+   * @param T_BC0 main camera relative pose
+   * @param j_C0Ci Jacobian of T_BCi relative to T_C0Ci
+   */
   static void dT_BC_dExtrinsic(const okvis::kinematics::Transformation &T_BCi,
-                               const okvis::kinematics::Transformation &T_BC0,
-                               Eigen::Matrix<double, 6, kNumParams> *j_C0Ci,
-                               Eigen::Matrix<double, 6, kNumParams> *j_BC0);
+                               const okvis::kinematics::Transformation *T_BC0,
+                               Eigen::Matrix<double, 6, kNumParams> *j_C0Ci);
 
-//  static void dpC_dExtrinsic_AIDP(const Eigen::Vector3d & /*pC*/,
-//                                  const Eigen::Matrix3d & /*R_CB*/,
-//                                  Eigen::MatrixXd * /*dpC_dT*/,
-//                                  const Eigen::Matrix3d * /*R_CfCa*/,
-//                                  const Eigen::Vector4d * /*ab1rho*/) {
-//    throw std::runtime_error("Method not implemented!");
-//  }
+  /**
+   * @brief dT_BC_dT_BC0
+   * @param T_BCi current camera relative pose
+   * @param T_BC0 main camera relative pose
+   * @param j_BC0 Jacobian of T_BCi relative to T_BC0.
+   */
+  static void dT_BC_dT_BC0(const okvis::kinematics::Transformation &T_BCi,
+                           const okvis::kinematics::Transformation *T_BC0,
+                           Eigen::Matrix<double, 6, 6> *j_BC0);
 
-//  static void dpC_dExtrinsic_HPP(const Eigen::Vector4d & /*hpC*/,
-//                                 const Eigen::Matrix3d & /*R_CB*/,
-//                                 Eigen::MatrixXd * /*dpC_dT*/) {
-//    throw std::runtime_error("Method not implemented!");
-//  }
+  //  static void dpC_dExtrinsic_AIDP(const Eigen::Vector3d & /*pC*/,
+  //                                  const Eigen::Matrix3d & /*R_CB*/,
+  //                                  Eigen::MatrixXd * /*dpC_dT*/,
+  //                                  const Eigen::Matrix3d * /*R_CfCa*/,
+  //                                  const Eigen::Vector4d * /*ab1rho*/) {
+  //    throw std::runtime_error("Method not implemented!");
+  //  }
+
+  //  static void dpC_dExtrinsic_HPP(const Eigen::Vector4d & /*hpC*/,
+  //                                 const Eigen::Matrix3d & /*R_CB*/,
+  //                                 Eigen::MatrixXd * /*dpC_dT*/) {
+  //    throw std::runtime_error("Method not implemented!");
+  //  }
 };
 
 #ifndef EXTRINSIC_MODEL_CASES
@@ -547,24 +582,6 @@ inline int ExtrinsicModelNameToId(std::string extrinsic_opt_rep,
   }
 }
 
-//inline void ExtrinsicModelUpdateState(int model_id, const Eigen::Vector3d &r,
-//                                      const Eigen::Quaterniond &q,
-//                                      const Eigen::VectorXd &delta,
-//                                      Eigen::Vector3d *r_delta,
-//                                      Eigen::Quaterniond *q_delta) {
-//  switch (model_id) {
-//#define MODEL_CASES EXTRINSIC_MODEL_CASES
-//#define EXTRINSIC_MODEL_CASE(ExtrinsicModel)                                   \
-//  case ExtrinsicModel::kModelId:                                               \
-//    return ExtrinsicModel::updateState(r, q, delta, r_delta, q_delta);
-
-//    MODEL_SWITCH_CASES
-
-//#undef EXTRINSIC_MODEL_CASE
-//#undef MODEL_CASES
-//  }
-//}
-
 inline void ExtrinsicModelOplus(int model_id, const double *const deltaT_XC,
                                 okvis::kinematics::Transformation *T_XC) {
   std::pair<Eigen::Matrix<double, 3, 1>, Eigen::Quaternion<double>> pair_T_XC =
@@ -598,43 +615,6 @@ inline void ExtrinsicModelOminus(int model_id, const double *rq,
 #undef MODEL_CASES
   }
 }
-
-//inline void ExtrinsicModel_dpC_dExtrinsic_AIDP(int model_id,
-//                                               const Eigen::Vector3d &pC,
-//                                               const Eigen::Matrix3d &R_CB,
-//                                               Eigen::MatrixXd *dpC_dT,
-//                                               const Eigen::Matrix3d *R_CfCa,
-//                                               const Eigen::Vector4d *ab1rho) {
-//  switch (model_id) {
-//#define MODEL_CASES EXTRINSIC_MODEL_CASES
-//#define EXTRINSIC_MODEL_CASE(ExtrinsicModel)                                   \
-//  case ExtrinsicModel::kModelId:                                               \
-//    return ExtrinsicModel::dpC_dExtrinsic_AIDP(pC, R_CB, dpC_dT, R_CfCa,       \
-//                                               ab1rho);
-
-//    MODEL_SWITCH_CASES
-
-//#undef EXTRINSIC_MODEL_CASE
-//#undef MODEL_CASES
-//  }
-//}
-
-//inline void ExtrinsicModel_dpC_dExtrinsic_HPP(int model_id,
-//                                              const Eigen::Vector4d &hpC,
-//                                              const Eigen::Matrix3d &R_CB,
-//                                              Eigen::MatrixXd *dpC_dT) {
-//  switch (model_id) {
-//#define MODEL_CASES EXTRINSIC_MODEL_CASES
-//#define EXTRINSIC_MODEL_CASE(ExtrinsicModel)                                   \
-//  case ExtrinsicModel::kModelId:                                               \
-//    return ExtrinsicModel::dpC_dExtrinsic_HPP(hpC, R_CB, dpC_dT);
-
-//    MODEL_SWITCH_CASES
-
-//#undef EXTRINSIC_MODEL_CASE
-//#undef MODEL_CASES
-//  }
-//}
 
 inline void
 ExtrinsicModelToDimensionLabels(int model_id,
